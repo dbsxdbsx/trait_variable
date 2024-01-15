@@ -1,6 +1,6 @@
 [package]
     name="trait_variable"
-    version="0.1.0"
+    version="0.2.0"
     edition="2021"
     description="Make variable fields feasible in trait definition by procedural macros."
     repository="https://github.com/dbsxdbsx/trait_variable"
@@ -13,13 +13,10 @@
     ]
     readme="README.md"
     exclude=["target/*", ".vscode/*", ".github/*", "tests/*", "justfile"]
-    keywords=[
-        "trait",
-        "variable",
-        "type",
-        "macro",
-        "code-generation",
-    ]
+    keywords=["trait", "variable", "type", "macro", "code-generation"]
+
+[lib]
+    proc-macro=true
 
 [profile.release]
     lto          =true
@@ -27,5 +24,7 @@
     strip        ="debuginfo"
 
 [dependencies]
+    syn  ={version="1", features=["full"]}
+    quote="1"
 
 [dev-dependencies]
