@@ -14,7 +14,7 @@ Add `trait_variable` to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-trait_variable = "0.1.0"
+trait_variable = "*"
 ```
 
 Then, use the macro in your Rust code:
