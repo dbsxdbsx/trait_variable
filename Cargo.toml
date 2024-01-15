@@ -17,10 +17,7 @@
         "trait",
         "variable",
         "type",
-        "enhance",
         "macro",
-        "procedural",
-        "macros",
         "code-generation",
     ]
 
