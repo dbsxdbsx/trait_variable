@@ -1,0 +1,86 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        //debug版本总体任务
+        {
+            "label": "DebugBuild",
+            "dependsOn": [
+                "checkIfBuildFolderExists",
+                "DebugBuildTask"
+            ],
+            "dependsOrder": "sequence",
+        },
+        //release版本总体任务
+        {
+            "label": "ReleaseBuild",
+            "dependsOn": [
+                "checkIfBuildFolderExists",
+                "ReleaseBuildTask",
+                "runBuiltProgram"
+            ],
+            "dependsOrder": "sequence",
+            "group": {
+                "kind": "build",
+            },
+        },
+        //
+        //以下为子任务
+        {
+            "label": "checkIfBuildFolderExists",
+            "type": "shell",
+            "windows": {
+                "command": "cmd",
+                "args": [
+                    "/C",
+                    "if not exist .\target mkdir .\target",
+                ],
+                "options": {
+                    "shell": {
+                        "executable": "powershell.exe"
+                    }
+                }
+            },
+            "linux": {
+                "command": "mkdir -p target",
+            },
+            "presentation": {
+                "reveal": "silent",
+                "close": false
+            },
+        },
+        {
+            "label": "DebugBuildTask",
+            "type": "shell",
+            "command": "cargo build",
+            "presentation": {
+                "reveal": "always",
+                "close": false
+            },
+        },
+        {
+            "label": "ReleaseBuildTask",
+            "type": "shell",
+            "command": "cargo build --release",
+            "presentation": {
+                "reveal": "always",
+                "close": false
+            },
+            // "problemMatcher":
+        },
+        {
+            "label": "runBuiltProgram",
+            "type": "shell",
+            "windows": {
+                "command": "cd ./target/Release/; ./trait_variable",
+                "options": {
+                    "shell": {
+                        "executable": "powershell",
+                    }
+                }
+            },
+            "linux": {
+                "command": "cd ./target/Release/ && ./trait_variable",
+            },
+        }
+    ]
+}

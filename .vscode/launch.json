@@ -1,0 +1,22 @@
+{
+    "version": "0.2.0",
+    "configurations": [{
+        "preLaunchTask": "DebugBuild",
+        "requireExactSource": false,
+        "name": "(Windows) 调试启动",
+        "type": "cppvsdbg",
+        "request": "launch",
+        "program": "${workspaceFolder}/target/debug/trait_variable",
+        "args": [],
+        "stopAtEntry": false,
+        "cwd": "${workspaceFolder}",
+        "environment": [],
+        "console": "integratedTerminal",
+        //"logging": {
+        //    "trace": true,
+        //    "traceResponse": true,
+        //    "engineLogging": true
+        //}
+        // "postDebugTask": "Terminate All Tasks"
+    }]
+}
