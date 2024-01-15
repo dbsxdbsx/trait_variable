@@ -1,5 +1,5 @@
 # Trait Variable
-**(Don't download. It is still under developement.)**
+**(Don't use it. It is still under developement.)**
 
 Make variable fields feasible in trait definition by procedural macros.
 
