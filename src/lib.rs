@@ -1,32 +1,9 @@
 use proc_macro::TokenStream;
 use quote::quote;
 use syn::{parse_macro_input, Ident, Item, ItemStruct, ItemTrait};
-
-// TODO: 处理trait的函数签名
-fn handle_trait(attr_name: &Ident, trait_item: &ItemTrait) -> TokenStream {
-    assert!(
-        attr_name.to_string().is_empty(),
-        "attr_name should be empty for trait"
-    );
-
-    // Implement the logic to handle the trait
-    let ts: TokenStream = quote!().into();
-    println!("{}", ts.to_string());
-    ts
-}
-
-// TODO: 处理struct的函数签名
-fn handle_struct(attr_name: &Ident, struct_item: &ItemStruct) -> TokenStream {
-    assert!(
-        !attr_name.to_string().is_empty(),
-        "attr_name should not be empty for struct"
-    );
-
-    // Implement the logic to handle the struct
-    let ts: TokenStream = quote!().into();
-    println!("{}", ts.to_string());
-    ts
-}
+mod cache;
+mod struct_macro;
+mod trait_macro; // 新增的缓存模块
 
 #[proc_macro_attribute]
 pub fn trait_variable(attr: TokenStream, item: TokenStream) -> TokenStream {
@@ -34,10 +11,19 @@ pub fn trait_variable(attr: TokenStream, item: TokenStream) -> TokenStream {
     let input = parse_macro_input!(item as Item);
 
     match input {
-        Item::Trait(trait_item) => handle_trait(&attr_name, &trait_item),
-        Item::Struct(struct_item) => handle_struct(&attr_name, &struct_item),
+        Item::Trait(trait_item) => {
+            // cache::cache_trait(&attr_name, &trait_item); //TODO: 将特性存储到缓存中
+            trait_macro::modify_trait(&attr_name, &trait_item)
+        }
+        Item::Struct(struct_item) => {
+            // let trait_item = cache::get_trait(&attr_name); // TODO: 从缓存中获取特性
+            // struct_macro::modify_struct(&attr_name, &struct_item, &trait_item) // 修改函数，增加一个参数
+            struct_macro::modify_struct(&attr_name, &struct_item)
+        }
         _ => {
             panic!("`#[trait_variable]` can only be used on traits and structs");
         }
     }
 }
+
+

@@ -24,7 +24,11 @@
     strip        ="debuginfo"
 
 [dependencies]
-    syn  ={version="1", features=["full"]}
-    quote="1"
+    quote      ="^1.0"
+    proc-macro2="^1.0" # TODO: need?
+    syn        ={version="^2.0", features=["full"]}
 
+    lazy_static="^1.4"
+    once_cell  ="^1.8"
+    
 [dev-dependencies]
