@@ -10,7 +10,7 @@ pub fn trait_var(attr: TokenStream, item: TokenStream) -> TokenStream {
     let attr_str = attr.to_string();
     let trait_name = parse_macro_input!(attr as Ident);
     let input = parse_macro_input!(item as DeriveInput);
-    let name = &input.ident;
+    let struct_name = &input.ident;
 
     // 解析特性定义，以便我们可以检查其中的方法
     let trait_ast: ItemTrait = syn::parse_str(&attr_str).expect("Failed to parse trait");
@@ -39,7 +39,7 @@ pub fn trait_var(attr: TokenStream, item: TokenStream) -> TokenStream {
 
     // 生成最终的impl块
     let gen = quote! {
-        impl #trait_name for #name {
+        impl #trait_name for #struct_name {
             #(#methods)*
         }
     };
