@@ -3,7 +3,7 @@ extern crate proc_macro;
 use proc_macro::TokenStream;
 use proc_macro2::Ident;
 use quote::{format_ident, quote};
-use syn::{parse_macro_input, parse_quote, DeriveInput, ItemTrait, TraitItem, TraitItemMethod};
+use syn::{parse_macro_input, DeriveInput, ItemTrait, TraitItem, TraitItemMethod};
 
 #[proc_macro_attribute]
 pub fn trait_var(attr: TokenStream, item: TokenStream) -> TokenStream {
@@ -21,10 +21,10 @@ pub fn trait_var(attr: TokenStream, item: TokenStream) -> TokenStream {
             // 检查方法名称是否符合特定格式
             let method_name = &sig.ident;
             let method_name_str = method_name.to_string();
-            if method_name_str.starts_with('_') {
+            if let Some(stripped) = method_name_str.strip_prefix('_') {
                 // 提取类型名称和字段名称
                 let type_name = &sig.output;
-                let field_name = format_ident!("{}", &method_name_str[1..]);
+                let field_name = format_ident!("{}", stripped);
                 // 生成对应的方法实现
                 let generated = quote! {
                     fn #method_name(&self) -> #type_name {
