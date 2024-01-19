@@ -1,29 +1,48 @@
+extern crate proc_macro;
+
 use proc_macro::TokenStream;
-use quote::quote;
-use syn::{parse_macro_input, Ident, Item, ItemStruct, ItemTrait};
-mod cache;
-mod struct_macro;
-mod trait_macro; // 新增的缓存模块
+use proc_macro2::Ident;
+use quote::{format_ident, quote};
+use syn::{parse_macro_input, parse_quote, DeriveInput, ItemTrait, TraitItem, TraitItemMethod};
 
 #[proc_macro_attribute]
-pub fn trait_variable(attr: TokenStream, item: TokenStream) -> TokenStream {
-    let attr_name = parse_macro_input!(attr as Ident);
-    let input = parse_macro_input!(item as Item);
+pub fn trait_var(attr: TokenStream, item: TokenStream) -> TokenStream {
+    let attr_str = attr.to_string();
+    let trait_name = parse_macro_input!(attr as Ident);
+    let input = parse_macro_input!(item as DeriveInput);
+    let name = &input.ident;
 
-    match input {
-        Item::Trait(trait_item) => {
-            // cache::cache_trait(&attr_name, &trait_item); //TODO: 将特性存储到缓存中
-            trait_macro::modify_trait(&attr_name, &trait_item)
+    // 解析特性定义，以便我们可以检查其中的方法
+    let trait_ast: ItemTrait = syn::parse_str(&attr_str).expect("Failed to parse trait");
+
+    // 遍历特性中的所有项目
+    let methods = trait_ast.items.into_iter().filter_map(|item| {
+        if let TraitItem::Method(TraitItemMethod { sig, .. }) = item {
+            // 检查方法名称是否符合特定格式
+            let method_name = &sig.ident;
+            let method_name_str = method_name.to_string();
+            if method_name_str.starts_with('_') {
+                // 提取类型名称和字段名称
+                let type_name = &sig.output;
+                let field_name = format_ident!("{}", &method_name_str[1..]);
+                // 生成对应的方法实现
+                let generated = quote! {
+                    fn #method_name(&self) -> #type_name {
+                        &self.#field_name
+                    }
+                };
+                return Some(generated);
+            }
         }
-        Item::Struct(struct_item) => {
-            // let trait_item = cache::get_trait(&attr_name); // TODO: 从缓存中获取特性
-            // struct_macro::modify_struct(&attr_name, &struct_item, &trait_item) // 修改函数，增加一个参数
-            struct_macro::modify_struct(&attr_name, &struct_item)
+        None
+    });
+
+    // 生成最终的impl块
+    let gen = quote! {
+        impl #trait_name for #name {
+            #(#methods)*
         }
-        _ => {
-            panic!("`#[trait_variable]` can only be used on traits and structs");
-        }
-    }
+    };
+
+    gen.into()
 }
-
-
