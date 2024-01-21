@@ -30,3 +30,5 @@ macro_rules! add_print {
         }
     }
 }
+
+pub use trait_variable_macros::trait_var;
