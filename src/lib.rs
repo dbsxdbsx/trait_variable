@@ -1,23 +1,36 @@
 extern crate proc_macro;
 
-// use proc_macro2::Ident;
-use quote::{format_ident, quote};
-use syn::{parse_macro_input, DeriveInput, ItemTrait, TraitItem, TraitItemMethod};
-
-use proc_macro::{Ident, Span, TokenStream};
+use proc_macro::TokenStream;
+use quote::quote;
+use syn::{parse_macro_input, Data, DeriveInput, Fields};
 
 #[proc_macro_attribute]
 pub fn trait_var(_attr: TokenStream, item: TokenStream) -> TokenStream {
-    trait_var2(_attr.into(), item.into()).into()
+    let input = parse_macro_input!(item as DeriveInput);
+    trait_var_impl(input)
 }
 
-fn trait_var2(
-    _attr: proc_macro2::TokenStream,
-    item: proc_macro2::TokenStream,
-) -> proc_macro2::TokenStream {
-    item
-}
+fn trait_var_impl(input: DeriveInput) -> TokenStream {
+    let name = &input.ident;
+    let expanded = quote! {
+        #input
 
+        impl #name {
+            pub fn print(&self) {
+                println!("hello world");
+            }
+        }
+    };
+
+    match input.data {
+        Data::Struct(data_struct) => match data_struct.fields {
+            Fields::Named(_) | Fields::Unnamed(_) | Fields::Unit => expanded.into(),
+        },
+        _ => syn::Error::new_spanned(input, "Expected a struct")
+            .to_compile_error()
+            .into(),
+    }
+}
 
 // #[proc_macro_attribute]
 // pub fn trait_var(attr: TokenStream, item: TokenStream) -> TokenStream {

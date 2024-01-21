@@ -9,6 +9,7 @@ mod tests {
 
     #[test]
     fn another_test_procedure_macro_syntax() {
-        let s = StructName { prop: 1 };
+        let s = StructName { prop: 4 };
+        s.print();
     }
 }
