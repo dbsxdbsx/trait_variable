@@ -18,10 +18,3 @@
 //         my_struct.my_function();
 //     }
 // }
-
-use trait_variable::echo;
-
-mod test_module {
-    #[test]
-    echo!(println!("test_module"));
-}

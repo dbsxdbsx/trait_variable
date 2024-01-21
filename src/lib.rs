@@ -6,9 +6,16 @@ use syn::{parse_macro_input, DeriveInput, ItemTrait, TraitItem, TraitItemMethod}
 
 use proc_macro::{Ident, Span, TokenStream};
 
-#[proc_macro]
-pub fn echo(input: TokenStream) -> TokenStream {
-    input
+#[proc_macro_attribute]
+pub fn trait_var(_attr: TokenStream, item: TokenStream) -> TokenStream {
+    trait_var2(_attr.into(), item.into()).into()
+}
+
+fn trait_var2(
+    _attr: proc_macro2::TokenStream,
+    item: proc_macro2::TokenStream,
+) -> proc_macro2::TokenStream {
+    item
 }
 
 
