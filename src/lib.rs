@@ -3,12 +3,12 @@ macro_rules! trait_variable {
     (pub struct $struct_name:ident {
         $($body:tt)*
     }) => {
-        add_print!(@impl pub struct $struct_name { $($body)* });
+        trait_variable!(@impl pub struct $struct_name { $($body)* });
     };
     (struct $struct_name:ident {
         $($body:tt)*
     }) => {
-        add_print!(@impl struct $struct_name { $($body)* });
+        trait_variable!(@impl struct $struct_name { $($body)* });
     };
     //
     (@impl $vis:vis struct $struct_name:ident {
@@ -17,8 +17,7 @@ macro_rules! trait_variable {
     }) => {
         paste::paste! {
             $vis struct $struct_name {
-                customized_field: i32,
-                // 以下是自定义的字段
+                // original_field
                 $($user_field_vis $user_field_name : $user_field_type,)*
             }
 
