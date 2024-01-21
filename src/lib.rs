@@ -1,6 +1,5 @@
 #[macro_export]
 macro_rules! trait_variable {
-// macro_rules! add_print {
     (pub struct $struct_name:ident {
         $($body:tt)*
     }) => {
