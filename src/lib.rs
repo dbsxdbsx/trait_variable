@@ -4,6 +4,9 @@ use proc_macro::TokenStream;
 use quote::quote;
 use syn::{parse_macro_input, Data, DeriveInput, Fields};
 
+// #[macro_export]
+
+
 #[proc_macro_attribute]
 pub fn trait_var(_attr: TokenStream, item: TokenStream) -> TokenStream {
     let input = parse_macro_input!(item as DeriveInput);
@@ -13,12 +16,8 @@ pub fn trait_var(_attr: TokenStream, item: TokenStream) -> TokenStream {
 fn trait_var_impl(input: DeriveInput) -> TokenStream {
     let name = &input.ident;
     let expanded = quote! {
-        #input
-
-        impl #name {
-            pub fn print(&self) {
-                println!("hello world");
-            }
+        add_print! {
+            #input
         }
     };
 
