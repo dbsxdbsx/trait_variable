@@ -1,6 +1,6 @@
 #[cfg(test)]
 mod test {
-    use trait_variable::{trait_var, trait_variable, TraitEnhance, TraitEnhanceType};
+    use trait_variable::trait_variable;
 
     trait_variable! {
         // the lint is also activated inside the macro, using rust_anaylzer for example
@@ -24,7 +24,7 @@ mod test {
             a: i32,
         }
     }
-
+    // TODO: not ok
     // #[trait_var(MyTrait)]
     // struct MyStruct {
     //     a: i32,
