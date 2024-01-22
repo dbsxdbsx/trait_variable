@@ -77,14 +77,13 @@ macro_rules! trait_variable {
                     Self { $($field_name,)* }
                 }
             }
+            //  the struct macro part
             #[doc(hidden)]
             #[macro_export] // <-- Only if the trait's visibility is `pub`
             macro_rules! __temp_macro_name {
                 (
                     $dollar (#[$dollar struct_attr:meta])*
-                    $dollar vis:vis
-                    struct
-                    $dollar struct_name:ident
+                    $dollar vis:vis struct $dollar struct_name:ident
                     { $dollar ( $dollar struct_content:tt )* }
                 ) => {
                     $dollar (#[$dollar struct_attr])*

@@ -11,15 +11,17 @@ mod test {
             let z : f32;
 
             // 2.the order of the function definition doesn't matter
-            fn print_x(&self) {
-                println!("x: `{}`", self.get_fields().x);
-            }
+            fn print_x(&self);
+            // fn print_x(&self) {
+            //     println!("x: `{}`", self.get_fields().x);
+            // }
             fn print_y(&self);
+            fn print_z(&self);
 
-            fn change_and_print_z(&mut self, new_num: f32) {
-                *self.get_fields_mut().z = new_num;
-                println!("z: `{}`", self.get_fields().z);
-            }
+            // fn change_and_print_z(&mut self, new_num: f32) {
+            //     *self.get_fields_mut().z = new_num;
+            //     println!("z: `{}`", self.get_fields().z);
+            // }
         }
     }
 
@@ -37,9 +39,15 @@ mod test {
     // }
 
     impl MyTrait for MyStruct {
+        fn print_x(&self) {
+            println!("x: `{}`", self.x);
+        }
         fn print_y(&self) {
             // println!("{}", self.get_fields().y);
             println!("y: `{}`", self.y);
+        }
+        fn print_z(&self) {
+            println!("z: `{}`", self.z);
         }
     }
 
@@ -53,6 +61,6 @@ mod test {
         };
         s.print_x();
         s.print_y();
-        s.change_and_print_z(3.14);
+        // s.change_and_print_z(3.14);
     }
 }
