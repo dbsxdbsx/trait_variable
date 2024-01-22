@@ -118,7 +118,7 @@ macro_rules! trait_variable {
             $vis use __temp_macro_name as $trait_name;
         }
     };
-    // Forward struct definition to generated macro next to the trait:
+    // 2. Entry point for parsing a struct, to generated macro next to the trait:
     (
         ($trait:path) // this line is just used as a tag
         $(#[$attr:meta])*
@@ -139,7 +139,7 @@ macro_rules! trait_variable {
             }
         }
     };
-    // Entry point for parsing a trait:
+    // 1. Entry point for parsing a trait:
     (
         $(#[$attr:meta])*
         $vis:vis trait $trait_name:ident {

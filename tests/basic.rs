@@ -8,12 +8,18 @@ mod test {
             // 1.put the variable fields definition at the top of the target trait before any function
             let x: i32; // TODO: can't be without variable at present
             let y: bool;
+            let z : f32;
 
             // 2.the order of the function definition doesn't matter
             fn print_x(&self) {
                 println!("x: `{}`", self.get_fields().x);
             }
             fn print_y(&self);
+
+            fn change_and_print_z(&mut self, new_num: f32) {
+                *self.get_fields_mut().z = new_num;
+                println!("z: `{}`", self.get_fields().z);
+            }
         }
     }
 
@@ -24,7 +30,7 @@ mod test {
             a: i32,
         }
     }
-    // TODO: not ok
+    // TODO: not ok yet
     // #[trait_var(MyTrait)]
     // struct MyStruct {
     //     a: i32,
@@ -38,13 +44,15 @@ mod test {
     }
 
     #[test]
-    fn test_with_attribute_macro() {
-        let s = MyStruct {
+    fn test() {
+        let mut s = MyStruct {
             a: 2,
             x: 3,
             y: true,
+            z: 1.,
         };
         s.print_x();
         s.print_y();
+        s.change_and_print_z(3.14);
     }
 }
