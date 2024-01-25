@@ -18,7 +18,7 @@ macro_rules! trait_variable {
         }
     ) => {
         $crate::trait_variable!{
-            @enhance_trait  // NOTE: this is a recursive call
+            @enhance_trait  // NOTE: go to arm 1.1
             trait_def = {
                 $(#[$attr])*
                 $vis trait $trait_name
@@ -51,7 +51,7 @@ macro_rules! trait_variable {
             dollar = {$dollar},
         }
     };
-    // 1.2 Parsing trait (finished, trait content doesn't start with a field so rest is the real trait):
+    // 1.2 Parsing trait (finished, `content` doesn't start with a field so rest is the real trait):
     (@enhance_trait
         trait_def = {
             $(#[$attr:meta])*
