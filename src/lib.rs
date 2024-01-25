@@ -66,44 +66,18 @@ macro_rules! trait_variable {
     ) => {
         paste::paste! {
             // 1.2.1 the derived parent trait code
-            // $vis trait [<_ $trait_name>] {
-            //     // TODO: how to ?
-            // }
+            $vis trait [<_ $trait_name>] {
+                $(
+                    fn [< _$trait_field_name >](&self) -> &$field_type;
+                )*
+            }
             // 1.2.2 the derived basic trait code
             $(#[$attr])*
             #[allow(non_camel_case_types, dead_code)]
             $vis trait $trait_name:
-            // [<_ $trait_name>]
-                $crate::TraitEnhance
-                + for<'a> $crate::TraitEnhanceType<'a,
-                    View = [< $trait_name _View >]<'a>,
-                    ViewMut = [< $trait_name _ViewMut >]<'a>
-                >
+                [<_ $trait_name>] // this is the hidden parent trait
             {
                 $($trait_content)*
-            }
-
-            #[doc(hidden)]
-            #[allow(non_camel_case_types, dead_code)]
-
-            // TODO: need?
-            pub struct [< $trait_name _View >]<'a> {
-                $($vis $trait_field_name: &'a $field_type,)*
-            }
-            impl<'a> [< $trait_name _View >]<'a> {
-                $vis fn new($($trait_field_name: &'a $field_type),*) -> Self {
-                    Self { $($trait_field_name,)* }
-                }
-            }
-            #[doc(hidden)]
-            #[allow(non_camel_case_types, dead_code)]
-            pub struct [< $trait_name _ViewMut >]<'a> {
-                $($vis $trait_field_name: &'a mut $field_type,)*
-            }
-            impl<'a> [< $trait_name _ViewMut >]<'a> {
-                $vis fn new($($trait_field_name: &'a mut $field_type),*) -> Self {
-                    Self { $($trait_field_name,)* }
-                }
             }
             // 1.2.2 the derived macro for struct
             #[doc(hidden)]
@@ -124,22 +98,12 @@ macro_rules! trait_variable {
                             $trait_field_name: $field_type,
                         )*
                     }
-                    // TODO: need?
-                    impl<'a> $crate::TraitEnhanceType<'a> for $struct_name {
-                        type View = <dyn $trait_name as $crate::TraitEnhanceType<'a>>::View;
-                        type ViewMut = <dyn $trait_name as $crate::TraitEnhanceType<'a>>::ViewMut;
-                    }
-                    impl $crate::TraitEnhance for $struct_name {
-                        fn get_fields(&self) -> <Self as $crate::TraitEnhanceType<'_>>::View {
-                            <Self as $crate::TraitEnhanceType>::View::new($(
-                                &self.$trait_field_name,
-                            )*)
-                        }
-                        fn get_fields_mut(&mut self) -> <Self as $crate::TraitEnhanceType<'_>>::ViewMut {
-                            <Self as $crate::TraitEnhanceType>::ViewMut::new($(
-                                &mut self.$trait_field_name,
-                            )*)
-                        }
+                    impl [<_ $trait_name>] for $struct_name {
+                        $(
+                            fn [< _$trait_field_name >](&self) -> &$field_type {
+                                &self.$trait_field_name
+                            }
+                        )*
                     }
                 };
             }
