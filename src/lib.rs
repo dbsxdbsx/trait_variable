@@ -110,7 +110,7 @@ macro_rules! trait_variable {
                     $dollar (#[$dollar struct_attr])*
                     $dollar vis struct $dollar struct_name {
                         $dollar ( $dollar  struct_content)*
-                        // From outer macro:
+                        // NOTE: this part is from root macro:
                         $(
                             $(#[$field_attr])*
                             $field_name: $field_type,
