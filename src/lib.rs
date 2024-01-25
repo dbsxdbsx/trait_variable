@@ -116,6 +116,7 @@ macro_rules! trait_variable {
                             $field_name: $field_type,
                         )*
                     }
+                    // TODO: need?
                     impl<'a> $crate::TraitEnhanceType<'a> for $struct_name {
                         type View = <dyn $trait_name as $crate::TraitEnhanceType<'a>>::View;
                         type ViewMut = <dyn $trait_name as $crate::TraitEnhanceType<'a>>::ViewMut;
