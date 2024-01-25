@@ -10,7 +10,7 @@ pub trait TraitEnhance: for<'a> TraitEnhanceType<'a> {
 
 #[macro_export]
 macro_rules! trait_variable {
-    // 1. Entry point for parsing a trait:
+    // 1. Entry point for wrapping a trait:
     (
         $(#[$attr:meta])*
         $vis:vis trait $trait_name:ident {
@@ -28,31 +28,7 @@ macro_rules! trait_variable {
             dollar = {$},
         }
     };
-    // 2. Entry point for parsing a struct, to generated macro next to the trait:
-    (
-        #[trait_var($trait_name:path)] // this line is just used as a tag
-        // ($trait:path) // this line is just used as a tag
-        $(#[$attr:meta])*
-        $vis:vis struct $struct_name:ident {
-            $(
-                $(#[$field_attr:meta])*
-                $field_vis:vis $field_name:ident : $field_type:ty
-            ),* $(,)?
-        }
-    ) => {
-        paste::paste!{
-            [<$trait_name _for_struct>] !{ // NOTE: this is the expanded macro from arm 2
-                $(#[$attr])*
-                $vis struct $struct_name {
-                    $(
-                        $(#[$field_attr:meta])*
-                        $field_vis $field_name : $field_type,
-                    )*
-                }
-            }
-        }
-    };
-    // 3.Parsing trait (has more fields):
+    // 1.1 Parsing trait (has more fields):
     (@enhance_trait
         trait_def = $trait_def:tt,
         content = {
@@ -75,7 +51,7 @@ macro_rules! trait_variable {
             dollar = {$dollar},
         }
     };
-    // 4.Parsing trait (finished, trait content doesn't start with a field so rest is the real trait):
+    // 1.2 Parsing trait (finished, trait content doesn't start with a field so rest is the real trait):
     (@enhance_trait
         trait_def = {
             $(#[$attr:meta])*
@@ -89,6 +65,7 @@ macro_rules! trait_variable {
         dollar = {$dollar:tt},
     ) => {
         paste::paste! {
+            // 1.2.1 the derived trait code
             $(#[$attr])*
             $vis trait $trait_name:
                 $crate::TraitEnhance
@@ -99,6 +76,7 @@ macro_rules! trait_variable {
             {
                 $($trait_content)*
             }
+            // TODO: need?
             #[doc(hidden)]
             #[allow(non_camel_case_types, dead_code)]
             pub struct [< $trait_name _View >]<'a> {
@@ -119,12 +97,12 @@ macro_rules! trait_variable {
                     Self { $($field_name,)* }
                 }
             }
-            //  the struct macro part
+            // 1.2.2 the derived macro for struct
             #[doc(hidden)]
             #[macro_export] // <-- Only if the trait's visibility is `pub`
             macro_rules! [<$trait_name _for_struct>] { // NOTE: the reexpanded macro is used for rust struct only
                 (
-                    $dollar (#[$dollar struct_attr:meta])*
+                    $dollar (#[$dollar struct_attr:meta])* // NOTE: make sure the style is consistent with that in arm 2 output
                     $dollar vis:vis struct $dollar struct_name:ident {
                         $dollar ( $dollar struct_content:tt )*
                     }
@@ -155,6 +133,30 @@ macro_rules! trait_variable {
                         }
                     }
                 };
+            }
+        }
+    };
+    // 2. Entry point for wrapping a struct(this arm is invalid if there is no trait wrapped through arm 1):
+    (
+        #[trait_var($trait_name:path)] // this line is just used as a tag
+        // ($trait:path) // this line is just used as a tag
+        $(#[$attr:meta])*
+        $vis:vis struct $struct_name:ident {
+            $(
+                $(#[$field_attr:meta])*
+                $field_vis:vis $field_name:ident : $field_type:ty
+            ),* $(,)?
+        }
+    ) => {
+        paste::paste!{
+            [<$trait_name _for_struct>] !{ // NOTE: this is the expanded macro from arm 1.2
+                $(#[$attr])*
+                $vis struct $struct_name {
+                    $(
+                        $(#[$field_attr:meta])*
+                        $field_vis $field_name : $field_type,
+                    )*
+                }
             }
         }
     };

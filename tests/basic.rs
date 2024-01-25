@@ -30,7 +30,7 @@ mod test {
         #[trait_var(MyTrait)] // put this at the top of the struct
         struct MyStruct { // feel free to add `pub` when needed
         // feel free to add any fields as usual or leave it empty
-        a: i32,
+         a: i32,
         }
     }
     // TODO: not ok yet
@@ -38,6 +38,11 @@ mod test {
     // struct MyStruct {
     //     a: i32,
     // }
+    impl MyStruct {
+        fn print_a(&self) {
+            println!("a: `{}`", self.a);
+        }
+    }
 
     impl MyTrait for MyStruct {
         fn print_x(&self) {
@@ -60,6 +65,7 @@ mod test {
             y: true,
             z: 1.,
         };
+        s.print_a();
         s.print_x();
         s.print_y();
         // s.change_and_print_z(3.14);
