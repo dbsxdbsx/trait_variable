@@ -10,7 +10,7 @@ pub trait TraitEnhance: for<'a> TraitEnhanceType<'a> {
 
 #[macro_export]
 macro_rules! trait_variable {
-    // 1. Entry point for wrapping a trait:
+    // 1. Entry point after wrapping a trait:
     (
         $(#[$attr:meta])*
         $vis:vis trait $trait_name:ident {
@@ -33,7 +33,7 @@ macro_rules! trait_variable {
         trait_def = $trait_def:tt,
         content = {
             $(#[$field_attr:meta])*
-            let $field_name:ident: $field_type:ty;
+            let $trait_field_name:ident: $field_type:ty;
             $($trait_content:tt)*
         },
         fields = { $($prev_fields:tt)* },
@@ -46,7 +46,7 @@ macro_rules! trait_variable {
             fields = {
                 $($prev_fields)*
                 $(#[$field_attr])*
-                let $field_name: $field_type;
+                let $trait_field_name: $field_type;
             },
             dollar = {$dollar},
         }
@@ -60,14 +60,20 @@ macro_rules! trait_variable {
         content = { $($trait_content:tt)* },
         fields = { $(
             $(#[$field_attr:meta])*
-            let $field_name:ident: $field_type:ty;
+            let $trait_field_name:ident: $field_type:ty;
         )* },
         dollar = {$dollar:tt},
     ) => {
         paste::paste! {
-            // 1.2.1 the derived trait code
+            // 1.2.1 the derived parent trait code
+            // $vis trait [<_ $trait_name>] {
+            //     // TODO: how to ?
+            // }
+            // 1.2.2 the derived basic trait code
             $(#[$attr])*
+            #[allow(non_camel_case_types, dead_code)]
             $vis trait $trait_name:
+            // [<_ $trait_name>]
                 $crate::TraitEnhance
                 + for<'a> $crate::TraitEnhanceType<'a,
                     View = [< $trait_name _View >]<'a>,
@@ -76,25 +82,27 @@ macro_rules! trait_variable {
             {
                 $($trait_content)*
             }
-            // TODO: need?
+
             #[doc(hidden)]
             #[allow(non_camel_case_types, dead_code)]
+
+            // TODO: need?
             pub struct [< $trait_name _View >]<'a> {
-                $($vis $field_name: &'a $field_type,)*
+                $($vis $trait_field_name: &'a $field_type,)*
             }
             impl<'a> [< $trait_name _View >]<'a> {
-                $vis fn new($($field_name: &'a $field_type),*) -> Self {
-                    Self { $($field_name,)* }
+                $vis fn new($($trait_field_name: &'a $field_type),*) -> Self {
+                    Self { $($trait_field_name,)* }
                 }
             }
             #[doc(hidden)]
             #[allow(non_camel_case_types, dead_code)]
             pub struct [< $trait_name _ViewMut >]<'a> {
-                $($vis $field_name: &'a mut $field_type,)*
+                $($vis $trait_field_name: &'a mut $field_type,)*
             }
             impl<'a> [< $trait_name _ViewMut >]<'a> {
-                $vis fn new($($field_name: &'a mut $field_type),*) -> Self {
-                    Self { $($field_name,)* }
+                $vis fn new($($trait_field_name: &'a mut $field_type),*) -> Self {
+                    Self { $($trait_field_name,)* }
                 }
             }
             // 1.2.2 the derived macro for struct
@@ -113,7 +121,7 @@ macro_rules! trait_variable {
                         // NOTE: this part is from root macro:
                         $(
                             $(#[$field_attr])*
-                            $field_name: $field_type,
+                            $trait_field_name: $field_type,
                         )*
                     }
                     // TODO: need?
@@ -124,12 +132,12 @@ macro_rules! trait_variable {
                     impl $crate::TraitEnhance for $struct_name {
                         fn get_fields(&self) -> <Self as $crate::TraitEnhanceType<'_>>::View {
                             <Self as $crate::TraitEnhanceType>::View::new($(
-                                &self.$field_name,
+                                &self.$trait_field_name,
                             )*)
                         }
                         fn get_fields_mut(&mut self) -> <Self as $crate::TraitEnhanceType<'_>>::ViewMut {
                             <Self as $crate::TraitEnhanceType>::ViewMut::new($(
-                                &mut self.$field_name,
+                                &mut self.$trait_field_name,
                             )*)
                         }
                     }
@@ -137,7 +145,7 @@ macro_rules! trait_variable {
             }
         }
     };
-    // 2. Entry point for wrapping a struct(this arm is invalid if there is no trait wrapped through arm 1):
+    // 2. Entry point after wrapping a struct(this arm is invalid if there is no trait wrapped through arm 1):
     (
         #[trait_var($trait_name:path)] // this line is just used as a tag
         // ($trait:path) // this line is just used as a tag
@@ -145,7 +153,7 @@ macro_rules! trait_variable {
         $vis:vis struct $struct_name:ident {
             $(
                 $(#[$field_attr:meta])*
-                $field_vis:vis $field_name:ident : $field_type:ty
+                $field_vis:vis $trait_field_name:ident : $field_type:ty
             ),* $(,)?
         }
     ) => {
@@ -155,7 +163,7 @@ macro_rules! trait_variable {
                 $vis struct $struct_name {
                     $(
                         $(#[$field_attr:meta])*
-                        $field_vis $field_name : $field_type,
+                        $field_vis $trait_field_name : $field_type,
                     )*
                 }
             }
