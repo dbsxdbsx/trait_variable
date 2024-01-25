@@ -1,6 +1,7 @@
 #[cfg(test)]
 mod test {
     use trait_variable::trait_variable;
+    use trait_variable_macros::trait_var;
 
     trait_variable! {
         // the lint is also activated inside the macro, using rust_anaylzer for example
@@ -26,10 +27,10 @@ mod test {
     }
 
     trait_variable! {
-        (MyTrait) // put this at the top of the struct
+        #[trait_var(MyTrait)] // put this at the top of the struct
         struct MyStruct { // feel free to add `pub` when needed
-            // feel free to add any fields as usual or leave it empty
-            a: i32,
+        // feel free to add any fields as usual or leave it empty
+        a: i32,
         }
     }
     // TODO: not ok yet
