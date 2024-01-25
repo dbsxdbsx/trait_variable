@@ -1,12 +1,4 @@
-pub trait TraitEnhanceType<'a> {
-    type View;
-    type ViewMut;
-}
-
-pub trait TraitEnhance: for<'a> TraitEnhanceType<'a> {
-    fn get_fields(&self) -> <Self as TraitEnhanceType<'_>>::View;
-    fn get_fields_mut(&mut self) -> <Self as TraitEnhanceType<'_>>::ViewMut;
-}
+mod refine_fn;
 
 #[macro_export]
 macro_rules! trait_variable {
@@ -77,9 +69,9 @@ macro_rules! trait_variable {
             $vis trait $trait_name:
                 [<_ $trait_name>] // this is the hidden parent trait
             {
-                $($trait_content)*
+                $crate::refine_fn!($($trait_content)*);
             }
-            // 1.2.2 the derived macro for struct
+            // 1.2.3 the derived macro for struct
             #[doc(hidden)]
             #[macro_export] // <-- Only if the trait's visibility is `pub`
             macro_rules! [<$trait_name _for_struct>] { // NOTE: the reexpanded macro is used for rust struct only

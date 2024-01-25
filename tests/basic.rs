@@ -12,10 +12,10 @@ mod test {
             let z : f32;
 
             // 2.the order of the function definition doesn't matter
-            fn print_x(&self);
-            // fn print_x(&self) {
-            //     println!("x: `{}`", self.get_fields().x);
-            // }
+            // fn print_x(&self);
+            fn print_x(&self) {
+                println!("x: `{}`", self.x);
+            }
             fn print_y(&self);
             fn print_z(&self);
 
