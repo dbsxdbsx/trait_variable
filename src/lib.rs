@@ -10,7 +10,49 @@ pub trait TraitEnhance: for<'a> TraitEnhanceType<'a> {
 
 #[macro_export]
 macro_rules! trait_variable {
-    // Parsing trait (has more fields):
+    // 1. Entry point for parsing a trait:
+    (
+        $(#[$attr:meta])*
+        $vis:vis trait $trait_name:ident {
+            $($trait_content:tt)*
+        }
+    ) => {
+        $crate::trait_variable!{
+            @enhance_trait  // NOTE: this is a recursive call
+            trait_def = {
+                $(#[$attr])*
+                $vis trait $trait_name
+            },
+            content = { $($trait_content)* },
+            fields = {},
+            dollar = {$},
+        }
+    };
+    // 2. Entry point for parsing a struct, to generated macro next to the trait:
+    (
+        #[trait_var($trait_name:path)] // this line is just used as a tag
+        // ($trait:path) // this line is just used as a tag
+        $(#[$attr:meta])*
+        $vis:vis struct $struct_name:ident {
+            $(
+                $(#[$field_attr:meta])*
+                $field_vis:vis $field_name:ident : $field_type:ty
+            ),* $(,)?
+        }
+    ) => {
+        paste::paste!{
+            [<$trait_name _for_struct>] !{ // NOTE: this is the expanded macro from arm 2
+                $(#[$attr])*
+                $vis struct $struct_name {
+                    $(
+                        $(#[$field_attr:meta])*
+                        $field_vis $field_name : $field_type,
+                    )*
+                }
+            }
+        }
+    };
+    // 3.Parsing trait (has more fields):
     (@enhance_trait
         trait_def = $trait_def:tt,
         content = {
@@ -33,7 +75,7 @@ macro_rules! trait_variable {
             dollar = {$dollar},
         }
     };
-    // Parsing trait (finished, trait content doesn't start with a field so rest is the real trait):
+    // 4.Parsing trait (finished, trait content doesn't start with a field so rest is the real trait):
     (@enhance_trait
         trait_def = {
             $(#[$attr:meta])*
@@ -80,7 +122,7 @@ macro_rules! trait_variable {
             //  the struct macro part
             #[doc(hidden)]
             #[macro_export] // <-- Only if the trait's visibility is `pub`
-            macro_rules! __temp_macro_name {
+            macro_rules! [<$trait_name _for_struct>] { // NOTE: the reexpanded macro is used for rust struct only
                 (
                     $dollar (#[$dollar struct_attr:meta])*
                     $dollar vis:vis struct $dollar struct_name:ident {
@@ -114,49 +156,6 @@ macro_rules! trait_variable {
                     }
                 };
             }
-            // Expose this macro under the same name as the trait:
-            $vis use __temp_macro_name as $trait_name; // without this, arm `2` can't be triggered
-        }
-    };
-    // 2. Entry point for parsing a struct, to generated macro next to the trait:
-    (
-        #[trait_var($trait:path)] // this line is just used as a tag
-        // ($trait:path) // this line is just used as a tag
-        $(#[$attr:meta])*
-        $vis:vis struct $struct_name:ident {
-            $(
-                $(#[$field_attr:meta])*
-                $field_vis:vis $field_name:ident : $field_type:ty
-            ),* $(,)?
-        }
-    ) => {
-        // the `$trait！` is doing the `__temp_macro_name` job
-        $trait! {
-            $(#[$attr])*
-            $vis struct $struct_name {
-                $(
-                    $(#[$field_attr:meta])*
-                    $field_vis $field_name : $field_type,
-                )*
-            }
-        }
-    };
-    // 1. Entry point for parsing a trait:
-    (
-        $(#[$attr:meta])*
-        $vis:vis trait $trait_name:ident {
-            $($trait_content:tt)*
-        }
-    ) => {
-        $crate::trait_variable!{
-            @enhance_trait  // NOTE: this is a recursive call
-            trait_def = {
-                $(#[$attr])*
-                $vis trait $trait_name
-            },
-            content = { $($trait_content)* },
-            fields = {},
-            dollar = {$},
         }
     };
 }
