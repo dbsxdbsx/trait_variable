@@ -12,12 +12,14 @@ mod test {
             let z : f32;
 
             // 2.the order of the function definition doesn't matter
-            fn print_x(&self);
-            // fn print_x(&self) {
-                // println!("x: `{}`", self.x);
-            // }
+            // fn print_x(&self); // ok
+            fn print_x(&self) {
+                // println!("(original)x: `{}`", self.x);// TODO: make self.<> valid
+                println!("(original)x: `{}`", self._x());
+            }
             fn print_y(&self);
             fn print_z(&self);
+            fn ret_bool(&self) -> bool;
 
             // fn change_and_print_z(&mut self, new_num: f32) {
             //     *self.get_fields_mut().z = new_num;
@@ -54,6 +56,10 @@ mod test {
         }
         fn print_z(&self) {
             println!("z: `{}`", self.z);
+        }
+
+        fn ret_bool(&self) -> bool {
+            true
         }
     }
 
