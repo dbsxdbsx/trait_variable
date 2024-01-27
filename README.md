@@ -5,7 +5,7 @@ Make variable fields feasible in trait definition by procedural macros.
 
 This crate provides a procedural macro that allows you to easily implement traits with variable fields just like using inheritance within C++/Python... of parent classes.
 
-And this crate would not be exited if the (fields_in_trait)[https://github.com/rust-lang/rfcs/pull/1546?notification_referrer_id=MDE4Ok5vdGlmaWNhdGlvblRocmVhZDEzMDU5NDczNzoxNzM3MjY1NQ%3D%3D&notifications_query=is%3Asaved#issuecomment-1493672251] is implemented officially.
+And this crate would not be exited if the [fields_in_trait](https://github.com/rust-lang/rfcs/pull/1546?notification_referrer_id=MDE4Ok5vdGlmaWNhdGlvblRocmVhZDEzMDU5NDczNzoxNzM3MjY1NQ%3D%3D&notifications_query=is%3Asaved#issuecomment-1493672251) is implemented officially.
 
 ## Usage
 
