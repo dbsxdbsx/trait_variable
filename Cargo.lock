@@ -52,7 +52,7 @@ dependencies = [
 [[package]]
 name = "trait-variable-macros"
 version = "0.1.1"
-source = "git+https://github.com/dbsxdbsx/trait_variable_macros.git#f3853eb7dc19a9ac0c9fec424d34a270e00426ba"
+source = "git+https://github.com/dbsxdbsx/trait_variable_macros.git#c97c415309f7b5f6507366eb67cfff2c65938d11"
 dependencies = [
  "lazy_static",
  "once_cell",

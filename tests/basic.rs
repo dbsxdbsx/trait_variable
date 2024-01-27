@@ -48,7 +48,6 @@ mod test {
             println!("a: `{}`", self.a);
         }
     }
-
     impl MyTrait for MyStruct {
         // fn print_x(&self) {
         //     println!("x: `{}`", self.x);
