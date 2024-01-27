@@ -61,6 +61,7 @@ macro_rules! trait_variable {
             $vis trait [<_ $trait_name>] {
                 $(
                     fn [< _$trait_field_name >](&self) -> &$field_type;
+                    fn [< _$trait_field_name _mut >](&mut self) -> &mut $field_type;
                 )*
             }
             // 1.2.2 the derived basic trait code
@@ -98,6 +99,9 @@ macro_rules! trait_variable {
                         $(
                             fn [< _$trait_field_name >](&self) -> &$field_type {
                                 &self.$trait_field_name
+                            }
+                            fn [< _$trait_field_name _mut>](&mut self) -> &mut $field_type {
+                                &mut self.$trait_field_name
                             }
                         )*
                     }

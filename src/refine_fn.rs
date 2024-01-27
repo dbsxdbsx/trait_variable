@@ -60,6 +60,7 @@ macro_rules! refine_fn_body {
         $crate::refine_fn_body! {
             [
                 pre_content: $($pre_content)*
+                // just copy and paste the original fn code
                 self.$fn_name($($args:tt)*)
             ]
             $($rest)*

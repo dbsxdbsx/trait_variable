@@ -16,6 +16,7 @@ mod test {
             // fn print_x(&self); // ok
             fn print_x(&self) {
                 // println!("(original)x: `{}`", self.x);// TODO: make self.<> valid
+                // let xx = self.x.clone();
                 let xx = self._x().clone();
                 // if self.y {
                 //     println!("(original)y: `{}`", self.y);
