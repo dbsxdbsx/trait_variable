@@ -31,11 +31,14 @@ macro_rules! refine_fn {
             // 3.1 copy and paste for each function with default implementation
             $(
                 fn $fn_name_impl($($arg_impl)*) $(-> $ret_ty_impl)? {
-                    $crate::refine_fn_body! {
-                        [pre_content: ]
-                        $($fn_body)*
-                    }
-                    // $crate::refine_fn_body! { $($fn_body)* }
+                    // TODO:
+                    // $crate::refine_fn_body! {
+                    //     [pre_content: ]
+                    //     $($fn_body)*
+                    // }
+
+                    //
+                    $($fn_body)*
                 }
             )*
             // 3.2 copy and paste for each function with no default implementation

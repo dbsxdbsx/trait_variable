@@ -10,27 +10,41 @@ mod test {
             // 1.put the variable fields definition at the top of the target trait before any function
             let x: i32; // TODO: can't be without variable at present
             let y: bool;
-            let z : f32;
+            let z : String;
+            let v : Vec<i32>;
 
             // 2.the order of the fn definition doesn't matter
-            // fn print_x(&self); // ok
+            // 2.1 fn with default implementation
             fn print_x(&self) {
-                // println!("(original)x: `{}`", self.x);// TODO: make self.<> valid
-                // let xx = self.x.clone();
-                let xx = self._x().clone();
-                // if self.y {
-                //     println!("(original)y: `{}`", self.y);
-                // }
-                // println!("(original)x: `{}`", self._x());
+                println!("x: `{}`", self._x());
             }
-            fn print_y(&self);
-            fn print_z(&self);
-            fn ret_bool(&self) -> bool;
-
-            // fn change_and_print_z(&mut self, new_num: f32) {
-            //     *self.get_fields_mut().z = new_num;
-            //     println!("z: `{}`", self.get_fields().z);
-            // }
+            fn change_and_print_x(&mut self, new_num: i32) {
+                *self._x_mut() = new_num;
+                println!("x: `{}`", self._x());
+            }
+            fn print_y(&self){
+                println!("y: `{}`", self._y());
+            }
+            fn change_and_print_y(&mut self, new_bool: bool) {
+                *self._y_mut() = new_bool;
+                println!("y: `{}`", self._y());
+            }
+            fn print_z(&self){
+                println!("z: `{}`", self._z());
+            }
+            fn change_and_print_z(&mut self, new_str: &str) {
+                *self._z_mut() = new_str.into();
+                println!("z: `{}`", self._z());
+            }
+            fn print_v(&self){
+                println!("v: `{:?}`", self._v());
+            }
+            fn change_and_print_v(&mut self, new_vec: Vec<i32>) {
+                *self._v_mut() = new_vec;
+                println!("v: `{:?}`", self._v());
+            }
+            // 2.1 fn without default implementation
+            fn change_and_print_a(&mut self, new_num: i32);
         }
     }
     //↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑trait definition↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑
@@ -56,19 +70,21 @@ mod test {
         }
     }
     impl MyTrait for MyStruct {
+        fn change_and_print_a(&mut self, new_num: i32) {
+            self.a = new_num;
+            println!("a: `{}`", self.a);
+        }
+
+        // uncomment the following code to change the default fn implementation as usual
         // fn print_x(&self) {
         //     println!("x: `{}`", self.x);
         // }
-        fn print_y(&self) {
-            println!("y: `{}`", self.y);
-        }
-        fn print_z(&self) {
-            println!("z: `{}`", self.z);
-        }
-
-        fn ret_bool(&self) -> bool {
-            true
-        }
+        // fn print_y(&self) {
+        //     println!("y: `{}`", self.y);
+        // }
+        // fn print_z(&self) {
+        //     println!("z: `{}`", self.z);
+        // }
     }
     //↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑impl block↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑
 
@@ -78,11 +94,32 @@ mod test {
             a: 2,
             x: 3,
             y: true,
-            z: 1.,
+            z: "hello_world".to_string(),
+            v: vec![1, 2, 3],
         };
+        // ----------------------no change value----------------------
         s.print_a();
         s.print_x();
         s.print_y();
-        // s.change_and_print_z(3.14);
+        s.print_z();
+        s.print_v();
+
+        assert_eq!(s.a, 2);
+        assert_eq!(s.x, 3);
+        assert!(s.y);
+        assert_eq!(s.z, "hello_world");
+        assert_eq!(s.v, vec![1, 2, 3]);
+        // ----------------------change value----------------------
+        s.change_and_print_a(4);
+        s.change_and_print_x(4);
+        s.change_and_print_y(false);
+        s.change_and_print_z("hello_world2");
+        s.change_and_print_v(vec![4, 5, 6]);
+
+        assert_eq!(s.a, 4);
+        assert_eq!(s.x, 4);
+        assert!(!s.y);
+        assert_eq!(s.z, "hello_world2");
+        assert_eq!(s.v, vec![4, 5, 6]);
     }
 }
