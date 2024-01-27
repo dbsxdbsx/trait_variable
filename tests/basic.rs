@@ -44,13 +44,13 @@ mod test {
                 println!("v: `{:?}`", self._v());
             }
             // TODO: 2.1.2 fn with default implementation and `self.field`
-            fn print_x(&self) {
-                println!("x: `{}`", self.x);
-            }
-            fn change_and_print_x(&mut self, new_num: i32) {
-                self.x = new_num;
-                println!("x: `{}`", self.x);
-            }
+            // fn print_x(&self) {
+            //     println!("x: `{}`", self.x);
+            // }
+            // fn change_and_print_x(&mut self, new_num: i32) {
+            //     self.x = new_num;
+            //     println!("x: `{}`", self.x);
+            // }
             // 2.1 fn without default implementation
             fn change_and_print_a(&mut self, new_num: i32);
         }
@@ -82,17 +82,11 @@ mod test {
             self.a = new_num;
             println!("a: `{}`", self.a);
         }
-
-        // uncomment the following code to change the default fn implementation as usual
-        // fn print_x(&self) {
-        //     println!("x: `{}`", self.x);
-        // }
-        // fn print_y(&self) {
-        //     println!("y: `{}`", self.y);
-        // }
-        // fn print_z(&self) {
-        //     println!("z: `{}`", self.z);
-        // }
+        // reload the default implementation with trait variable `self.z`
+        fn change_and_print_z_raw(&mut self, new_str: &str) {
+            self.z = format!("{}2", new_str);
+            println!("(overload method) z: `{}`", self.z);
+        }
     }
     //↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑impl block↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑
 
@@ -102,7 +96,7 @@ mod test {
             a: 2,
             x: 3,
             y: true,
-            z: "hello_world".to_string(),
+            z: "".to_string(),
             v: vec![1, 2, 3],
         };
         // ----------------------no change value with raw field-methods----------------------
@@ -113,12 +107,12 @@ mod test {
 
         assert_eq!(s.x, 3);
         assert!(s.y);
-        assert_eq!(s.z, "hello_world");
+        assert_eq!(s.z, "");
         assert_eq!(s.v, vec![1, 2, 3]);
         // ----------------------change value with raw field-methods----------------------
         s.change_and_print_x_raw(4);
         s.change_and_print_y_raw(false);
-        s.change_and_print_z_raw("hello_world2");
+        s.change_and_print_z_raw("hello_world");
         s.change_and_print_v_raw(vec![4, 5, 6]);
 
         assert_eq!(s.x, 4);
@@ -132,7 +126,6 @@ mod test {
         assert_eq!(s.a, 2);
         // ----------------------change value with `self.field`----------------------
         s.change_and_print_a(4);
-
         // TODO: s.change_and_print_x(4);
 
         assert_eq!(s.a, 4);
