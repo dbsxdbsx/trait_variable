@@ -31,8 +31,11 @@ macro_rules! refine_fn {
             // 3.1 copy and paste for each function with default implementation
             $(
                 fn $fn_name_impl($($arg_impl)*) $(-> $ret_ty_impl)? {
-                    $crate::refine_fn_body! { $($fn_body)* }
-                    // $($fn_body)* // TODO: do more with the `fn_body`
+                    $crate::refine_fn_body! {
+                        [pre_content: ]
+                        $($fn_body)*
+                    }
+                    // $crate::refine_fn_body! { $($fn_body)* }
                 }
             )*
             // 3.2 copy and paste for each function with no default implementation
@@ -45,28 +48,54 @@ macro_rules! refine_fn {
 
 // --------------------------------------------
 #[macro_export]
+/// refine the body content of a function/method, excluding braces
+/// replace all `self.<field_name>` to `self._<field_name>()`
 macro_rules! refine_fn_body {
-    // TODO: use tt-muncher to rewrite the whole!!!!!!!!!!
-    // 匹配 self.<any_name> 并替换为 self._<any_name>()
-    ($($body:tt)*) => {
-        $($body)*
+    // 1.1 Match method call with `self.` prefix, match and paste
+    (
+        [pre_content: $($pre_content:tt)*]
+        self.$fn_name:ident ($($args:tt)*)
+        $($rest:tt)*
+    ) => {
+        $crate::refine_fn_body! {
+            [
+                pre_content: $($pre_content)*
+                self.$fn_name($($args:tt)*)
+            ]
+            $($rest)*
+        }
     };
-}
-
-// 定义宏`replace_expr`来执行实际的替换操作
-#[macro_export]
-macro_rules! replace_expr {
-    // 匹配 self.<any_name> 并替换为 self._<any_name>()
-    (self.$name:ident) => {
-        self._$name()
+    // 1.2 Match `self.<field_name>` and replace it
+    (
+        [pre_content: $($pre_content:tt)*]
+        self.$field_name:ident
+        $($rest:tt)*
+    ) => {
+        $crate::refine_fn_body! {
+            [
+                pre_content: $($pre_content)*
+                // todo:
+                paste::paste!{
+                    self.
+                    [<_ $field_name>]
+                    ()
+                }
+            ]
+            $($rest)*
+        }
     };
-    // 递归地处理每个token tree
-    ($first:tt $($rest:tt)*) => {
-        replace_expr!($first)
-        replace_expr!($($rest)*)
+    // 2. If no matched pattern, process one token at a time
+    (
+        [pre_content: $($pre_content:tt)*]
+        $token:tt
+        $($rest:tt)*
+    ) => {
+        $crate::refine_fn_body! {
+            [pre_content: $($pre_content)* $token] $($rest)*
+        }
     };
-    // 匹配任何其他单个token tree并保持不变
-    ($other:tt) => {
-        $other
+    // 3. Base case: no more tokens to process
+    ([pre_content: $($pre_content:tt)*]) => {
+        $($pre_content)*
     };
 }

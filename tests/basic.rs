@@ -3,8 +3,8 @@ mod test {
     use trait_variable::trait_variable;
     use trait_variable_macros::trait_var;
 
+    //↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓trait definition↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓
     trait_variable! {
-        // #[trait_var]
         // the lint is also activated inside the macro, using rust_anaylzer for example
         trait MyTrait {  // feel free to add `pub` when needed
             // 1.put the variable fields definition at the top of the target trait before any function
@@ -12,11 +12,15 @@ mod test {
             let y: bool;
             let z : f32;
 
-            // 2.the order of the function definition doesn't matter
+            // 2.the order of the fn definition doesn't matter
             // fn print_x(&self); // ok
             fn print_x(&self) {
                 // println!("(original)x: `{}`", self.x);// TODO: make self.<> valid
-                println!("(original)x: `{}`", self._x());
+                let xx = self._x().clone();
+                // if self.y {
+                //     println!("(original)y: `{}`", self.y);
+                // }
+                // println!("(original)x: `{}`", self._x());
             }
             fn print_y(&self);
             fn print_z(&self);
@@ -28,21 +32,23 @@ mod test {
             // }
         }
     }
+    //↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑trait definition↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑
 
-    trait_variable! {
-        (MyTrait) // put this at the top of the struct
-        struct MyStruct { // feel free to add `pub` when needed
-        // feel free to add any fields as usual or leave it empty
-         a: i32,
-        }
+    //↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓struct definition↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓
+    #[trait_var(MyTrait)]
+    struct MyStruct {
+        a: i32,
     }
-
-    // TODO: not ok yet
-    // #[trait_var(MyTrait)]
-    // struct MyStruct {
-    //     a: i32,
+    // the above code would be expanded into this:
+    // trait_variable! {
+    //     (MyTrait)
+    //     struct MyStruct {
+    //      a: i32,
+    //     }
     // }
+    //↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑struct definition↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑
 
+    //↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓impl block↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓
     impl MyStruct {
         fn print_a(&self) {
             println!("a: `{}`", self.a);
@@ -63,6 +69,7 @@ mod test {
             true
         }
     }
+    //↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑impl block↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑
 
     #[test]
     fn test() {
