@@ -4,6 +4,7 @@ mod test {
     use trait_variable_macros::trait_var;
 
     trait_variable! {
+        // #[trait_var]
         // the lint is also activated inside the macro, using rust_anaylzer for example
         trait MyTrait {  // feel free to add `pub` when needed
             // 1.put the variable fields definition at the top of the target trait before any function
@@ -29,17 +30,19 @@ mod test {
     }
 
     trait_variable! {
-        #[trait_var(MyTrait)] // put this at the top of the struct
+        (MyTrait) // put this at the top of the struct
         struct MyStruct { // feel free to add `pub` when needed
         // feel free to add any fields as usual or leave it empty
          a: i32,
         }
     }
+
     // TODO: not ok yet
     // #[trait_var(MyTrait)]
     // struct MyStruct {
     //     a: i32,
     // }
+
     impl MyStruct {
         fn print_a(&self) {
             println!("a: `{}`", self.a);
@@ -47,11 +50,10 @@ mod test {
     }
 
     impl MyTrait for MyStruct {
-        fn print_x(&self) {
-            println!("x: `{}`", self.x);
-        }
+        // fn print_x(&self) {
+        //     println!("x: `{}`", self.x);
+        // }
         fn print_y(&self) {
-            // println!("{}", self.get_fields().y);
             println!("y: `{}`", self.y);
         }
         fn print_z(&self) {
