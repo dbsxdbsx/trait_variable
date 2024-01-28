@@ -88,7 +88,7 @@ macro_rules! refine_fn {
             $(
                 fn $fn_name_impl_with_self_mut(&mut $self, $($arg_impl_with_self_mut)*) $(-> $ret_ty_impl_with_self_mut)? {
                     $crate::refine_fn_body! {
-                        $self,
+                        $self,  // input `self` here to avoid `self` as keyword issue.
                         [pre_content: ]
                         $($fn_body_with_self_mut)*
                     }
