@@ -45,6 +45,7 @@ mod test {
             }
             // TODO: 2.1.2 fn with default implementation and `self.field`
             fn print_x(&self) {
+                let xx = self.x.clone();
                 println!("x: `{}`", self.x);
             }
             fn change_and_print_x(&mut self, new_num: i32) {

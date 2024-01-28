@@ -144,12 +144,7 @@ macro_rules! refine_fn_body {
             [
                 pre_content: $($pre_content)*
                 // todo: check if $field matches $self
-                paste::paste! {
-                    $self .
-                    [<_ $field_name>]
-                    ()
-                }
-                // $crate::match_self_field!($self, $field, $field_name)
+                $crate::match_self_field!($self, $field, $field_name)
             ]
             $($rest)*
         }
@@ -158,7 +153,7 @@ macro_rules! refine_fn_body {
     (
         $self:tt,
         [pre_content: $($pre_content:tt)*]
-        $token:tt
+        $token:tt  // TODO: one token at a time may be wrong?
         $($rest:tt)*
     ) => {
         $crate::refine_fn_body! {
@@ -177,28 +172,32 @@ macro_rules! refine_fn_body {
 }
 
 #[macro_export]
-// macro_rules! match_self_field {
-//     // 当$self和$field相同时，使用这个分支
-//     ($self:tt, self, $field_name:ident) => {
-//         // 在这里执行当$self和$field相等时的代码
-//     };
-//     // 当$self和$field不相同时，使用这个分支
-//     ($self:tt, $field:ident, $field_name:ident) => {
-//         // 在这里执行当$self和$field不相等时的代码
-//     };
-// }
 macro_rules! match_self_field {
+    ($self:tt, self, $field_name:ident) => {
+        paste::paste! {
+            $self .
+            [<_ $field_name>]
+            ()
+        }
+    };
     ($self:tt, $field:ident, $field_name:ident) => {
-        if $self as *const _ == &$field as *const _ {
-            paste::paste! {
-                $self .
-                [<_ $field_name>]
-                ()
-            }
-        } else {
-            paste::paste! {
-                $field.$field_name
-            }
+        paste::paste! {
+            $field.$field_name
         }
     };
 }
+// macro_rules! match_self_field {
+//     ($self:tt, $field:ident, $field_name:ident) => {
+//         if $self as *const _ == &$field as *const _ {
+//             paste::paste! {
+//                 $self .
+//                 [<_ $field_name>]
+//                 ()
+//             }
+//         } else {
+//             paste::paste! {
+//                 $field.$field_name
+//             }
+//         }
+//     };
+// }
