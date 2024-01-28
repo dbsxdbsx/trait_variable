@@ -10,7 +10,7 @@ macro_rules! refine_fn {
         $($rest:tt)*
     ) => (
         $crate::refine_fn! {
-            [fns_impls_with_self: $(&$self, $fns_impls_with_self)* /* */ $fn_name ($($arg)*) $($ret_ty)? {$($fn_body)*}]
+            [fns_impls_with_self: $($fns_impls_with_self)* /* */ &$self, $fn_name ($($arg)*) $($ret_ty)? {$($fn_body)*}]
             [fns_impls_with_self_mut: $($fns_impls_with_self_mut)*]
             [fns_impls_without_self: $($fns_impls_without_self)*]
             [fns_no_impls: $($fns_no_impls)*]
@@ -28,7 +28,7 @@ macro_rules! refine_fn {
     ) => (
         $crate::refine_fn! {
             [fns_impls_with_self: $($fns_impls_with_self)*]
-            [fns_impls_with_self_mut: $(&mut $self, $fns_impls_with_self_mut)* /* */ $fn_name ($($arg)*) $($ret_ty)? {$($fn_body)*}]
+            [fns_impls_with_self_mut: $($fns_impls_with_self_mut)* /* */ &mut $self, $fn_name ($($arg)*) $($ret_ty)? {$($fn_body)*}]
             [fns_impls_without_self: $($fns_impls_without_self)*]
             [fns_no_impls: $($fns_no_impls)*]
             $($rest)*
@@ -45,7 +45,7 @@ macro_rules! refine_fn {
     ) => ($crate::refine_fn! {
         [fns_impls_with_self: $($fns_impls_with_self)*]
         [fns_impls_with_self_mut: $($fns_impls_with_self_mut)*]
-        [fns_impls_without_self: $($fns_no_impls)* /* */ $fn_name ($($arg)*) $($ret_ty)? {$($fn_body)*}]
+        [fns_impls_without_self: $($fns_impls_without_self)* /* */ $fn_name ($($arg)*) $($ret_ty)? {$($fn_body)*}]
         [fns_no_impls: $($fns_no_impls)*]
         $($rest)*
     });
