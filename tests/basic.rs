@@ -44,14 +44,14 @@ mod test {
                 println!("v: `{:?}`", self._v());
             }
             // TODO: 2.1.2 fn with default implementation and `self.field`
-            // fn print_x(&self) {
-            //     println!("x: `{}`", self.x);
-            // }
-            // fn change_and_print_x(&mut self, new_num: i32) {
-            //     self.x = new_num;
-            //     println!("x: `{}`", self.x);
-            // }
-            // 2.1 fn without default implementation
+            fn print_x(&self) {
+                println!("x: `{}`", self.x);
+            }
+            fn change_and_print_x(&mut self, new_num: i32) {
+                self.x = new_num;
+                println!("x: `{}`", self.x);
+            }
+            // 2.2 fn without default implementation
             fn change_and_print_a(&mut self, new_num: i32);
         }
     }

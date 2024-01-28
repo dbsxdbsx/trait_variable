@@ -6,11 +6,11 @@ macro_rules! refine_fn {
         [fns_impls_with_self_mut: $($fns_impls_with_self_mut:tt)*]
         [fns_impls_without_self: $($fns_impls_without_self:tt)*]
         [fns_no_impls: $($fns_no_impls:tt)*]
-        fn $fn_name:ident(&self $($arg:tt)*) $(-> $ret_ty:ty)? { $($fn_body:tt)* }
+        fn $fn_name:ident(& $self:expr, $($arg:tt)*) $(-> $ret_ty:ty)? { $($fn_body:tt)* }
         $($rest:tt)*
     ) => (
         $crate::refine_fn! {
-            [fns_impls_with_self: $($fns_impls_with_self)* /* */ $fn_name ($($arg)*) $($ret_ty)? {$($fn_body)*}]
+            [fns_impls_with_self: $(&$self, $fns_impls_with_self)* /* */ $fn_name ($($arg)*) $($ret_ty)? {$($fn_body)*}]
             [fns_impls_with_self_mut: $($fns_impls_with_self_mut)*]
             [fns_impls_without_self: $($fns_impls_without_self)*]
             [fns_no_impls: $($fns_no_impls)*]
@@ -23,12 +23,12 @@ macro_rules! refine_fn {
         [fns_impls_with_self_mut: $($fns_impls_with_self_mut:tt)*]
         [fns_impls_without_self: $($fns_impls_without_self:tt)*]
         [fns_no_impls: $($fns_no_impls:tt)*]
-        fn $fn_name:ident(&mut self $($arg:tt)*) $(-> $ret_ty:ty)? { $($fn_body:tt)* }
+        fn $fn_name:ident(&mut $self:expr, $($arg:tt)*) $(-> $ret_ty:ty)? { $($fn_body:tt)* }
         $($rest:tt)*
     ) => (
         $crate::refine_fn! {
             [fns_impls_with_self: $($fns_impls_with_self)*]
-            [fns_impls_with_self_mut: $($fns_impls_with_self_mut)* /* */ $fn_name ($($arg)*) $($ret_ty)? {$($fn_body)*}]
+            [fns_impls_with_self_mut: $(&mut $self, $fns_impls_with_self_mut)* /* */ $fn_name ($($arg)*) $($ret_ty)? {$($fn_body)*}]
             [fns_impls_without_self: $($fns_impls_without_self)*]
             [fns_no_impls: $($fns_no_impls)*]
             $($rest)*
@@ -45,7 +45,7 @@ macro_rules! refine_fn {
     ) => ($crate::refine_fn! {
         [fns_impls_with_self: $($fns_impls_with_self)*]
         [fns_impls_with_self_mut: $($fns_impls_with_self_mut)*]
-        [fns_impls_without_self: $($fns_impl)* /* */ $fn_name ($($arg)*) $($ret_ty)? {$($fn_body)*}]
+        [fns_impls_without_self: $($fns_no_impls)* /* */ $fn_name ($($arg)*) $($ret_ty)? {$($fn_body)*}]
         [fns_no_impls: $($fns_no_impls)*]
         $($rest)*
     });
@@ -66,17 +66,17 @@ macro_rules! refine_fn {
     });
     // 2.final output
     (
-        [fns_impls_with_self: $( $fn_name_impl_with_self:ident ($($arg_impl_with_self:tt)*) $($ret_ty_impl_with_self:ty)? {$($fn_body_with_self:tt)*} )*]
-        [fns_impls_with_self_mut: $( $fn_name_impl_with_self_mut:ident ($($arg_impl_with_self_mut:tt)*) $($ret_ty_impl_with_self_mut:ty)? {$($fn_body_with_self_mut:tt)*} )*]
+        [fns_impls_with_self: $( $fn_name_impl_with_self:ident (&$self:expr, $($arg_impl_with_self:tt)*) $($ret_ty_impl_with_self:ty)? {$($fn_body_with_self:tt)*} )*]
+        [fns_impls_with_self_mut: $( $fn_name_impl_with_self_mut:ident (&mut $self_mut:expr, $($arg_impl_with_self_mut:tt)*) $($ret_ty_impl_with_self_mut:ty)? {$($fn_body_with_self_mut:tt)*} )*]
         [fns_impls_without_self: $( $fn_name_impl_without_self:ident ($($arg_impl_without_self:tt)*) $($ret_ty_impl_without_self:ty)? {$($fn_body_without_self:tt)*} )*]
         [fns_no_impls: $( $fn_name_no_impl:ident ($($arg_no_impl:tt)*) $($ret_ty_no_impl:ty)? ; )*]
     ) => (
         paste::paste!{
             // 2.1.1 copy and refine for each function with default implementation, but with `&self.` prefix
             $(
-                fn $fn_name_impl_with_self(& self $($arg_impl_with_self)*) $(-> $ret_ty_impl_with_self)? {
+                fn $fn_name_impl_with_self(&$self, $($arg_impl_with_self)*) $(-> $ret_ty_impl_with_self)? {
                     $crate::refine_fn_body! {
-                        self,
+                        $self,
                         [pre_content: ]
                         $($fn_body_with_self)*
                     }
@@ -86,9 +86,9 @@ macro_rules! refine_fn {
             )*
             // 2.1.2 copy and refine for each function with default implementation, but with `&mut self.` prefix
             $(
-                fn $fn_name_impl_with_self_mut(&mut self $($arg_impl_with_self_mut)*) $(-> $ret_ty_impl_with_self_mut)? {
+                fn $fn_name_impl_with_self_mut(&mut $self, $($arg_impl_with_self_mut)*) $(-> $ret_ty_impl_with_self_mut)? {
                     $crate::refine_fn_body! {
-                        self,
+                        $self,
                         [pre_content: ]
                         $($fn_body_with_self_mut)*
                     }
@@ -123,7 +123,7 @@ macro_rules! refine_fn_body {
     // };
     // 1.1 Match method call with `self.` prefix, match and paste
     (
-        $self:ident,
+        $self:expr,
         [pre_content: $($pre_content:tt)*]
         self.$fn_name:ident ($($args:tt)*) // match fn call with `self.` prefix
         $($rest:tt)*
@@ -132,17 +132,16 @@ macro_rules! refine_fn_body {
             $self,
             [
                 pre_content: $($pre_content)*
-                // just copy and paste the original fn code
-                $self.$fn_name($($args:tt)*)
+                $self.$fn_name($($args:tt)*)  // just copy and paste the original fn code
             ]
             $($rest)*
         }
     };
     // 1.2 Match `self.<field_name>` and replace it
     (
-        $self:ident,
+        $self:expr,
         [pre_content: $($pre_content:tt)*]
-        self.$field_name:ident
+        self.$field_name:ident // match field with `self.` prefix
         $($rest:tt)*
     ) => {
         $crate::refine_fn_body! {
@@ -160,7 +159,7 @@ macro_rules! refine_fn_body {
     };
     // 2. If no matched pattern, process one token at a time
     (
-        $self:ident,
+        $self:expr,
         [pre_content: $($pre_content:tt)*]
         $token:tt
         $($rest:tt)*
@@ -173,7 +172,7 @@ macro_rules! refine_fn_body {
     };
     // 3. Base case: no more tokens to process
     (
-        $self:ident,
+        $self:expr,
         [pre_content: $($pre_content:tt)*]
     ) => {
         $($pre_content)*
