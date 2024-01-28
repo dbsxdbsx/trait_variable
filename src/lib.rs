@@ -71,7 +71,9 @@ macro_rules! trait_variable {
                 [<_ $trait_name>] // this is the hidden parent trait
             {
                 $crate::refine_fn! {
-                    [fns_impls: ]
+                    [fns_impls_with_self: ]
+                    [fns_impls_with_self_mut: ]
+                    [fns_impls_without_self: ]
                     [fns_no_impls: ]
                     $($trait_content)*
                 }
