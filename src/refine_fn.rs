@@ -10,7 +10,7 @@ macro_rules! refine_fn {
         $($rest:tt)*
     ) => (
         $crate::refine_fn! {
-            [fns_impls_with_self: $($fns_impls_with_self)* /* */ &$self, $fn_name ($($arg)*) $($ret_ty)? {$($fn_body)*}]
+            [fns_impls_with_self: $($fns_impls_with_self)* /* */ $fn_name ( &$self, $($arg)* ) $($ret_ty)? {$($fn_body)*}]
             [fns_impls_with_self_mut: $($fns_impls_with_self_mut)*]
             [fns_impls_without_self: $($fns_impls_without_self)*]
             [fns_no_impls: $($fns_no_impls)*]
@@ -28,7 +28,7 @@ macro_rules! refine_fn {
     ) => (
         $crate::refine_fn! {
             [fns_impls_with_self: $($fns_impls_with_self)*]
-            [fns_impls_with_self_mut: $($fns_impls_with_self_mut)* /* */ &mut $self, $fn_name ($($arg)*) $($ret_ty)? {$($fn_body)*}]
+            [fns_impls_with_self_mut: $($fns_impls_with_self_mut)* /* */ $fn_name ( &mut $self, $($arg)* ) $($ret_ty)? {$($fn_body)*}]
             [fns_impls_without_self: $($fns_impls_without_self)*]
             [fns_no_impls: $($fns_no_impls)*]
             $($rest)*
@@ -76,7 +76,7 @@ macro_rules! refine_fn {
             $(
                 fn $fn_name_impl_with_self(&$self, $($arg_impl_with_self)*) $(-> $ret_ty_impl_with_self)? {
                     $crate::refine_fn_body! {
-                        $self,
+                        $self,  // input `self` here to avoid `self` as a keyword issue.
                         [pre_content: ]
                         $($fn_body_with_self)*
                     }
@@ -86,9 +86,9 @@ macro_rules! refine_fn {
             )*
             // 2.1.2 copy and refine for each function with default implementation, but with `&mut self.` prefix
             $(
-                fn $fn_name_impl_with_self_mut(&mut $self, $($arg_impl_with_self_mut)*) $(-> $ret_ty_impl_with_self_mut)? {
+                fn $fn_name_impl_with_self_mut(&mut $self_mut, $($arg_impl_with_self_mut)*) $(-> $ret_ty_impl_with_self_mut)? {
                     $crate::refine_fn_body! {
-                        $self,  // input `self` here to avoid `self` as keyword issue.
+                        $self_mut,  // input `self` here to avoid `self` as a keyword issue.
                         [pre_content: ]
                         $($fn_body_with_self_mut)*
                     }
@@ -98,7 +98,7 @@ macro_rules! refine_fn {
             )*
             // 2.1.3 copy and refine for each function with default implementation, but without `&(mut)self.` prefix
             $(
-                fn $fns_impls_without_self($($arg_impl_without_self)*) $(-> $ret_ty_impl_without_self)? {
+                fn $fn_name_impl_without_self($($arg_impl_without_self)*) $(-> $ret_ty_impl_without_self)? {
                     $($fn_body_without_self)*
                 }
             )*
@@ -145,6 +145,7 @@ macro_rules! refine_fn_body {
         $($rest:tt)*
     ) => {
         $crate::refine_fn_body! {
+            $self,
             [
                 pre_content: $($pre_content)*
                 // todo:
