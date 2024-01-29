@@ -21,12 +21,12 @@ macro_rules! trait_variable {
             dollar = {$},
         }
     };
-    // 1.1 Parsing trait (has more fields):
+    // 1.1 Parsing trait (may contains trait variable fields):
     (@enhance_trait
         trait_def = $trait_def:tt,
         content = {
             $(#[$field_attr:meta])*
-            let $trait_field_name:ident: $field_type:ty;
+            $field_vis:vis $trait_field_name:ident : $field_type:ty;
             $($trait_content:tt)*
         },
         fields = { $($prev_fields:tt)* },
@@ -39,12 +39,12 @@ macro_rules! trait_variable {
             fields = {
                 $($prev_fields)*
                 $(#[$field_attr])*
-                let $trait_field_name: $field_type;
+                $field_vis $trait_field_name : $field_type;
             },
             dollar = {$dollar},
         }
     };
-    // 1.2 Parsing trait (finished, `content` doesn't start with a field so rest is the real trait):
+    // 1.2 Parsing trait (finished, `content` doesn't start with a trait variable field, so rest is the real trait):
     (@enhance_trait
         trait_def = {
             $(#[$attr:meta])*
@@ -53,7 +53,7 @@ macro_rules! trait_variable {
         content = { $($trait_content:tt)* },
         fields = { $(
             $(#[$field_attr:meta])*
-            let $trait_field_name:ident: $field_type:ty;
+            $field_vis:vis $trait_field_name:ident : $field_type:ty;
         )* },
         dollar = {$dollar:tt},
     ) => {
@@ -94,11 +94,11 @@ macro_rules! trait_variable {
                 ) => {
                     $dollar (#[$dollar struct_attr])*
                     $dollar vis struct $dollar struct_name {
-                        $dollar ( $dollar  struct_content)*
+                        $dollar ( $dollar struct_content)*
                         // NOTE: this part is from root macro:
                         $(
                             $(#[$field_attr])*
-                            $trait_field_name: $field_type,
+                            $field_vis $trait_field_name: $field_type,
                         )*
                     }
                     impl [<_ $trait_name>] for $struct_name {
@@ -117,8 +117,8 @@ macro_rules! trait_variable {
     };
     // 2. Entry point after wrapping a struct(this arm is invalid if there is no trait wrapped through arm 1):
     (
-        // ($trait_name:ident) // NOTE: this line is just used as a tag for pattern matching
-        ($trait_name:path) // NOTE: this line is just used as a tag for pattern matching
+        ($trait_name:ident) // NOTE: this line is just used as a tag for pattern matching
+        // ($trait_name:path) // NOTE: this line is just used as a tag for pattern matching
         $(#[$attr:meta])*
         $vis:vis struct $struct_name:ident {
             $(

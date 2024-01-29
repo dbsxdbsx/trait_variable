@@ -8,10 +8,10 @@ use trait_variable_macros::trait_var;
 trait_variable! {
     trait MyTraitForBasic {  // feel free to add `pub` when needed
         // 1.put the variable fields definition at the top of the target trait before any function
-        let x: i32;
-        let y: bool;
-        let z : String;
-        let v : Vec<i32>;
+        x: i32;
+        pub y: bool; // feel free to add pub or not, the visibility of the field used in any struct is consistent
+        z : String;
+        v : Vec<i32>;
 
         // 2.the order of the fn definition doesn't matter
         // 2.1.1 fn with default implementation and raw field methods

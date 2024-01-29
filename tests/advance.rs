@@ -6,7 +6,7 @@ use trait_variable::{trait_var, trait_variable};
 trait_variable! {
     trait MyTraitForAdvance {
         // still, put the trait variable fields definition at the top of the target trait before any others
-        let x: u32;
+        x: u32;
 
         const MY_CONST: u32 = 5;
         type Output;
