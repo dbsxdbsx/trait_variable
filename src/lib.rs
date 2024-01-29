@@ -117,8 +117,8 @@ macro_rules! trait_variable {
     };
     // 2. Entry point after wrapping a struct(this arm is invalid if there is no trait wrapped through arm 1):
     (
-        ($trait_name:ident) // NOTE: this line is just used as a tag for pattern matching
-        // ($trait_name:path) // NOTE: this line is just used as a tag for pattern matching
+        // ($trait_name:ident) // NOTE: this line is just used as a tag for pattern matching
+        ($trait_name:path) // NOTE: this line is just used as a tag for pattern matching
         $(#[$attr:meta])*
         $vis:vis struct $struct_name:ident {
             $(
