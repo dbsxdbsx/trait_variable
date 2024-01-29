@@ -71,7 +71,7 @@ macro_rules! trait_variable {
             $vis trait $trait_name:
                 [<_ $trait_name>] // this is the hidden parent trait
             {
-                // if do nothing, directly copy the trait method content
+                // directly copy the trait method content
                 $($trait_content)*
                 // TODO: refine fn body (replace `self.<field_name>` to `self._<field_name>()`)
                 // $crate::refine_fn! {
@@ -117,9 +117,8 @@ macro_rules! trait_variable {
     };
     // 2. Entry point after wrapping a struct(this arm is invalid if there is no trait wrapped through arm 1):
     (
-        ($trait_name:ident) // NOTE: this line is just used as a tag for pattern matching
-        // ($trait_name:path) // NOTE: this line is just used as a tag for pattern matching
-        // #[trait_tag($trait_name:path)] // this line is just used as a tag
+        // ($trait_name:ident) // NOTE: this line is just used as a tag for pattern matching
+        ($trait_name:path) // NOTE: this line is just used as a tag for pattern matching
         $(#[$attr:meta])*
         $vis:vis struct $struct_name:ident {
             $(
