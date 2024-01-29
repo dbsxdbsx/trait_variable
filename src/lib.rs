@@ -1,4 +1,5 @@
 mod refine_fn;
+pub use trait_variable_macros::trait_var;
 
 #[macro_export]
 macro_rules! trait_variable {
