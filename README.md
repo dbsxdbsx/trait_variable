@@ -1,15 +1,10 @@
 # Trait Variable
-**(Don't use it. It is still under developement.)**
-
 Make variable fields feasible in trait definition by procedural macros.
 
-This crate provides a procedural macro that allows you to easily implement traits with variable fields just like using inheritance within C++/Python... of parent classes.
-
-And this crate would not be exited if the [fields_in_trait](https://github.com/rust-lang/rfcs/pull/1546) is implemented officially.
+This crate provides macros allowing you to easily implement traits with variable fields just like using inheritance within C++/Python... of parent classes. And this crate would not be exited if the [fields_in_trait](https://github.com/rust-lang/rfcs/pull/1546) is implemented officially.
 
 ## Usage
 
-**(todo: not yet finished)**
 Add `trait_variable` to your `Cargo.toml`:
 
 ```toml
@@ -17,7 +12,7 @@ Add `trait_variable` to your `Cargo.toml`:
 trait_variable = "*"
 ```
 
-Then, use the macro in your Rust code:
+Then, use the macros in your Rust code:
 
 ```rust
 use trait_variable::trait_variable;
@@ -27,6 +22,12 @@ struct MyStruct {
     // Your struct fields
 }
 ```
+
+## TODO list
+ - [] expand code fix for public/private trait;
+ - [] try to support `self.<trait_field>` directly in trait method body(this may be hard or even impossible under current rust macro system v.1.75 2021);
+ - [] try to let smart intellisense extension(like `Rust Analyzer`) support inside macro.
+
 
 The `trait_variable` macro will generate a default implementation of `MyTrait` for `MyStruct`, using `todo!()` for all methods not explicitly implemented.
 
