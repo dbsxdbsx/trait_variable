@@ -58,14 +58,14 @@ macro_rules! trait_variable {
         dollar = {$dollar:tt},
     ) => {
         paste::paste! {
-            // 1.2.1 the derived parent trait code
+            // 1.2.1 the derived hidden parent trait code
             $vis trait [<_ $trait_name>] {
                 $(
                     fn [< _$trait_field_name >](&self) -> &$field_type;
                     fn [< _$trait_field_name _mut >](&mut self) -> &mut $field_type;
                 )*
             }
-            // 1.2.2 the derived basic trait code
+            // 1.2.2 the derived basic trait code, which inherits the hidden parent trait
             $(#[$attr])*
             #[allow(non_camel_case_types, dead_code)]
             $vis trait $trait_name:
@@ -82,11 +82,12 @@ macro_rules! trait_variable {
                 //     $($trait_content)*
                 // }
             }
-            // 1.2.3 the derived macro for struct
+            // 1.2.3 the derived macro for use with struct
             #[doc(hidden)]
-            #[macro_export] // <-- Only if the trait's visibility is `pub`
+            #[macro_export] // TODO: <-- Only if the trait's visibility is `pub`
             macro_rules! [<$trait_name _for_struct>] { // NOTE: the reexpanded macro is used for rust struct only
                 (
+                    ($dollar hidden_parent_trait:path)
                     $dollar (#[$dollar struct_attr:meta])* // NOTE: make sure the style is consistent with that in arm 2 output
                     $dollar vis:vis struct $dollar struct_name:ident {
                         $dollar ( $dollar struct_content:tt )*
@@ -101,7 +102,8 @@ macro_rules! trait_variable {
                             $field_vis $trait_field_name: $field_type,
                         )*
                     }
-                    impl [<_ $trait_name>] for $struct_name {
+                    impl $dollar hidden_parent_trait for $struct_name {
+                    // impl [<_ $trait_name>] for $struct_name {
                         $(
                             fn [< _$trait_field_name >](&self) -> &$field_type {
                                 &self.$trait_field_name
@@ -119,6 +121,7 @@ macro_rules! trait_variable {
     (
         // ($trait_name:ident) // NOTE: this line is just used as a tag for pattern matching
         ($trait_name:path) // NOTE: this line is just used as a tag for pattern matching
+        ($hidden_parent_trait:path)
         $(#[$attr:meta])*
         $vis:vis struct $struct_name:ident {
             $(
@@ -128,7 +131,8 @@ macro_rules! trait_variable {
         }
     ) => {
         paste::paste!{
-            [<$trait_name _for_struct>] !{ // NOTE: this is the expanded macro from arm 1.2
+            [<$trait_name _for_struct>] !{ // NOTE: here it invokes the expanded macro from arm 1.2
+                ($hidden_parent_trait)
                 $(#[$attr])*
                 $vis struct $struct_name {
                     $(
