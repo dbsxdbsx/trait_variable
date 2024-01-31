@@ -1,6 +1,6 @@
 [package]
     name="trait_variable"
-    version="0.3.1"
+    version="0.3.3"
     edition="2021"
     description="Make variable fields feasible in trait definition by (declarative and procedural) macros, which can be used for `struct` then."
     repository="https://github.com/dbsxdbsx/trait_variable"
