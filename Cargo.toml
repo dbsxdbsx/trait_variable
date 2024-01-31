@@ -25,7 +25,7 @@
     quote="^1.0"
 
     # trait-variable-macros={git="https://github.com/dbsxdbsx/trait_variable_macros.git", features=[]}
-    trait-variable-macros="*"
+    trait-variable-macros="0.3.3"
 
     # proc-macro2="^1.0"
     # syn        ={version="^1.0", features=["full"]}
