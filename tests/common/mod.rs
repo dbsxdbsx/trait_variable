@@ -1,4 +1,4 @@
-use trait_variable_macros::{trait_var, trait_variable};
+use trait_variable::{trait_var, trait_variable};
 //↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓trait definition↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓
 trait_variable! {
     pub(crate) trait MyTrait {  // feel free to add `pub` when needed
@@ -10,9 +10,9 @@ trait_variable! {
         // 2.the order of the function definition doesn't matter
         fn get_print_field_x(&self) -> &i32{
             // println!("x: `{}`", self._x());// ok
-            println!("x: `{}`", sself.x);// TODO: make self.<> valid
+            println!("x: `{}`", self.x);// TODO: make self.<> valid
             // self._x() // ok
-            sself.x
+            self.x
         }
         fn get_print_field_y(&self) -> &bool;
         fn get_print_field_z(&self) -> &f32;

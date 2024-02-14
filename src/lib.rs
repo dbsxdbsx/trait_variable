@@ -134,7 +134,7 @@ pub fn trait_variable(input: TokenStream) -> TokenStream {
         if let TraitItem::Method(mut method) = item {
             if let Some(body) = &mut method.default {
                 // Use regular expressions or other methods to find and replace text
-                let re = Regex::new(r"sself\.([a-zA-Z_]\w*)").unwrap();
+                let re = Regex::new(r"self\.([a-zA-Z_]\w*)").unwrap();
                 let body_str = quote!(#body).to_string();
                 let new_body_str = re
                     .replace_all(&body_str, |caps: &Captures| {
