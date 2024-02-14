@@ -1,5 +1,5 @@
-use trait_variable::{trait_var, trait_variable};
 //↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓trait definition↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓
+use trait_variable::{trait_var, trait_variable};
 trait_variable! {
     pub(crate) trait MyTrait {  // feel free to add `pub` when needed
         // 1.put the variable fields definition at the top of the target trait before any function
@@ -16,10 +16,13 @@ trait_variable! {
         }
         fn get_print_field_y(&self) -> &bool;
         fn get_print_field_z(&self) -> &f32;
-        fn change_get_print_field_z(&mut self, new_num: f32)->&f32 {
-            (*self._z_mut()) = new_num; // ok
+        fn change_get_print_field_z(&mut self, func: fn(&mut f32))->&f32 {
+            // modify the field by assignment operation
+            // (*self._z_mut()) = new_num; // ok
             // &mut self.z = new_num; // TODO
 
+            // modify the field by function call
+            func(&mut self._z_mut()); // ok
             // self.test();
             // self.test(&mut self.z);
             println!("z: `{}`",self.z);
@@ -27,8 +30,8 @@ trait_variable! {
             self.z
         }
 
-        fn test(&mut self, num:&mut f32){
-
+        fn get_cloned_trait_field(&self) -> (i32, bool, f32) {
+            (*self.x, *self.y, *self.z)
         }
     }
 }

@@ -27,7 +27,7 @@ struct MyStruct {
  - [] add more test cases for various trait field types, like Option, String, Vec, HashMap, etc;
  - [] test with trait with associated types, generic types, async methods, etc;
  - [] omit `use <trait_module>::<_hidden_parent_trait_name>;` statement when using `#[trait_var(<trait_name>)]` for a struct in an extra module;
- - [] try to let smart intellisense extension(like `Rust Analyzer`) support idents inside macro.
+ - [] try to let smart intellisense extension(like `Rust Analyzer`) support idents inside macro(Maybe impossible).
 
 The `trait_variable` macro will generate a default implementation of `MyTrait` for `MyStruct`, using `todo!()` for all methods not explicitly implemented.
 

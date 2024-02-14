@@ -3,10 +3,6 @@ use common::MyStruct;
 
 use crate::common::MyTrait;
 
-fn test_mutable(num: &mut f32) {
-    *num = -1.0;
-}
-
 #[test]
 fn test() {
     let mut s = MyStruct::new(1, "hello".into(), -2, true, -3.14);
@@ -24,10 +20,11 @@ fn test() {
     assert_eq!(s.get_print_field_x(), &-2);
     assert_eq!(s.get_print_field_y(), &y);
     assert_eq!(s.get_print_field_z(), &-3.14);
-    assert_eq!(s.change_get_print_field_z(3.14), &3.14);
-
-    // 3. test mutable fields as parameters
-    test_mutable(&mut s.z);
-    assert_eq!(s.z, -1.0);
-    assert_eq!(s.get_print_field_z(), &-1.0);
+    assert_eq!(
+        s.change_get_print_field_z(|input| {
+            *input = -*input;
+        }),
+        &3.14
+    );
+    assert_eq!(s.get_cloned_trait_field(), (-2, s.y, 3.14));
 }
