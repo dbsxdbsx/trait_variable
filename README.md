@@ -24,16 +24,16 @@ struct MyStruct {
 ```
 
 ## TODO list
- - [] expand code fix for public/private trait;
- - [] try to support `self.<trait_field>` directly in trait method body(this may be hard or even impossible under current rust macro system v.1.75 2021);
- - [] try to let smart intellisense extension(like `Rust Analyzer`) support inside macro.
-
+ - [] add more test cases for various trait field types, like Option, String, Vec, HashMap, etc;
+ - [] test with trait with associated types, generic types, async methods, etc;
+ - [] omit `use <trait_module>::<_hidden_parent_trait_name>;` statement when using `#[trait_var(<trait_name>)]` for a struct in an extra module;
+ - [] try to let smart intellisense extension(like `Rust Analyzer`) support idents inside macro.
 
 The `trait_variable` macro will generate a default implementation of `MyTrait` for `MyStruct`, using `todo!()` for all methods not explicitly implemented.
 
 ## Requirements
 
-- Rust edition 2021 or later. All code is tested under Rust Version 1.74.0.
+- Rust edition 2021 or later. All code is tested under Rust Version 1.76.0. Not Sure the minimum version.
 
 ## Contributing
 
