@@ -16,9 +16,17 @@ trait_variable! {
         }
         fn get_print_field_y(&self) -> &bool;
         fn get_print_field_z(&self) -> &f32;
-        fn change_and_print_z(&mut self, _new_num: f32) {
-            // self.z = new_num; // TODO
-            // println!("z: `{}`",self.z);
+        fn change_and_print_z(&mut self, new_num: f32) {
+            (*self._z_mut()) = new_num; // ok
+            // &mut self.z = new_num; // TODO
+
+            // self.test();
+            // self.test(&mut self.z);
+            println!("z: `{}`",self.z);
+        }
+
+        fn test(&mut self, num:&mut f32){
+
         }
     }
 }
@@ -54,6 +62,7 @@ impl MyStruct {
         &self.b
     }
 }
+
 impl MyTrait for MyStruct {
     fn get_print_field_y(&self) -> &bool {
         println!("y: `{}`", self.y);
