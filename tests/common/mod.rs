@@ -16,13 +16,15 @@ trait_variable! {
         }
         fn get_print_field_y(&self) -> &bool;
         fn get_print_field_z(&self) -> &f32;
-        fn change_and_print_z(&mut self, new_num: f32) {
+        fn change_get_print_field_z(&mut self, new_num: f32)->&f32 {
             (*self._z_mut()) = new_num; // ok
             // &mut self.z = new_num; // TODO
 
             // self.test();
             // self.test(&mut self.z);
             println!("z: `{}`",self.z);
+
+            self.z
         }
 
         fn test(&mut self, num:&mut f32){
