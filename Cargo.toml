@@ -1,11 +1,11 @@
 [package]
-    name="trait_variable"
+    name="trait-variable-macros"
     version="0.3.3"
     edition="2021"
-    description="Make variable fields feasible in trait definition by (declarative and procedural) macros, which can be used for `struct` then."
-    repository="https://github.com/dbsxdbsx/trait_variable"
+    description="Make variable fields feasible in trait definition(the procedural macros part)."
+    repository="https://github.com/dbsxdbsx/trait_variable_macros"
     license="MIT OR Apache-2.0"
-    documentation="https://docs.rs/trait_variable"
+    documentation="https://docs.rs/trait_variable_macros"
     categories=[
         "development-tools::cargo-plugins",
         "development-tools::build-utils",
@@ -15,23 +15,28 @@
     exclude=["target/*", ".vscode/*", ".github/*", "tests/*", "justfile"]
     keywords=["trait", "variable", "type", "macro", "code-generation"]
 
+[lib]
+    proc-macro=true
+
 [profile.release]
     lto          =true
     codegen-units=1
     strip        ="debuginfo"
 
 [dependencies]
+    quote      ="^1.0"
+    proc-macro2="^1.0"
+    syn        ={version="^1.0", features=["full"]}
+    # syn        ={version="^2.0", features=["full"]}
     paste="^1.0"
-    quote="^1.0"
 
-    trait-variable-macros={git="https://github.com/dbsxdbsx/trait_variable_macros.git", features=[]}
-    # trait-variable-macros="0.3.3"
+    lazy_static="^1.4"
+    once_cell  ="^1.8"
 
-    # proc-macro2="^1.0"
-    # syn        ={version="^1.0", features=["full"]}
-    # # syn        ={version="^2.0", features=["full"]}
+    regex="^1.5"
 
-    # lazy_static="^1.4"
-    # once_cell  ="^1.8"
+# [dev-dependencies]
 
-[dev-dependencies]
+[[test]]
+    name="basic"
+    path="tests/basic.rs"

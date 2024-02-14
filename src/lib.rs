@@ -1,146 +1,241 @@
-mod refine_fn;
-pub use trait_variable_macros::trait_var;
+extern crate proc_macro;
 
-#[macro_export]
-macro_rules! trait_variable {
-    // 1. Entry point after wrapping a trait:
-    (
-        $(#[$attr:meta])*
-        $vis:vis trait $trait_name:ident {
-            $($trait_content:tt)*
-        }
-    ) => {
-        $crate::trait_variable!{
-            @enhance_trait  // NOTE: go to arm 1.1
-            trait_def = {
-                $(#[$attr])*
-                $vis trait $trait_name
+use proc_macro::TokenStream;
+use quote::quote;
+use regex::{Captures, Regex};
+use syn::{braced, token, Visibility};
+use syn::{
+    parse::{Parse, ParseStream},
+    parse_macro_input,
+    punctuated::Punctuated,
+    Ident, Token, TraitItem, Type,
+};
+
+struct TraitVarField {
+    var_vis: Visibility,
+    var_name: Ident,
+    _colon_token: Token![:],
+    ty: Type,
+}
+impl Parse for TraitVarField {
+    fn parse(input: ParseStream) -> syn::Result<Self> {
+        Ok(TraitVarField {
+            var_vis: input.parse()?,
+            var_name: input.parse()?,
+            _colon_token: input.parse()?,
+            ty: input.parse()?,
+        })
+    }
+}
+
+struct TraitInput {
+    trait_vis: Visibility,
+    _trait_token: Token![trait],
+    trait_name: Ident,
+    _brace_token: token::Brace,
+    trait_variables: Punctuated<TraitVarField, Token![;]>,
+    trait_items: Vec<TraitItem>,
+}
+
+impl Parse for TraitInput {
+    fn parse(input: ParseStream) -> syn::Result<Self> {
+        let content;
+        Ok(TraitInput {
+            trait_vis: input.parse()?,
+            _trait_token: input.parse()?,
+            trait_name: input.parse()?,
+            _brace_token: braced!(content in input),
+            // Parse all variable declarations until a method or end of input is encountered
+            trait_variables: {
+                let mut vars = Punctuated::new();
+                while !content.peek(Token![fn]) && !content.peek(Token![;]) && !content.is_empty() {
+                    vars.push_value(content.parse()?);
+                    // Ensure that a semicolon follows the variable declaration
+                    if !content.peek(Token![;]) {
+                        return Err(content.error("expected `;` after variable declaration"));
+                    }
+                    vars.push_punct(content.parse()?);
+                }
+                vars
             },
-            content = { $($trait_content)* },
-            fields = {},
-            dollar = {$},
-        }
-    };
-    // 1.1 Parsing trait (may contains trait variable fields):
-    (@enhance_trait
-        trait_def = $trait_def:tt,
-        content = {
-            $(#[$field_attr:meta])*
-            $field_vis:vis $trait_field_name:ident : $field_type:ty;
-            $($trait_content:tt)*
-        },
-        fields = { $($prev_fields:tt)* },
-        dollar = {$dollar:tt},
-    ) => {
-        $crate::trait_variable! {
-            @enhance_trait  // NOTE: this is a recursive call
-            trait_def = $trait_def,
-            content = { $($trait_content)* },
-            fields = {
-                $($prev_fields)*
-                $(#[$field_attr])*
-                $field_vis $trait_field_name : $field_type;
+            // Parse all method declarations
+            trait_items: {
+                let mut items = Vec::new();
+                while !content.is_empty() {
+                    items.push(content.parse()?);
+                }
+                items
             },
-            dollar = {$dollar},
-        }
-    };
-    // 1.2 Parsing trait (finished, `content` doesn't start with a trait variable field, so rest is the real trait):
-    (@enhance_trait
-        trait_def = {
-            $(#[$attr:meta])*
-            $vis:vis trait $trait_name:ident
+        })
+    }
+}
+
+/// functional macro: used to generate code for a trait with variable fields
+#[proc_macro]
+pub fn trait_variable(input: TokenStream) -> TokenStream {
+    let TraitInput {
+        trait_vis,
+        trait_name,
+        trait_variables,
+        trait_items,
+        ..
+    } = parse_macro_input!(input as TraitInput);
+    // 1.1 get parent trait name
+    let parent_trait_name = Ident::new(&format!("_{}", trait_name), trait_name.span());
+    // 1.2 get trait declarative macro name
+    let trait_decl_macro_name =
+        Ident::new(&format!("{}_for_struct", trait_name), trait_name.span());
+
+    // 2.1 generate parent trait methods declaration
+    let parent_trait_methods =
+        trait_variables
+            .iter()
+            .map(|TraitVarField { var_name, ty, .. }| {
+                let method_name = Ident::new(&format!("_{}", var_name), var_name.span());
+                let method_name_mut = Ident::new(&format!("_{}_mut", var_name), var_name.span());
+                quote! {
+                    fn #method_name(&self) -> &#ty;
+                    fn #method_name_mut(&mut self) -> &mut #ty;
+                }
+            });
+    // 2.2 generate trait variable fields definition for structs later
+    let struct_trait_fields_defs = trait_variables.iter().map(
+        |TraitVarField {
+             var_vis,
+             var_name,
+             ty,
+             ..
+         }| {
+            quote! {
+                #var_vis #var_name: #ty,
+            }
         },
-        content = { $($trait_content:tt)* },
-        fields = { $(
-            $(#[$field_attr:meta])*
-            $field_vis:vis $trait_field_name:ident : $field_type:ty;
-        )* },
-        dollar = {$dollar:tt},
-    ) => {
-        paste::paste! {
-            // 1.2.1 the derived hidden parent trait code
-            $vis trait [<_ $trait_name>] {
-                $(
-                    fn [< _$trait_field_name >](&self) -> &$field_type;
-                    fn [< _$trait_field_name _mut >](&mut self) -> &mut $field_type;
-                )*
-            }
-            // 1.2.2 the derived basic trait code, which inherits the hidden parent trait
-            $(#[$attr])*
-            #[allow(non_camel_case_types, dead_code)]
-            $vis trait $trait_name:
-                [<_ $trait_name>] // this is the hidden parent trait
-            {
-                // directly copy the trait method content
-                $($trait_content)*
-                // TODO: refine fn body (replace `self.<field_name>` to `self._<field_name>()`)
-                // $crate::refine_fn! {
-                //     [fns_impls_with_self: ]
-                //     [fns_impls_with_self_mut: ]
-                //     [fns_impls_without_self: ]
-                //     [fns_no_impls: ]
-                //     $($trait_content)*
-                // }
-            }
-            // 1.2.3 the derived macro for use with struct
-            #[doc(hidden)]
-            #[macro_export] // TODO: <-- Only if the trait's visibility is `pub`
-            macro_rules! [<$trait_name _for_struct>] { // NOTE: the reexpanded macro is used for rust struct only
-                (
-                    ($dollar hidden_parent_trait:path)
-                    $dollar (#[$dollar struct_attr:meta])* // NOTE: make sure the style is consistent with that in arm 2 output
-                    $dollar vis:vis struct $dollar struct_name:ident {
-                        $dollar ( $dollar struct_content:tt )*
+    );
+    // 2.3 generate parent trait methods implementation for struct
+    let parent_trait_methods_impls =
+        trait_variables
+            .iter()
+            .map(|TraitVarField { var_name, ty, .. }| {
+                let method_name = Ident::new(&format!("_{}", var_name), var_name.span());
+                let method_name_mut = Ident::new(&format!("_{}_mut", var_name), var_name.span());
+                quote! {
+                    fn #method_name(&self) -> &#ty{
+                        &self.#var_name
                     }
-                ) => {
-                    $dollar (#[$dollar struct_attr])*
-                    $dollar vis struct $dollar struct_name {
-                        $dollar ( $dollar struct_content)*
-                        // NOTE: this part is from root macro:
-                        $(
-                            $(#[$field_attr])*
-                            $field_vis $trait_field_name: $field_type,
-                        )*
+                    fn #method_name_mut(&mut self) -> &mut #ty{
+                        &mut self.#var_name
                     }
-                    impl $dollar hidden_parent_trait for $struct_name {
-                    // impl [<_ $trait_name>] for $struct_name {
-                        $(
-                            fn [< _$trait_field_name >](&self) -> &$field_type {
-                                &self.$trait_field_name
-                            }
-                            fn [< _$trait_field_name _mut>](&mut self) -> &mut $field_type {
-                                &mut self.$trait_field_name
-                            }
-                        )*
-                    }
-                };
+                }
+            });
+
+    // 3. refine the body of methods from the original trait
+    // let original_trait_items = trait_items;
+    let original_trait_items = trait_items.into_iter().map(|item| {
+        if let TraitItem::Method(mut method) = item {
+            if let Some(body) = &mut method.default {
+                // Use regular expressions or other methods to find and replace text
+                let re = Regex::new(r"sself\.([a-zA-Z_]\w*)").unwrap();
+                let body_str = quote!(#body).to_string();
+                let new_body_str = re
+                    .replace_all(&body_str, |caps: &Captures| {
+                        let name = &caps[1];
+                        // Check if it is followed by braces
+                        if body_str.contains(&format!("{}(", name)) {
+                            format!("self.{}", name)
+                        } else {
+                            format!("self._{}()", name)
+                        }
+                    })
+                    .to_string();
+
+                let new_body: TokenStream = new_body_str.parse().expect("Failed to parse new body");
+                method.default = Some(syn::parse(new_body).expect("Failed to parse method body"));
             }
+            quote! { #method }
+        } else {
+            quote! { #item }
         }
-    };
-    // 2. Entry point after wrapping a struct(this arm is invalid if there is no trait wrapped through arm 1):
-    (
-        // ($trait_name:ident) // NOTE: this line is just used as a tag for pattern matching
-        ($trait_name:path) // NOTE: this line is just used as a tag for pattern matching
-        ($hidden_parent_trait:path)
-        $(#[$attr:meta])*
-        $vis:vis struct $struct_name:ident {
-            $(
-                $(#[$field_attr:meta])*
-                $field_vis:vis $trait_field_name:ident : $field_type:ty
-            ),* $(,)?
-        }
-    ) => {
-        paste::paste!{
-            [<$trait_name _for_struct>] !{ // NOTE: here it invokes the expanded macro from arm 1.2
-                ($hidden_parent_trait)
-                $(#[$attr])*
+    });
+
+    // 4. generate the hidden declarative macro for target struct
+    let decl_macro_code = quote! {
+        #[doc(hidden)]
+        #[macro_export] // it is ok to always export the declarative macro
+        macro_rules! #trait_decl_macro_name { // NOTE: the reexpanded macro is used for rust struct only
+            (
+                ($hidden_parent_trait:path)
+                $(#[$struct_attr:meta])* // NOTE: make sure the style is consistent with that in arm 2 output
+                $vis:vis struct $struct_name:ident {
+                    $($struct_content:tt)*
+                }
+            ) => {
+                $(#[$struct_attr])*
                 $vis struct $struct_name {
-                    $(
-                        $(#[$field_attr:meta])*
-                        $field_vis $trait_field_name : $field_type,
+                    $($struct_content)*
+                    #(
+                        #struct_trait_fields_defs
                     )*
                 }
+                impl $hidden_parent_trait for $struct_name {
+                    #(
+                        #parent_trait_methods_impls
+                    )*
+                }
+            };
+        }
+    };
+    // 5. expand the final code
+    let expanded = quote! {
+        #trait_vis trait #parent_trait_name {
+            #(#parent_trait_methods)*
+        }
+        #trait_vis trait #trait_name: #parent_trait_name {
+            #(#original_trait_items)*
+        }
+
+        #decl_macro_code
+    };
+    TokenStream::from(expanded)
+}
+
+/// attribute macro: used to tag Rust struct like: `#[trait_var(<trait_name>)]`
+#[proc_macro_attribute]
+pub fn trait_var(args: TokenStream, input: TokenStream) -> TokenStream {
+    // parse attributes
+    let args = parse_macro_input!(args as syn::AttributeArgs);
+    let trait_name = match args.first().unwrap() {
+        syn::NestedMeta::Meta(syn::Meta::Path(path)) => path.get_ident().unwrap(),
+        _ => panic!("Expected a trait name"),
+    };
+
+    // parse input, only accept `struct`
+    let input_struct = parse_macro_input!(input as syn::ItemStruct);
+    let visible = &input_struct.vis;
+    let struct_name = &input_struct.ident;
+
+    // handle different visibility of the struct fields
+    let struct_fields = input_struct.fields.iter().map(|f| {
+        let field_vis = &f.vis;
+        let field_ident = &f.ident;
+        let field_ty = &f.ty;
+        quote! {
+            #field_vis #field_ident: #field_ty,
+        }
+    });
+
+    // expand code
+    let trait_macro_name = Ident::new(&format!("{}_for_struct", trait_name), trait_name.span());
+    let parent_trait_name = Ident::new(&format!("_{}", trait_name), trait_name.span());
+    let expanded = quote! {
+        #trait_macro_name! {
+            (#parent_trait_name)
+            // (#hidden_trait_path) // TODO: delete?
+            #visible struct #struct_name {
+                #(#struct_fields)*
             }
         }
     };
+
+    // return
+    expanded.into()
 }

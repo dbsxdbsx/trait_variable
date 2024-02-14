@@ -96,7 +96,6 @@ dependencies = [
 [[package]]
 name = "trait-variable-macros"
 version = "0.3.3"
-source = "git+https://github.com/dbsxdbsx/trait_variable_macros.git#668b6b0e076e7268ec9e26fa5a027ffa64d4e476"
 dependencies = [
  "lazy_static",
  "once_cell",
@@ -105,15 +104,6 @@ dependencies = [
  "quote",
  "regex",
  "syn",
-]
-
-[[package]]
-name = "trait_variable"
-version = "0.3.3"
-dependencies = [
- "paste",
- "quote",
- "trait-variable-macros",
 ]
 
 [[package]]

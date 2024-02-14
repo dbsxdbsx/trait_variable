@@ -71,7 +71,7 @@
             "label": "runBuiltProgram",
             "type": "shell",
             "windows": {
-                "command": "cd ./target/Release/; ./trait_variable",
+                "command": "cd ./target/Release/; ./trait-variable-macros",
                 "options": {
                     "shell": {
                         "executable": "powershell",
@@ -79,7 +79,7 @@
                 }
             },
             "linux": {
-                "command": "cd ./target/Release/ && ./trait_variable",
+                "command": "cd ./target/Release/ && ./trait-variable-macros",
             },
         }
     ]

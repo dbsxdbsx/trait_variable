@@ -6,7 +6,7 @@
         "name": "(Windows) 调试启动",
         "type": "cppvsdbg",
         "request": "launch",
-        "program": "${workspaceFolder}/target/debug/trait_variable",
+        "program": "${workspaceFolder}/target/debug/trait-variable-macros",
         "args": [],
         "stopAtEntry": false,
         "cwd": "${workspaceFolder}",
