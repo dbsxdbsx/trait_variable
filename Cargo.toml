@@ -1,6 +1,6 @@
 [package]
     name="trait-variable-macros"
-    version="0.3.3"
+    version="0.3.4"
     edition="2021"
     description="Make variable fields feasible in trait definition(the procedural macros part)."
     repository="https://github.com/dbsxdbsx/trait_variable_macros"
