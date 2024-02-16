@@ -129,14 +129,13 @@ pub fn trait_variable(input: TokenStream) -> TokenStream {
             });
 
     // 3. refine the body of methods from the original trait
-    // let original_trait_items = trait_items;
     let original_trait_items = trait_items.into_iter().map(|item| {
         if let TraitItem::Method(mut method) = item {
             if let Some(body) = &mut method.default {
-                // Use regular expressions or other methods to find and replace text
+                // 1. match trait variable fields with prefix `self.`
                 let re = Regex::new(r"self\.([a-zA-Z_]\w*)").unwrap();
                 let body_str = quote!(#body).to_string();
-                let new_body_str = re
+                let mut new_body_str = re
                     .replace_all(&body_str, |caps: &Captures| {
                         let name = &caps[1];
                         // Check if it is followed by braces
@@ -147,7 +146,14 @@ pub fn trait_variable(input: TokenStream) -> TokenStream {
                         }
                     })
                     .to_string();
-
+                // 2. match trait variable fields with prefix `self_mut.`
+                let re = Regex::new(r"(self_mut\.)([a-zA-Z_]\w*)").unwrap();
+                new_body_str = re
+                    .replace_all(&new_body_str, |caps: &Captures| {
+                        format!("self._{}_mut()", &caps[2])
+                    })
+                    .to_string();
+                // 3. convert the replaced string back to TokenStream
                 let new_body: TokenStream = new_body_str.parse().expect("Failed to parse new body");
                 method.default = Some(syn::parse(new_body).expect("Failed to parse method body"));
             }

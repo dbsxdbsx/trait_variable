@@ -10,7 +10,7 @@ trait_variable! {
         // 2.the order of the function definition doesn't matter
         fn get_print_field_x(&self) -> &i32{
             // println!("x: `{}`", self._x());// ok
-            println!("x: `{}`", self.x);// TODO: make self.<> valid
+            println!("x: `{}`", self.x);// ok, `self.x` would convert to `self._x()`
             // self._x() // ok
             self.x
         }
@@ -18,13 +18,13 @@ trait_variable! {
         fn get_print_field_z(&self) -> &f32;
         fn change_get_print_field_z(&mut self, func: fn(&mut f32))->&f32 {
             // modify the field by assignment operation
-            // (*self._z_mut()) = new_num; // ok
-            // &mut self.z = new_num; // TODO
+            // *self._z_mut() = 5.; // ok
+            // self.z = 4; // TODO
 
             // modify the field by function call
-            func(&mut self._z_mut()); // ok
-            // self.test();
-            // self.test(&mut self.z);
+            // func(self._z_mut()); // ok
+            // func(&mut self.z); // TODO: lint error  by compiler with `&mut`
+            func(self_mut.z); // ok: `self_mut.z` would convert to `self._z_mut()`
             println!("z: `{}`",self.z);
 
             self.z
