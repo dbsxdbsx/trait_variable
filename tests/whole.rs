@@ -29,7 +29,7 @@ fn test() {
                 *z = -*z;
             }
         ),
-        &3.14
+        &-3.14
     );
-    assert_eq!(s.get_cloned_trait_field(), (-2, s.y, 3.14));
+    assert_eq!(s.get_cloned_trait_field(), (-2, s.y, -3.14));
 }

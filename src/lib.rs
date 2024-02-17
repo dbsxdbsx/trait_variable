@@ -136,7 +136,7 @@ pub fn trait_variable(input: TokenStream) -> TokenStream {
                 let parsed_body: syn::Block =
                     syn::parse2(quote! { #body }).expect("Failed to parse method body");
                 let mut new_stmts = Vec::new();
-                let re = Regex::new(r"\bself\.([a-zA-Z_]\w*)").unwrap(); // TODO: compact the regex 2ed part?
+                let re = Regex::new(r"\bself\.([a-zA-Z_]\w*)").unwrap();
                 let last_index = parsed_body.stmts.len() - 1;
                 // 遍历方法体中的每个语句
                 for (i, stmt) in parsed_body.stmts.into_iter().enumerate() {
