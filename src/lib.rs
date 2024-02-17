@@ -1,9 +1,9 @@
 extern crate proc_macro;
 
 use proc_macro::TokenStream;
-use quote::quote;
+use quote::{quote, ToTokens};
 use regex::{Captures, Regex};
-use syn::{braced, token, Visibility};
+use syn::{braced, parse_quote, token, Expr, ExprAssign, ExprPath, Member, Visibility};
 use syn::{
     parse::{Parse, ParseStream},
     parse_macro_input,
@@ -132,30 +132,240 @@ pub fn trait_variable(input: TokenStream) -> TokenStream {
     let original_trait_items = trait_items.into_iter().map(|item| {
         if let TraitItem::Method(mut method) = item {
             if let Some(body) = &mut method.default {
-                // 1. match trait variable fields with prefix `self.`
-                let re = Regex::new(r"self\.([a-zA-Z_]\w*)").unwrap();
-                let body_str = quote!(#body).to_string();
-                let mut new_body_str = re
-                    .replace_all(&body_str, |caps: &Captures| {
-                        let name = &caps[1];
-                        // Check if it is followed by braces
-                        if body_str.contains(&format!("{}(", name)) {
-                            format!("self.{}", name)
-                        } else {
-                            format!("self._{}()", name)
+                // 解析方法体为syn::Block
+                let parsed_body: syn::Block =
+                    syn::parse2(quote! { #body }).expect("Failed to parse method body");
+                let mut new_stmts = Vec::new();
+                let re = Regex::new(r"\bself\.([a-zA-Z_]\w*)").unwrap(); // TODO: compact the regex 2ed part?
+                let last_index = parsed_body.stmts.len() - 1;
+                // 遍历方法体中的每个语句
+                for (i, stmt) in parsed_body.stmts.into_iter().enumerate() {
+                    let is_last_stmt = i == last_index; // 检查是否是最后一个语句
+                    let refined_stmt = match stmt {
+                        // 对于表达式语句和带分号的表达式语句
+                        syn::Stmt::Semi(ref expr, semi) => {
+                            // 使用syn来分析表达式，判断是赋值表达式还是其他类型的表达式
+                            match expr {
+                                // 赋值表达式 // TODO: 只能等号？
+                                syn::Expr::Assign(assign_expr) => {
+                                    // 对赋值表达式的左侧进行处理
+                                    let left = &assign_expr.left;
+                                    let left_str = quote!(#left).to_string();
+                                    let new_left_str = re
+                                        .replace_all(&left_str, |caps: &Captures| {
+                                            format!("(*self._{}_mut())", &caps[1])
+                                        })
+                                        .to_string();
+                                    // 对赋值表达式的右侧进行处理
+                                    let right = &assign_expr.right;
+                                    let right_str = quote!(#right).to_string();
+                                    let new_right_str = re
+                                        .replace_all(&right_str, |caps: &Captures| {
+                                            format!("self._{}()", &caps[1]) // TODO: add (*<original>)?
+                                        })
+                                        .to_string();
+                                    // 重新构建赋值表达式
+                                    let new_expr_str =
+                                        format!("{} = {}", new_left_str, new_right_str);
+                                    let new_expr: syn::Expr = syn::parse_str(&new_expr_str)
+                                        .expect("Failed to parse new expr");
+                                    // 根据原始语句的类型添加到新语句列表
+                                    syn::Stmt::Semi(new_expr, semi)
+                                }
+                                // 复合赋值表达式，如 +=, -= 等
+                                syn::Expr::AssignOp(assign_op_expr) => {
+                                    let left = &assign_op_expr.left;
+                                    let left_str = quote!(#left).to_string();
+                                    let new_left_str = re
+                                        .replace_all(&left_str, |caps: &Captures| {
+                                            format!("(*self._{}_mut())", &caps[1])
+                                        })
+                                        .to_string();
+                                    // 对赋值表达式的右侧进行处理
+                                    let right = &assign_op_expr.right;
+                                    let right_str = quote!(#right).to_string();
+                                    let new_right_str = re
+                                        .replace_all(&right_str, |caps: &Captures| {
+                                            format!("self._{}()", &caps[1]) // TODO: add (*<original>)?
+                                        })
+                                        .to_string(); // 重新构建赋值表达式
+                                    let new_expr_str = format!(
+                                        "{} {} {}",
+                                        new_left_str,
+                                        assign_op_expr.op.to_token_stream(),
+                                        new_right_str
+                                    );
+                                    let new_expr: syn::Expr = syn::parse_str(&new_expr_str)
+                                        .expect("Failed to parse new expr");
+                                    // 根据原始语句的类型添加到新语句列表
+                                    syn::Stmt::Semi(new_expr, semi)
+                                }
+                                // 如果表达式是宏调用, 将宏调用中的self.<field>替换为self._<field>()
+                                syn::Expr::Macro(expr_macro) => {
+                                    let macro_tokens = &expr_macro.mac.tokens;
+                                    let macro_str = quote!(#macro_tokens).to_string();
+                                    let new_macro_str = re
+                                        .replace_all(&macro_str, |caps: &Captures| {
+                                            format!("*self._{}()", &caps[1])
+                                        })
+                                        .to_string();
+                                    // 将替换后的字符串转换回TokenStream
+                                    let new_tokens =
+                                        new_macro_str.parse().expect("Failed to parse tokens");
+                                    // 构建新的宏调用表达式
+                                    let new_macro = syn::Expr::Macro(syn::ExprMacro {
+                                        attrs: expr_macro.attrs.clone(),
+                                        mac: syn::Macro {
+                                            path: expr_macro.mac.path.clone(),
+                                            bang_token: expr_macro.mac.bang_token,
+                                            delimiter: expr_macro.mac.delimiter.clone(),
+                                            tokens: new_tokens,
+                                        },
+                                    });
+                                    // 将新的宏调用表达式包装回Stmt::Semi
+                                    syn::Stmt::Semi(new_macro, semi)
+                                }
+                                // 如果表达式是函数调用
+                                syn::Expr::Call(expr_call) => {
+                                    // way1: use syn
+                                    // 遍历函数调用的参数
+                                    let mut new_args = Vec::new();
+                                    for arg in &expr_call.args {
+                                        if let syn::Expr::Reference(expr_ref) = arg {
+                                            // 检查是否是 `&mut self.<field>` 形式
+                                            if expr_ref.mutability.is_some() {
+                                                // 如果有 `mut` 关键字
+                                                if let syn::Expr::Path(expr_path) = &*expr_ref.expr
+                                                {
+                                                    if expr_path.path.is_ident("sxxxelf") {
+                                                        // 替换为 `self._<field>_mut()`
+                                                        let field_name = expr_path
+                                                            .path
+                                                            .segments
+                                                            .last()
+                                                            .unwrap()
+                                                            .ident
+                                                            .to_string();
+                                                        let new_arg = syn::parse_str::<syn::Expr>(
+                                                            &format!("self._{}_mut()", field_name),
+                                                        )
+                                                        .unwrap();
+                                                        new_args.push(new_arg);
+                                                        continue;
+                                                    }
+                                                }
+                                            }
+                                        }
+                                        // 对于其他参数，使用原始参数
+                                        new_args.push(arg.clone());
+                                    }
+                                    // way2: use regex, still wrong with compile error
+                                    // // 定义正则表达式
+                                    // let re_immutable =
+                                    //     Regex::new(r"& self\.([a-zA-Z_]\w*)").unwrap();
+                                    // let re_mutable =
+                                    //     Regex::new(r"&mut self\.([a-zA-Z_]\w*)").unwrap();
+                                    // // 遍历函数调用的参数
+                                    // let mut new_args = Vec::new();
+                                    // for arg in &expr_call.args {
+                                    //     let arg_str = quote!(#arg).to_string();
+                                    //     // 首先尝试匹配 &mut self.<field>
+                                    //     let new_arg_str = if let Some(caps) =
+                                    //         re_mutable.captures(&arg_str)
+                                    //     {
+                                    //         arg_str.replace(
+                                    //             &caps[0],
+                                    //             &format!("self._{}_mut()", &caps[1]),
+                                    //         )
+                                    //     } else if let Some(caps) = re_immutable.captures(&arg_str) {
+                                    //         // 如果没有匹配到 &mut self.<field>，则尝试匹配 &self.<field>
+                                    //         arg_str
+                                    //             .replace(&caps[0], &format!("self._{}()", &caps[1]))
+                                    //     } else {
+                                    //         // 如果都没有匹配到，保持原样
+                                    //         arg_str
+                                    //     };
+                                    //     // 将替换后的字符串转换回syn::Expr
+                                    //     let new_arg: syn::Expr = syn::parse_str(&new_arg_str)
+                                    //         .expect("Failed to parse new arg");
+                                    //     new_args.push(new_arg);
+                                    // }
+
+                                    // 构建新的函数调用表达式
+                                    let new_expr_call = syn::ExprCall {
+                                        attrs: expr_call.attrs.clone(),
+                                        func: expr_call.func.clone(),
+                                        paren_token: expr_call.paren_token,
+                                        args: syn::punctuated::Punctuated::from_iter(new_args),
+                                    };
+                                    // 将新的函数调用表达式包装回Stmt::Semi或Stmt::Expr
+                                    syn::Stmt::Semi(syn::Expr::Call(new_expr_call), semi)
+                                }
+                                // 其他类型的表达式(like trail expression)
+                                _ => {
+                                    // TODO: block refine
+                                    if is_last_stmt {
+                                        // 如果是最后一个语句（尾表达式），则特殊处理
+                                        let expr_str = quote!(#expr).to_string();
+                                        let new_expr_str = re
+                                            .replace_all(&expr_str, |caps: &Captures| {
+                                                format!("self._{}()", &caps[1])
+                                            })
+                                            .to_string();
+                                        let new_expr: syn::Expr = syn::parse_str(&new_expr_str)
+                                            .expect("Failed to parse new expr");
+                                        syn::Stmt::Expr(new_expr)
+                                    } else {
+                                        // 如果不是尾表达式，保持原样
+                                        stmt.clone()
+                                    }
+                                }
+                            }
                         }
-                    })
-                    .to_string();
-                // 2. match trait variable fields with prefix `self_mut.`
-                let re = Regex::new(r"(self_mut\.)([a-zA-Z_]\w*)").unwrap();
-                new_body_str = re
-                    .replace_all(&new_body_str, |caps: &Captures| {
-                        format!("self._{}_mut()", &caps[2])
-                    })
-                    .to_string();
-                // 3. convert the replaced string back to TokenStream
-                let new_body: TokenStream = new_body_str.parse().expect("Failed to parse new body");
-                method.default = Some(syn::parse(new_body).expect("Failed to parse method body"));
+                        syn::Stmt::Expr(ref expr) => {
+                            let expr_str = quote!(#expr).to_string();
+                            let new_expr_str = re
+                                .replace_all(&expr_str, |caps: &Captures| {
+                                    format!("self._{}()", &caps[1])
+                                })
+                                .to_string();
+                            let new_expr: syn::Expr =
+                                syn::parse_str(&new_expr_str).expect("Failed to parse new expr");
+                            syn::Stmt::Expr(new_expr)
+                        }
+                        // 非表达式的类型
+                        _ => {
+                            // stmt
+                            //
+                            let stmt_str = quote!(#stmt).to_string();
+                            let new_stmt_str = re
+                                .replace_all(&stmt_str, |caps: &Captures| {
+                                    // 检查是否需要考虑可变性
+                                    let field_name = &caps[1];
+                                    // 这里我们假设所有的字段访问都不需要考虑可变性，直接替换为self._<field_name>()
+                                    // 实际情况可能需要根据上下文判断是否需要使用self._<field_name>_mut()
+                                    format!("self._{}()", field_name)
+                                })
+                                .to_string();
+                            let new_stmt: syn::Stmt =
+                                syn::parse_str(&new_stmt_str).expect("Failed to parse new stmt");
+                            new_stmt
+                        }
+                    };
+                    new_stmts.push(refined_stmt);
+                }
+
+                // 将修改后的语句重新组装成方法体
+                let new_body = syn::Block {
+                    brace_token: parsed_body.brace_token,
+                    stmts: new_stmts,
+                };
+
+                // 将新的方法体设置回method.default
+                method.default = Some(
+                    syn::parse(quote!(#new_body).into())
+                        .expect("Failed to parse modified method body"),
+                );
             }
             quote! { #method }
         } else {

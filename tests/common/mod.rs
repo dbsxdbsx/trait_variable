@@ -8,25 +8,44 @@ trait_variable! {
         pub z: f32;
 
         // 2.the order of the function definition doesn't matter
-        fn get_print_field_x(&self) -> &i32{
-            // println!("x: `{}`", self._x());// ok
-            println!("x: `{}`", self.x);// ok, `self.x` would convert to `self._x()`
-            // self._x() // ok
-            self.x
+        fn print_all_trait_fields(&self) {
+            println!("x: `{}`, y: `{}`, z: `{}`", self.x, self.y, self.z); // for macro param `self.x`, it would convert to `*self._x()`
+            eprintln!("x: `{}`, y: `{}`, z: `{}`", self.x, self.y, self.z); // the same as above
+            // println!("x: `{self.x}`"); // the **Inline Replacement Style** is not supported yet
         }
+        fn get_print_field_x(&self) -> &i32{
+            println!("x: `{}`", self.x);
+            return self.x;
+        }
+
+        fn return_x_plus_a_num(&self, num: i32) -> i32 {
+            return self.x + num;
+        }
+
         fn get_print_field_y(&self) -> &bool;
+        fn return_y_clone(&self) -> bool {
+            self.y.clone()
+        }
         fn get_print_field_z(&self) -> &f32;
-        fn change_get_print_field_z(&mut self, func: fn(&mut f32))->&f32 {
+        fn change_get_print_field_z(&mut self, ref_z: fn(&f32), ref_z_mut: fn(&mut f32))->&f32 {
+            let bak_z = self.z.clone();
+            // self.z = if self.z>0. { -self.z } else { self.z }; // TODO:
+
             // modify the field by assignment operation
-            // *self._z_mut() = 5.; // ok
-            // self.z = 4; // TODO
+            self.z = 4. + self.z ; // ok, the left `self.z` would convert to `(*self._z_mut())`, and the right `self.z` would convert to `*self._z()`
+            self.z += 4. + self.z ; // ok, the left `self.z` would convert to `(*self._z_mut())`, and the right `self.z` would convert to `*self._z()`
+            self.z -= 4. + self.z ; // ok, the expand logic is the same as `+=`
+            self.z *= 4. + self.z ; // ok, the expand logic is the same as `+=`
+            self.z /= 4. + self.z ; // ok, the expand logic is the same as `+=`
+            // self.z = 4+ func(&mut self.z); // TODO:
 
             // modify the field by function call
-            // func(self._z_mut()); // ok
-            // func(&mut self.z); // TODO: lint error  by compiler with `&mut`
-            func(self_mut.z); // ok: `self_mut.z` would convert to `self._z_mut()`
-            println!("z: `{}`",self.z);
+            // func(&self._x(), self._z_mut()); // ok, the left `self.x` would convert to `*self._x()`, and the right `self.z` would convert to `*self._z_mut()`
+            // ref_z(&self.z); // TODO: test with both mutable and immutable reference trait fields
+            // ref_z_mut(&mut self.z); // ok, the right `self.z` would convert to `*self._z_mut()`
 
+            // return
+            self.z = bak_z;
             self.z
         }
 

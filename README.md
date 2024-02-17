@@ -24,8 +24,10 @@ struct MyStruct {
 ```
 
 ## TODO list
+ - [] 重构match arm，(if block表达式）： self.z + 4.0 测试， &mut self.z 参数测试，添加原本就有的非field函数`()`的测试，;
  - [] add more test cases for various trait field types, like Option, String, Vec, HashMap, etc;
  - [] test with trait with associated types, generic types, async methods, etc;
+ - [] test left value with tuple, like `(<trait_field>, _)`;
  - [] omit `use <trait_module>::<_hidden_parent_trait_name>;` statement when using `#[trait_var(<trait_name>)]` for a struct in an extra module;
  - [] try to let smart intellisense extension(like `Rust Analyzer`) support idents inside macro(Maybe impossible).
 
