@@ -1,4 +1,6 @@
 extern crate proc_macro;
+mod utils;
+use crate::utils::process_assignment_expr;
 
 use proc_macro::TokenStream;
 use quote::{quote, ToTokens};
@@ -146,58 +148,18 @@ pub fn trait_variable(input: TokenStream) -> TokenStream {
                         syn::Stmt::Semi(ref expr, semi) => {
                             // 使用syn来分析表达式，判断是赋值表达式还是其他类型的表达式
                             match expr {
-                                // 赋值表达式 // TODO: 只能等号？
                                 syn::Expr::Assign(assign_expr) => {
-                                    // 对赋值表达式的左侧进行处理
-                                    let left = &assign_expr.left;
-                                    let left_str = quote!(#left).to_string();
-                                    let new_left_str = re
-                                        .replace_all(&left_str, |caps: &Captures| {
-                                            format!("(*self._{}_mut())", &caps[1])
-                                        })
-                                        .to_string();
-                                    // 对赋值表达式的右侧进行处理
-                                    let right = &assign_expr.right;
-                                    let right_str = quote!(#right).to_string();
-                                    let new_right_str = re
-                                        .replace_all(&right_str, |caps: &Captures| {
-                                            format!("self._{}()", &caps[1]) // TODO: add (*<original>)?
-                                        })
-                                        .to_string();
-                                    // 重新构建赋值表达式
-                                    let new_expr_str =
-                                        format!("{} = {}", new_left_str, new_right_str);
-                                    let new_expr: syn::Expr = syn::parse_str(&new_expr_str)
-                                        .expect("Failed to parse new expr");
-                                    // 根据原始语句的类型添加到新语句列表
+                                    let new_expr = process_assignment_expr(
+                                        &re,
+                                        &syn::Expr::Assign(assign_expr.clone()),
+                                    );
                                     syn::Stmt::Semi(new_expr, semi)
                                 }
-                                // 复合赋值表达式，如 +=, -= 等
                                 syn::Expr::AssignOp(assign_op_expr) => {
-                                    let left = &assign_op_expr.left;
-                                    let left_str = quote!(#left).to_string();
-                                    let new_left_str = re
-                                        .replace_all(&left_str, |caps: &Captures| {
-                                            format!("(*self._{}_mut())", &caps[1])
-                                        })
-                                        .to_string();
-                                    // 对赋值表达式的右侧进行处理
-                                    let right = &assign_op_expr.right;
-                                    let right_str = quote!(#right).to_string();
-                                    let new_right_str = re
-                                        .replace_all(&right_str, |caps: &Captures| {
-                                            format!("self._{}()", &caps[1]) // TODO: add (*<original>)?
-                                        })
-                                        .to_string(); // 重新构建赋值表达式
-                                    let new_expr_str = format!(
-                                        "{} {} {}",
-                                        new_left_str,
-                                        assign_op_expr.op.to_token_stream(),
-                                        new_right_str
+                                    let new_expr = process_assignment_expr(
+                                        &re,
+                                        &syn::Expr::AssignOp(assign_op_expr.clone()),
                                     );
-                                    let new_expr: syn::Expr = syn::parse_str(&new_expr_str)
-                                        .expect("Failed to parse new expr");
-                                    // 根据原始语句的类型添加到新语句列表
                                     syn::Stmt::Semi(new_expr, semi)
                                 }
                                 // 如果表达式是宏调用, 将宏调用中的self.<field>替换为self._<field>()
@@ -227,6 +189,7 @@ pub fn trait_variable(input: TokenStream) -> TokenStream {
                                 }
                                 // 如果表达式是函数调用
                                 syn::Expr::Call(expr_call) => {
+                                    // TODO: issue,
                                     // way1: use syn
                                     // 遍历函数调用的参数
                                     let mut new_args = Vec::new();
