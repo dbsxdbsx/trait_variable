@@ -26,21 +26,36 @@ trait_variable! {
         fn return_y_clone(&self) -> bool {
             self.y.clone()
         }
+
+        /// it is made with no param to test with trait field
+        fn get_number(&self) -> f32 {
+            1.1
+        }
+
         fn get_print_field_z(&self) -> &f32;
         fn change_get_print_field_z(&mut self, ref_z: fn(&f32), ref_z_mut: fn(&mut f32))->&f32 {
             let bak_z = self.z.clone();
+            // check simple expression
             self.z = 4.;
-            self.z = if self.z > 0. { -self.z } else { self.z }; // TODO: ok but not complete for complex expression in blocks
+            assert!(self.z == 4.); // test `assert` macro while also checking the result of the expression
+            self.z = 4. + self.get_number()+ self.z;
+            assert_eq!(self.z, 9.1); // test `assert_eq` macro while also checking the result of the expression
+            // assert!(14.2 - (4. + self.get_number()+ self.z)<0.01); // test assert with complex expression
+            assert_ne!(self.z, 4.); // test `assert_ne` macro while also checking the result of the expression
 
-            // modify the field by assignment operation
-            self.z = 4. + self.z ; // ok, the left `self.z` would convert to `(*self._z_mut())`, and the right `self.z` would convert to `*self._z()`
+            // check complex expression
+            self.z = 4. + self.z; // ok, the left `self.z` would convert to `(*self._z_mut())`, and the right `self.z` would convert to `*self._z()`
             self.z += 4. + self.z ; // ok, the left `self.z` would convert to `(*self._z_mut())`, and the right `self.z` would convert to `*self._z()`
-            self.z -= 4. + self.z ; // ok, the expand logic is the same as `+=`
+            self.z -= 4. + self.z + self.get_number(); // ok, the expand logic is the same as `+=`
             self.z *= 4. + self.z ; // ok, the expand logic is the same as `+=`
             self.z /= 4. + self.z ; // ok, the expand logic is the same as `+=`
-            // self.z = 4+ func(&mut self.z); // TODO:
 
-            // modify the field by function call
+            // check if else expression
+            self.z = if self.z > 0. { -self.z } else { self.z }; // TODO: ok but not complete for complex expression in blocks
+
+
+
+            // TODO: modify the field by function call
             // func(&self._x(), self._z_mut()); // ok, the left `self.x` would convert to `*self._x()`, and the right `self.z` would convert to `*self._z_mut()`
             // ref_z(&self.z); // TODO: test with both mutable and immutable reference trait fields
             // ref_z_mut(&mut self.z); // ok, the right `self.z` would convert to `*self._z_mut()`

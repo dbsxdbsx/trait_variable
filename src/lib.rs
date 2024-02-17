@@ -1,6 +1,6 @@
 extern crate proc_macro;
 mod utils;
-use crate::utils::process_assignment_expr;
+use crate::utils::{process_assignment_expr, replace_self_field};
 
 use proc_macro::TokenStream;
 use quote::{quote, ToTokens};
@@ -165,12 +165,7 @@ pub fn trait_variable(input: TokenStream) -> TokenStream {
                                 // 如果表达式是宏调用, 将宏调用中的self.<field>替换为self._<field>()
                                 syn::Expr::Macro(expr_macro) => {
                                     let macro_tokens = &expr_macro.mac.tokens;
-                                    let macro_str = quote!(#macro_tokens).to_string();
-                                    let new_macro_str = re
-                                        .replace_all(&macro_str, |caps: &Captures| {
-                                            format!("*self._{}()", &caps[1])
-                                        })
-                                        .to_string();
+                                    let new_macro_str = replace_self_field(macro_tokens, true);
                                     // 将替换后的字符串转换回TokenStream
                                     let new_tokens =
                                         new_macro_str.parse().expect("Failed to parse tokens");
@@ -200,7 +195,7 @@ pub fn trait_variable(input: TokenStream) -> TokenStream {
                                                 // 如果有 `mut` 关键字
                                                 if let syn::Expr::Path(expr_path) = &*expr_ref.expr
                                                 {
-                                                    if expr_path.path.is_ident("sxxxelf") {
+                                                    if expr_path.path.is_ident("self") {
                                                         // 替换为 `self._<field>_mut()`
                                                         let field_name = expr_path
                                                             .path

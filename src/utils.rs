@@ -65,20 +65,30 @@ pub fn process_assignment_expr(re: &Regex, expr: &Expr) -> Expr {
 /// # 返回值
 ///
 /// 返回替换后的表达式字符串
-fn replace_self_field<T: ToTokens>(expr: &T, deref: bool) -> String {
+/// 替换表达式中的 `self.<field>` 模式，除非它后面紧跟着一个左括号 `(`
+pub fn replace_self_field<T: ToTokens>(expr: &T, deref: bool) -> String {
     let re = Regex::new(r"\bself\.([a-zA-Z_]\w*)").unwrap();
     let expr_str = quote!(#expr).to_string();
-    let new_expr_str = re
-        .replace_all(&expr_str, |caps: &Captures| {
-            // 如果在条件表达式中匹配到 `self.<field>`，则替换为 `(*self._<name>())`
-            if deref {
-                format!("(*self._{}())", &caps[1])
+    let mut new_expr_str = String::new();
+    let mut last_end = 0;
+
+    for cap in re.captures_iter(&expr_str) {
+        let match_start = cap.get(0).unwrap().start();
+        let match_end = cap.get(0).unwrap().end();
+
+        // if followed with `(`, no need replacement
+        if expr_str[match_end..].chars().next() != Some('(') {
+            let replacement = if deref {
+                format!("(*self._{}())", &cap[1])
             } else {
-                format!("self._{}()", &caps[1])
-            }
-        })
-        .to_string();
+                format!("self._{}()", &cap[1])
+            };
+            new_expr_str.push_str(&expr_str[last_end..match_start]);
+            new_expr_str.push_str(&replacement);
+            last_end = match_end;
+        }
+    }
+    new_expr_str.push_str(&expr_str[last_end..]);
 
     new_expr_str
-    // syn::parse_str(&new_expr_str).expect("Failed to parse new expr")
 }

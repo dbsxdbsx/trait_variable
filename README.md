@@ -24,7 +24,7 @@ struct MyStruct {
 ```
 
 ## TODO list
- - [] 重构match arm，(if block表达式,  &mut self.z 参数测试，添加原本就有的非field函数`()`的测试，;
+ - [] replace_self_field重构， if block表达式（复杂模式）,  &mut self.z 参数测试;
   to English comment;
  - [] add more test cases for various trait field types, like Option, String, Vec, HashMap, etc;
  - [] test with trait with associated types, generic types, async methods, etc;
