@@ -29,7 +29,8 @@ trait_variable! {
         fn get_print_field_z(&self) -> &f32;
         fn change_get_print_field_z(&mut self, ref_z: fn(&f32), ref_z_mut: fn(&mut f32))->&f32 {
             let bak_z = self.z.clone();
-            // self.z = if self.z>0. { -self.z } else { self.z }; // TODO:
+            self.z = 4.;
+            self.z = if self.z > 0. { -self.z } else { self.z }; // TODO: ok but not complete for complex expression in blocks
 
             // modify the field by assignment operation
             self.z = 4. + self.z ; // ok, the left `self.z` would convert to `(*self._z_mut())`, and the right `self.z` would convert to `*self._z()`
@@ -72,7 +73,9 @@ pub struct MyStruct {
 //      pub b: String,
 //     }
 // }
+//↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑struct definition↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑
 
+/*↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓struct impl↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓*/
 impl MyStruct {
     pub fn new(a: i32, b: String, x: i32, y: bool, z: f32) -> Self {
         Self { a, b, x, y, z }
@@ -97,37 +100,4 @@ impl MyTrait for MyStruct {
         &self.z
     }
 }
-//↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑struct definition↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑
-// TODO: delete the following code with file `test_struct.rs`
-// use trait_variable_macros::trait_variable;
-// mod test_struct;
-// pub use test_struct::MyStruct;
-
-// trait_variable! {
-//     pub trait MyTrait {  // feel free to add `pub` when needed
-//         // 1.put the variable fields definition at the top of the target trait before any function
-//             x: i32;
-//         pub y: bool;
-//         pub z: f32;
-
-//         // 2.the order of the function definition doesn't matter
-//         fn get_print_field_x(&self) -> &i32{
-//             println!("x: `{}`", self._x());// TODO: make self.<> valid
-//             self._x()
-//             // &self.x
-//         }
-//         fn get_print_field_y(&self) -> &bool;
-//         fn get_print_field_z(&self) -> &f32;
-//         fn change_and_print_z(&mut self, _new_num: f32) {
-//             // self.z = new_num; // TODO
-//             // println!("z: `{}`",self.z);
-//         }
-//     }
-// }
-
-// #[macro_export]
-// macro_rules! my_macro {
-//     () => {
-//         println!("Hello from macro in module a");
-//     };
-// }
+/*↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑struct impl↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑*/

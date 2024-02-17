@@ -148,20 +148,20 @@ pub fn trait_variable(input: TokenStream) -> TokenStream {
                         syn::Stmt::Semi(ref expr, semi) => {
                             // 使用syn来分析表达式，判断是赋值表达式还是其他类型的表达式
                             match expr {
-                                syn::Expr::Assign(assign_expr) => {
-                                    let new_expr = process_assignment_expr(
+                                syn::Expr::Assign(assign_expr) => syn::Stmt::Semi(
+                                    process_assignment_expr(
                                         &re,
                                         &syn::Expr::Assign(assign_expr.clone()),
-                                    );
-                                    syn::Stmt::Semi(new_expr, semi)
-                                }
-                                syn::Expr::AssignOp(assign_op_expr) => {
-                                    let new_expr = process_assignment_expr(
+                                    ),
+                                    semi,
+                                ),
+                                syn::Expr::AssignOp(assign_op_expr) => syn::Stmt::Semi(
+                                    process_assignment_expr(
                                         &re,
                                         &syn::Expr::AssignOp(assign_op_expr.clone()),
-                                    );
-                                    syn::Stmt::Semi(new_expr, semi)
-                                }
+                                    ),
+                                    semi,
+                                ),
                                 // 如果表达式是宏调用, 将宏调用中的self.<field>替换为self._<field>()
                                 syn::Expr::Macro(expr_macro) => {
                                     let macro_tokens = &expr_macro.mac.tokens;
