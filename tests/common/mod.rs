@@ -74,13 +74,13 @@ trait_variable! {
 //↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑trait definition↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑
 
 //↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓struct definition↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓
-// way1: use the attribute macro to generate the struct (Recommended)
+// way1: use the attribute macro to expand the struct (Recommended)
 #[trait_var(MyTrait)]
 pub struct MyStruct {
     a: i32,
     pub b: String,
 }
-// way2: use the hidden declarative macro to generate the struct (Not recommended)
+// way2: use the hidden declarative macro to expand the struct (Not recommended)
 // MyTrait_for_struct! {
 //     (_MyTrait) // inputput the hiddent parent trait
 //     pub struct MyStruct { // feel free to add `pub` when needed
