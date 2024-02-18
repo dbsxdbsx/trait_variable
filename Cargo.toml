@@ -1,6 +1,6 @@
 [package]
     name="trait_variable"
-    version="0.4.2"
+    version="0.4.3"
     edition="2021"
     description="Make variable fields feasible in trait definition."
     repository="https://github.com/dbsxdbsx/trait_variable"

@@ -17,8 +17,6 @@ Then, incorporate the macros into your Rust code as follows:
 ```rust
 /*↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓trait definition↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓*/
 use trait_variable::{trait_var, trait_variable};
-
-
 trait_variable! {
     pub(crate) trait MyTrait {  // feel free to add `pub` when needed
         // 1.put the variable fields definition at the TOP of the target trait before any function
@@ -67,7 +65,7 @@ impl MyTrait for MyStruct {
     fn print_all(&self) {
         println!("a: `{}`", self.a);
         println!("b: `{}`", self.b);
-        println!("x: `{}`", self.x);
+        self.print_x();
         println!("y: `{}`", self.y);
     }
 }
@@ -77,7 +75,8 @@ impl MyTrait for MyStruct {
 fn test() {
     let s = MyStruct::new(1, "hello".into(), -2, true);
     s.print_all();
-    assert_eq!(s.y, true);
+    assert_eq!(s.x, -2); // if not in a unit test, then `self.x`` is not accessible, since it is private
+    assert_eq!(s.y, true); // s.x is private
 }
 ```
 
