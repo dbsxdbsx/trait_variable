@@ -1,3 +1,6 @@
+//! # Complicated Usage of the `trait_variable` Macro
+//!
+//! This file demonstrates a more complete and complicated usage of the `trait_variable` macro.
 mod common;
 use common::MyStruct;
 
@@ -16,7 +19,7 @@ fn test() {
     // let x = s.x; // Not visible
     let y = s.y;
 
-    // 3. test methods for the struct fields    
+    // 3. test methods for the struct fields
     assert_eq!(s.get_print_field_a(), &1);
     assert_eq!(s.get_print_field_b(), &b);
     assert_eq!(s.get_print_field_x(), &-2);

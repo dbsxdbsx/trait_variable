@@ -2,7 +2,7 @@
 use trait_variable::{trait_var, trait_variable};
 trait_variable! {
     pub(crate) trait MyTrait {  // feel free to add `pub` when needed
-        // 1.put the variable fields definition at the top of the target trait before any function
+        // 1.put the variable fields definition at the TOP of the target trait before any function
             x: i32;
         pub y: bool;
         pub z: f32;
@@ -13,6 +13,7 @@ trait_variable! {
             eprintln!("x: `{}`, y: `{}`, z: `{}`", self.x, self.y, self.z); // the same as above
             // println!("x: `{self.x}`"); // the **Inline Replacement Style** is not supported yet
         }
+
         fn get_print_field_x(&self) -> &i32{
             println!("x: `{}`", self.x);
             return self.x;
@@ -40,7 +41,7 @@ trait_variable! {
             assert!(self.z == 4.); // test `assert` macro while also checking the result of the expression
             self.z = 4. + self.get_number()+ self.z;
             assert_eq!(self.z, 9.1); // test `assert_eq` macro while also checking the result of the expression
-            // assert!(14.2 - (4. + self.get_number()+ self.z)<0.01); // test assert with complex expression
+            assert!(14.2 - (4. + self.get_number()+ self.z)<0.01); // test assert with complex expression
             assert_ne!(self.z, 4.); // test `assert_ne` macro while also checking the result of the expression
 
             // check complex expression
@@ -82,7 +83,7 @@ pub struct MyStruct {
 // way2: use the hidden declarative macro to generate the struct (Not recommended)
 // MyTrait_for_struct! {
 //     (_MyTrait) // inputput the hiddent parent trait
-//     pub struct MyStruct { // TODO: feel free to add `pub` when needed
+//     pub struct MyStruct { // feel free to add `pub` when needed
 //      // feel free to add any fields as usual or leave it empty
 //      a: i32,
 //      pub b: String,
