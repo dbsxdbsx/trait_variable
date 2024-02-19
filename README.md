@@ -1,7 +1,7 @@
 # Trait Variable
-Make variable fields feasible in trait definition by procedural macros.
+Making variable fields feasible in trait definition for Rust.
 
-This crate enables the use of variable fields in trait definitions through procedural macros along with structs, simulating inheritance found in languages like C++ and Python. This functionality is achieved without modifying Rust's core language features, offering a workaround until a [similar feature](https://github.com/rust-lang/rfcs/pull/1546) might be officially introduced in Rust.
+Specifically, this crate enables the use of variable fields in trait definitions through procedural macros along with structs, simulating inheritance found in languages like C++ and Python. This functionality is achieved without modifying Rust's core language features, offering a workaround until a [similar feature](https://github.com/rust-lang/rfcs/pull/1546) might be officially introduced in Rust.
 
 ## Usage
 
