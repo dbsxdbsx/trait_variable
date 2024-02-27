@@ -63,5 +63,5 @@ fn test() {
     let s = MyStruct::new(1, "hello".into(), -2, true);
     s.print_all();
     assert_eq!(s.x, -2); // if not in a unit test, then `self.x`` is not accessible, since it is private
-    assert_eq!(s.y, true); // s.x is private
+    assert!(s.y);
 }

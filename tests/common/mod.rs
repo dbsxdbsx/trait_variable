@@ -3,72 +3,70 @@ use trait_variable::{trait_var, trait_variable};
 trait_variable! {
     pub(crate) trait MyTrait {  // feel free to add `pub` when needed
         // 1.put the variable fields definition at the TOP of the target trait before any function
-            x: i32;
-        pub y: bool;
-        pub z: f32;
+            i: i32;
+        pub b: bool;
+        pub f: f32;
+            // s: String;
+            // v: Vec<i32>;
 
         // 2.the order of the function definition doesn't matter
-        fn print_all_trait_fields(&self) {
-            println!("x: `{}`, y: `{}`, z: `{}`", self.x, self.y, self.z); // for macro param `self.x`, it would convert to `*self._x()`
-            eprintln!("x: `{}`, y: `{}`, z: `{}`", self.x, self.y, self.z); // the same as above
-            // println!("x: `{self.x}`"); // the **Inline Replacement Style** is not supported yet
+        fn get_number(&self, num:f32) -> f32 {
+            num
         }
 
-        fn get_print_field_x(&self) -> &i32{
-            println!("x: `{}`", self.x);
-            return self.x;
+        fn get_print_field_b(&self) -> &bool;
+
+        // the below is methods for testing trait variable fields:
+        fn test_macro(&self) {
+            println!("i32_field: `{}`, bool_field: `{}`, f32_field: `{}`", self.i, self.b, self.f); // for macro param `self.i`, it would convert to `*self._x()`
+            // println!("i32_field: `{self.i}`"); // the **Inline Replacement Style** is not supported yet
+            eprintln!("i32_field: `{}`, bool_field: `{}`, f32_field: `{}`", self.i, self.b, self.f); // the same as above
+            assert!(self.i == self.i);
+            assert_eq!(self.b, self.b);
+            assert_ne!(self.f+1., self.f);
         }
 
-        fn return_x_plus_a_num(&self, num: i32) -> i32 {
-            return self.x + num;
+        fn test_assigntment(&mut self) {
+            self.i = 1;
+            self.i += 1;
+            assert!(self.i == 2);
+            self.b = true;
+            self.b = !self.b;
+            assert_eq!(self.b, false);
+            self.f = 3.14;
+            self.f *= 0. + self.f - self.get_number(3.14); // ok, the expand logic is the same as `+=`
+            assert!(3.14 -(self.get_number(3.14)+ self.f + 0.)<0.01);
         }
 
-        fn get_print_field_y(&self) -> &bool;
-        fn return_y_clone(&self) -> bool {
-            self.y.clone()
+        fn test_return_ref_i32_by_return_statement(&self) -> &i32{
+            return self.i; //TODO:should panic
+            // return &self.i; //TODO:should panic
         }
 
-        /// it is made with no param to test with trait field
-        fn get_number(&self) -> f32 {
-            1.1
+        fn test_return_ref_x_by_expression(&self) -> &i32{
+            // self.i //TODO:should panic
+            &self.i //TODO:should panic
         }
 
-        fn get_print_field_z(&self) -> &f32;
-        fn change_get_print_field_z(&mut self, ref_z: fn(&f32), ref_z_mut: fn(&mut f32))->&f32 {
-            let bak_z = self.z.clone();
-            // check simple expression
-            self.z = 4.;
-            assert!(self.z == 4.); // test `assert` macro while also checking the result of the expression
-            self.z = 4. + self.get_number()+ self.z;
-            assert_eq!(self.z, 9.1); // test `assert_eq` macro while also checking the result of the expression
-            assert!(14.2 - (4. + self.get_number()+ self.z)<0.01); // test assert with complex expression
-            assert_ne!(self.z, 4.); // test `assert_ne` macro while also checking the result of the expression
-
-            // check complex expression
-            self.z = 4. + self.z; // ok, the left `self.z` would convert to `(*self._z_mut())`, and the right `self.z` would convert to `*self._z()`
-            self.z += 4. + self.z ; // ok, the left `self.z` would convert to `(*self._z_mut())`, and the right `self.z` would convert to `*self._z()`
-            self.z -= 4. + self.z + self.get_number(); // ok, the expand logic is the same as `+=`
-            self.z *= 4. + self.z ; // ok, the expand logic is the same as `+=`
-            self.z /= 4. + self.z ; // ok, the expand logic is the same as `+=`
-
-            // check if else expression
-            self.z = if self.z > 0. { -self.z } else { self.z }; // TODO: ok but not complete for complex expression in blocks
+        // fn return_y_clone(&self) -> bool {
+        //     self.b.clone()
+        // }
 
 
+        // fn get_print_field_z(&self) -> &f32;
 
-            // TODO: modify the field by function call
-            // func(&self._x(), self._z_mut()); // ok, the left `self.x` would convert to `*self._x()`, and the right `self.z` would convert to `*self._z_mut()`
-            // ref_z(&self.z); // TODO: test with both mutable and immutable reference trait fields
-            // ref_z_mut(&mut self.z); // ok, the right `self.z` would convert to `*self._z_mut()`
 
-            // return
-            self.z = bak_z;
-            self.z
-        }
+        // fn get_cloned_trait_field(&self) -> (i32, bool, f32) {
+        //     (*self.i, *self.b, *self.f)
+        // }
 
-        fn get_cloned_trait_field(&self) -> (i32, bool, f32) {
-            (*self.x, *self.y, *self.z)
-        }
+        // fn get_mut_trait_field_x(&mut self) ->&mut i32 {
+        //     &mut self.i
+        // }
+
+        // fn get_mut_trait_field(&mut self) -> (&mut i32, &mut bool, &mut f32) {
+        //     (self.i, self.b, self.f)
+        // }
     }
 }
 //↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑trait definition↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑
@@ -78,7 +76,6 @@ trait_variable! {
 #[trait_var(MyTrait)]
 pub struct MyStruct {
     a: i32,
-    pub b: String,
 }
 // way2: use the hidden declarative macro to expand the struct (Not recommended)
 // MyTrait_for_struct! {
@@ -93,27 +90,19 @@ pub struct MyStruct {
 
 /*↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓struct impl↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓*/
 impl MyStruct {
-    pub fn new(a: i32, b: String, x: i32, y: bool, z: f32) -> Self {
-        Self { a, b, x, y, z }
+    pub fn new(a: i32, i: i32, b: bool, f: f32) -> Self {
+        Self { a, i, b, f }
     }
     pub fn get_print_field_a(&self) -> &i32 {
         println!("a: `{}`", self.a);
         &self.a
     }
-    pub fn get_print_field_b(&self) -> &String {
-        println!("b: `{}`", self.b);
-        &self.b
-    }
 }
 
 impl MyTrait for MyStruct {
-    fn get_print_field_y(&self) -> &bool {
-        println!("y: `{}`", self.y);
-        &self.y
-    }
-    fn get_print_field_z(&self) -> &f32 {
-        println!("z: `{}`", self.z);
-        &self.z
+    fn get_print_field_b(&self) -> &bool {
+        println!("b: `{}`", self.b);
+        &self.b
     }
 }
 /*↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑struct impl↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑*/

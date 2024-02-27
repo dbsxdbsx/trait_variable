@@ -1,6 +1,6 @@
 use quote::{quote, ToTokens};
 use regex::{Captures, Regex};
-use syn::{parse_quote, Expr};
+use syn::Expr;
 
 pub fn process_assignment_expr(re: &Regex, expr: &Expr) -> Expr {
     // 1. left side
@@ -77,7 +77,7 @@ pub fn replace_self_field<T: ToTokens>(expr: &T, deref: bool) -> String {
         let match_end = cap.get(0).unwrap().end();
 
         // if followed with `(`, no need replacement
-        if expr_str[match_end..].chars().next() != Some('(') {
+        if !expr_str[match_end..].starts_with('(') {
             let replacement = if deref {
                 format!("(*self._{}())", &cap[1])
             } else {
