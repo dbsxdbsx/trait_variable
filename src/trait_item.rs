@@ -20,7 +20,7 @@ pub fn refine_trait_items(trait_items: Vec<TraitItem>) -> Vec<proc_macro2::Token
                     let last_index = parsed_body.stmts.len() - 1;
                     // 遍历方法体中的每个语句
                     for (i, stmt) in parsed_body.stmts.into_iter().enumerate() {
-                        let is_last_stmt = i == last_index; // 检查是否是最后一个语句
+                        let _is_last_stmt = i == last_index; // 检查是否是最后一个语句
                         let refined_stmt = match stmt {
                             // 带分号的表达式语句
                             syn::Stmt::Semi(ref expr, semi) => {
@@ -40,6 +40,7 @@ pub fn refine_trait_items(trait_items: Vec<TraitItem>) -> Vec<proc_macro2::Token
                                         ),
                                         semi,
                                     ),
+
                                     // 如果表达式是宏调用, 将宏调用中的self.<field>替换为self._<field>()
                                     syn::Expr::Macro(expr_macro) => {
                                         let macro_tokens = &expr_macro.mac.tokens;
@@ -70,6 +71,7 @@ pub fn refine_trait_items(trait_items: Vec<TraitItem>) -> Vec<proc_macro2::Token
                                             semi,
                                         )
                                     }
+
                                     // 如果表达式是函数调用
                                     syn::Expr::Call(expr_call) => {
                                         // TODO: issue,
@@ -156,31 +158,41 @@ pub fn refine_trait_items(trait_items: Vec<TraitItem>) -> Vec<proc_macro2::Token
                                     // 其他类型的表达式(like trail expression)
                                     _ => {
                                         // TODO: block refine
-                                        if is_last_stmt {
-                                            // 如果是最后一个语句（尾表达式），则特殊处理
-                                            let new_expr_str = replace_self_field(expr, false);
-                                            let new_expr: syn::Expr = syn::parse_str(&new_expr_str)
-                                                .expect("Failed to parse new expr");
-                                            syn::Stmt::Expr(new_expr)
-                                        } else {
-                                            // 如果不是尾表达式，保持原样
-                                            stmt.clone()
-                                        }
+                                        stmt.clone()
+                                        // if is_last_stmt {
+                                        //     // 如果是最后一个语句（尾表达式），则特殊处理
+                                        //     let new_expr_str = replace_self_field(expr, false);
+                                        //     let new_expr: syn::Expr = syn::parse_str(&new_expr_str)
+                                        //         .expect("Failed to parse new expr");
+                                        //     syn::Stmt::Expr(new_expr)
+                                        // } else {
+                                        //     // 如果不是尾表达式，保持原样
+                                        //     stmt.clone()
+                                        // }
                                     }
                                 }
                             }
                             // 不带分号的表达式语句
                             syn::Stmt::Expr(ref expr) => {
-                                let expr_str = quote!(#expr).to_string();
-                                let new_expr_str = re
-                                    .replace_all(&expr_str, |caps: &Captures| {
-                                        format!("self._{}()", &caps[1])
-                                    })
-                                    .to_string();
+                                let new_expr_str = replace_self_field(expr, true);
                                 let new_expr: syn::Expr = syn::parse_str(&new_expr_str)
                                     .expect("Failed to parse new expr");
                                 syn::Stmt::Expr(new_expr)
                             }
+                            // 匹配局部变量绑定（let语句）
+                            syn::Stmt::Local(local) => {
+                                // 使用replace_self_field函数进行替换
+                                let new_local_init = if let Some((_, init)) = local.init {
+                                    Some((syn::token::Eq::default(), Box::new(syn::parse_str(&replace_self_field(&init, true)).expect("Failed to parse init expr"))))
+                                } else {
+                                    None
+                                };
+                                // 构建新的局部变量绑定
+                                syn::Stmt::Local(syn::Local {
+                                    init: new_local_init,
+                                    ..local
+                                })
+                            },
                             // 非表达式的类型
                             _ => {
                                 // stmt

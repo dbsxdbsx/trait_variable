@@ -143,7 +143,7 @@ Choose the license that best fits your needs.
 
 ## todo list
 syn::parse_str refactor
- - [] replace_self_field重构，返回类型是&mut的情况 ,if block表达式（复杂模式）,  &mut self.z 参数测试;
+ - [] replace_self_field重构,if block表达式（复杂模式）,  &mut self.z 参数测试;
   to English comment;
  - [] add more test cases for various trait field types, like Option, String, Vec, HashMap, etc;
  - [] test with trait with constant field, associated types, generic types, async methods, etc;

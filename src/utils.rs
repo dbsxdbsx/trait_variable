@@ -22,6 +22,7 @@ pub fn process_assignment_expr(re: &Regex, expr: &Expr) -> Expr {
         syn::Expr::AssignOp(assign_op_expr) => &assign_op_expr.right,
         _ => unreachable!(),
     };
+    // TODO: move the conditional expression pattern to a separate function, it should not be here
     // 2.1 deal with conditional expression pattern
     let new_right_str = if let Expr::If(if_expr) = right.as_ref() {
         let new_cond_str = replace_self_field(&if_expr.cond, true);
@@ -38,7 +39,7 @@ pub fn process_assignment_expr(re: &Regex, expr: &Expr) -> Expr {
         }
         new_if_block_str
     } else {
-        replace_self_field(right, false)
+        replace_self_field(right, true)
     };
 
     // 3. rebuild the final expression and return

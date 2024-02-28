@@ -27,37 +27,73 @@ trait_variable! {
         }
 
         fn test_assigntment(&mut self) {
+            // bak
+            let bak_i = self.i.clone();
+            let bak_b = self.b;
+            // let bak_b = (*self._b_mut());
+            let bak_f = self.f;
+            // println!("bak is:{:?}",std::any::type_name_of_val(bak_i));
+
+            // test
+            self.i = self.i;
             self.i = 1;
             self.i += 1;
             assert!(self.i == 2);
+
             self.b = true;
+            self.b = self.b.clone();
             self.b = !self.b;
             assert_eq!(self.b, false);
+
             self.f = 3.14;
             self.f *= 0. + self.f - self.get_number(3.14); // ok, the expand logic is the same as `+=`
             assert!(3.14 -(self.get_number(3.14)+ self.f + 0.)<0.01);
+
+            // restore
+            // self.i = 5;
+            self.i = bak_i;
+            self.b = bak_b;
+            self.f = bak_f;
         }
 
         fn test_return_ref_i32_by_return_statement(&self) -> &i32{
             // return self.i; // should panic
-            return &self.i;
+            return & self.i;
         }
 
         fn test_return_mut_ref_i32_by_return_statement(&mut self) -> &mut i32{
             // return self.i; // should panic
             // return & self.i; // should panic
-            return &mut self.i;
+            return &  mut self.i;
         }
 
-        // fn test_return_ref_x_by_expression(&self) -> &i32{
-        //     // self.i //TODO:should panic
-        //     &self.i //TODO:should panic
-        // }
+        fn test_return_ref_i32_by_expression(&self) -> &i32{
+            // self.i //should panic
+            &self.i
+        }
 
-        // fn return_y_clone(&self) -> bool {
-        //     self.b.clone()
-        // }
+        fn test_return_mut_ref_i32_by_expression(&mut self) -> &mut i32{
+            // self.i //should panic
+            // &self.i //should panic
+            &mut self.i
+        }
 
+        fn test_return_cloned_i32_by_explicit_clone_return_statement(&self) -> i32{
+            return self.i.clone();
+        }
+
+        fn test_return_cloned_i32_by_implicit_clone_return_statement(&self) -> i32{
+            return self.i;
+        }
+
+
+        fn test_return_cloned_i32_by_explicit_clone_expression(&self) -> i32{
+            self.i.clone()
+        }
+
+        fn test_return_cloned_i32_by_implicit_clone_expression(&self) -> i32{
+            self.i
+        }
 
         // fn get_print_field_z(&self) -> &f32;
 

@@ -12,10 +12,20 @@ fn test() {
 
     s.test_macro();
     s.test_assigntment();
-    s.test_return_ref_i32_by_return_statement();
-    s.test_return_mut_ref_i32_by_return_statement();
-    // assert_eq!(s.test_return_ref_x_by_return_statement(), &-2);
-    // assert_eq!(s.test_return_ref_x_by_expression(), &-2);
+    assert_eq!(s.test_return_ref_i32_by_return_statement(), &-2);
+    assert_eq!(s.test_return_mut_ref_i32_by_return_statement(), &-2);
+    assert_eq!(s.test_return_ref_i32_by_expression(), &-2);
+    assert_eq!(s.test_return_mut_ref_i32_by_expression(), &-2);
+    assert_eq!(
+        s.test_return_cloned_i32_by_explicit_clone_return_statement(),
+        -2
+    );
+    assert_eq!(
+        s.test_return_cloned_i32_by_implicit_clone_return_statement(),
+        -2
+    );
+    assert_eq!(s.test_return_cloned_i32_by_explicit_clone_expression(), -2);
+    assert_eq!(s.test_return_cloned_i32_by_implicit_clone_expression(), -2);
 
     // // 3. test methods for the struct fields
     // assert_eq!(s.get_print_field_a(), &1);
