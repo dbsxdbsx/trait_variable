@@ -142,6 +142,7 @@ This crate is dual-licensed under either:
 Choose the license that best fits your needs.
 
 ## todo list
+syn::parse_str refactor
  - [] replace_self_field重构，返回类型是&mut的情况 ,if block表达式（复杂模式）,  &mut self.z 参数测试;
   to English comment;
  - [] add more test cases for various trait field types, like Option, String, Vec, HashMap, etc;

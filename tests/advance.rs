@@ -12,6 +12,8 @@ fn test() {
 
     s.test_macro();
     s.test_assigntment();
+    s.test_return_ref_i32_by_return_statement();
+    s.test_return_mut_ref_i32_by_return_statement();
     // assert_eq!(s.test_return_ref_x_by_return_statement(), &-2);
     // assert_eq!(s.test_return_ref_x_by_expression(), &-2);
 

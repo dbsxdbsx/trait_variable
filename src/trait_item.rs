@@ -22,7 +22,7 @@ pub fn refine_trait_items(trait_items: Vec<TraitItem>) -> Vec<proc_macro2::Token
                     for (i, stmt) in parsed_body.stmts.into_iter().enumerate() {
                         let is_last_stmt = i == last_index; // 检查是否是最后一个语句
                         let refined_stmt = match stmt {
-                            // 对于表达式语句和带分号的表达式语句
+                            // 带分号的表达式语句
                             syn::Stmt::Semi(ref expr, semi) => {
                                 // 使用syn来分析表达式，判断是赋值表达式还是其他类型的表达式
                                 match expr {
@@ -59,6 +59,16 @@ pub fn refine_trait_items(trait_items: Vec<TraitItem>) -> Vec<proc_macro2::Token
                                         });
                                         // 将新的宏调用表达式包装回Stmt::Semi
                                         syn::Stmt::Semi(new_macro, semi)
+                                    }
+                                    // for return statement
+                                    syn::Expr::Return(ref expr_return) => {
+                                        let replaced_expr_str = replace_self_field(expr_return, true);
+                                        let replaced_expr = syn::parse_str(&replaced_expr_str)
+                                            .expect("Failed to parse replaced expression in return statement");
+                                        syn::Stmt::Semi(
+                                            syn::Expr::Return(replaced_expr),
+                                            semi,
+                                        )
                                     }
                                     // 如果表达式是函数调用
                                     syn::Expr::Call(expr_call) => {
@@ -142,6 +152,7 @@ pub fn refine_trait_items(trait_items: Vec<TraitItem>) -> Vec<proc_macro2::Token
                                         // 将新的函数调用表达式包装回Stmt::Semi或Stmt::Expr
                                         syn::Stmt::Semi(syn::Expr::Call(new_expr_call), semi)
                                     }
+
                                     // 其他类型的表达式(like trail expression)
                                     _ => {
                                         // TODO: block refine
@@ -158,6 +169,7 @@ pub fn refine_trait_items(trait_items: Vec<TraitItem>) -> Vec<proc_macro2::Token
                                     }
                                 }
                             }
+                            // 不带分号的表达式语句
                             syn::Stmt::Expr(ref expr) => {
                                 let expr_str = quote!(#expr).to_string();
                                 let new_expr_str = re

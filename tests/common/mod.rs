@@ -39,14 +39,20 @@ trait_variable! {
         }
 
         fn test_return_ref_i32_by_return_statement(&self) -> &i32{
-            return self.i; //TODO:should panic
-            // return &self.i; //TODO:should panic
+            // return self.i; // should panic
+            return &self.i;
         }
 
-        fn test_return_ref_x_by_expression(&self) -> &i32{
-            // self.i //TODO:should panic
-            &self.i //TODO:should panic
+        fn test_return_mut_ref_i32_by_return_statement(&mut self) -> &mut i32{
+            // return self.i; // should panic
+            // return & self.i; // should panic
+            return &mut self.i;
         }
+
+        // fn test_return_ref_x_by_expression(&self) -> &i32{
+        //     // self.i //TODO:should panic
+        //     &self.i //TODO:should panic
+        // }
 
         // fn return_y_clone(&self) -> bool {
         //     self.b.clone()
