@@ -23,17 +23,6 @@ trait_variable! {
         fn get_number(&self, num:f32) -> f32 {
             num
         }
-
-        fn test_param_i32(&self) {
-            assert_eq!(test_with_param(self.i), self.i);
-        }
-        fn test_ref_param_i32(&mut self) {
-            assert_eq!(test_with_ref_param_i32(&self.i), self.i);
-        }
-        fn test_mut_ref_param_i32(&mut self) {
-           assert_eq!(test_with_mut_ref_param_i32(&mut self.i), self.i);
-        }
-
         fn get_print_field_b(&self) -> &bool;
 
         // the below is methods for testing trait variable fields:
@@ -58,11 +47,21 @@ trait_variable! {
             self.i = self.i;
             self.i = 1;
             self.i += 1;
+            self.i =  if self.i== 2{
+                3 - 3 + self.i
+            }else{
+                self.i + 2 / 2
+            };
             assert!(self.i == 2);
 
             self.b = true;
             self.b = self.b.clone();
             self.b = !self.b;
+            self.b = if self.b == true {
+                self.b
+            }else{
+                !!self.b
+            };
             assert_eq!(self.b, false);
 
             self.f = 3.14;
@@ -76,44 +75,69 @@ trait_variable! {
             self.f = bak_f;
         }
 
+        /*↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓return type test↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓*/
         fn test_return_ref_i32_by_return_statement(&self) -> &i32{
             // return self.i; // should panic
             return & self.i;
         }
-
         fn test_return_mut_ref_i32_by_return_statement(&mut self) -> &mut i32{
             // return self.i; // should panic
             // return & self.i; // should panic
             return &  mut self.i;
         }
-
         fn test_return_ref_i32_by_expression(&self) -> &i32{
             // self.i //should panic
             &self.i
         }
-
         fn test_return_mut_ref_i32_by_expression(&mut self) -> &mut i32{
             // self.i //should panic
             // &self.i //should panic
             &mut self.i
         }
-
         fn test_return_cloned_i32_by_explicit_clone_return_statement(&self) -> i32{
             return self.i.clone();
         }
-
         fn test_return_cloned_i32_by_implicit_clone_return_statement(&self) -> i32{
             return self.i;
         }
-
-
         fn test_return_cloned_i32_by_explicit_clone_expression(&self) -> i32{
             self.i.clone()
         }
-
         fn test_return_cloned_i32_by_implicit_clone_expression(&self) -> i32{
             self.i
         }
+        /*↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑return type test↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑*/
+
+
+        /*↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓param test↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓*/
+        fn test_param_i32(&self) {
+            assert_eq!(test_with_param(self.i), self.i);
+        }
+        fn test_ref_param_i32(&mut self) {
+            assert_eq!(test_with_ref_param_i32(&self.i), self.i);
+        }
+        fn test_mut_ref_param_i32(&mut self) {
+           assert_eq!(test_with_mut_ref_param_i32(&mut self.i), self.i);
+        }
+        /*↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑param test↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑*/
+
+        /*↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓conditional/loop test↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓*/
+        fn test_if_else_block(&mut self) {
+            let bak_i = self.i;
+            self.i = 5;
+            if self.i<0 {
+                assert!(self.i<0);
+            } else if self.i < 5 {
+                assert!(self.i<5);
+            }
+            else {
+                assert!(self.i>=5);
+            }
+            self.i = bak_i;
+        }
+        /*↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑conditional/loop test↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑*/
+
+
 
         // fn get_print_field_z(&self) -> &f32;
 

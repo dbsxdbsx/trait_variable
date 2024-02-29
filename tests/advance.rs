@@ -29,6 +29,7 @@ fn test() {
     s.test_param_i32();
     s.test_ref_param_i32();
     s.test_mut_ref_param_i32();
+    s.test_if_else_block();
     // // 3. test methods for the struct fields
     // assert_eq!(s.get_print_field_a(), &1);
     // assert_eq!(s.get_print_field_b(), &s.b);

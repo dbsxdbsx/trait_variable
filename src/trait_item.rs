@@ -92,18 +92,7 @@ pub fn refine_trait_items(trait_items: Vec<TraitItem>) -> Vec<proc_macro2::Token
                                     }
                                     // 其他类型的表达式(like trail expression)
                                     _ => {
-                                        // TODO: block refine
                                         stmt.clone()
-                                        // if is_last_stmt {
-                                        //     // 如果是最后一个语句（尾表达式），则特殊处理
-                                        //     let new_expr_str = replace_self_field(expr, false);
-                                        //     let new_expr: syn::Expr = syn::parse_str(&new_expr_str)
-                                        //         .expect("Failed to parse new expr");
-                                        //     syn::Stmt::Expr(new_expr)
-                                        // } else {
-                                        //     // 如果不是尾表达式，保持原样
-                                        //     stmt.clone()
-                                        // }
                                     }
                                 }
                             }
