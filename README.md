@@ -142,11 +142,11 @@ This crate is dual-licensed under either:
 Choose the license that best fits your needs.
 
 ## todo list
-syn::parse_str refactor
- - [] replace_self_field重构,if block表达式（复杂模式）,
-  to English comment;
+ - [] replace_self_field重构,let Some();
+ - [] syn::parse_str refactor;
  - [] add more test cases for various trait field types, like Option, String, Vec, HashMap, etc;
  - [] test with trait with constant field, associated types, generic types, async methods, etc;
  - [] test left value with tuple, like `(<trait_field>, _)`;
  - [] omit `use <trait_module>::<_hidden_parent_trait_name>;` statement when using `#[trait_var(<trait_name>)]` for a struct in an extra module;
  - [] try to let smart intellisense extension(like `Rust Analyzer`) support idents inside macro(Maybe impossible).
+ - [] to English comment;

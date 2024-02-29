@@ -1,6 +1,6 @@
-//! # Complicated Usage of the `trait_variable` Macro
+//! # Comprehensive Usage of the `trait_variable` Macro
 //!
-//! This file demonstrates a more complete and complicated usage of the `trait_variable` macro.
+//! This file demonstrates a more complete and comprehensive usage of the `trait_variable` macro.
 mod common;
 use common::MyStruct;
 
@@ -33,4 +33,5 @@ fn test() {
     s.test_match_arm();
     s.test_raw_loop();
     s.test_for_loop();
+    s.test_lambda();
 }

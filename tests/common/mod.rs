@@ -171,7 +171,20 @@ trait_variable! {
         }
         /*↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑conditional/loop test↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑*/
 
-
+        /*↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓lambda↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓*/
+        fn test_lambda(&mut self) {
+            let bak_i = self.i;
+            self.i = 5;
+            // 定义一个 lambda 表达式，捕获 self 的可变引用
+            let _lambda = |delta: i32| {
+                // self.i += delta;
+            };
+            // 使用 lambda 表达式
+            // lambda(10); // 增加 self.i 的值
+            assert_eq!(self.i, 15);
+            self.i = bak_i;
+        }
+        /*↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑lambda↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑*/
 
     }
 }
