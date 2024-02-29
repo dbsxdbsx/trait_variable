@@ -26,7 +26,9 @@ fn test() {
     );
     assert_eq!(s.test_return_cloned_i32_by_explicit_clone_expression(), -2);
     assert_eq!(s.test_return_cloned_i32_by_implicit_clone_expression(), -2);
-
+    s.test_param_i32();
+    s.test_ref_param_i32();
+    s.test_mut_ref_param_i32();
     // // 3. test methods for the struct fields
     // assert_eq!(s.get_print_field_a(), &1);
     // assert_eq!(s.get_print_field_b(), &s.b);

@@ -1,6 +1,7 @@
 use quote::quote;
 use regex::{Captures, Regex};
 
+use syn::ExprCall;
 use syn::{parse::Parse, TraitItem};
 
 use crate::utils::{process_assignment_expr, replace_self_field};
@@ -71,90 +72,24 @@ pub fn refine_trait_items(trait_items: Vec<TraitItem>) -> Vec<proc_macro2::Token
                                             semi,
                                         )
                                     }
-
                                     // 如果表达式是函数调用
                                     syn::Expr::Call(expr_call) => {
-                                        // TODO: issue,
-                                        // way1: use syn
-                                        // 遍历函数调用的参数
                                         let mut new_args = Vec::new();
                                         for arg in &expr_call.args {
-                                            if let syn::Expr::Reference(expr_ref) = arg {
-                                                // 检查是否是 `&mut self.<field>` 形式
-                                                if expr_ref.mutability.is_some() {
-                                                    // 如果有 `mut` 关键字
-                                                    if let syn::Expr::Path(expr_path) =
-                                                        &*expr_ref.expr
-                                                    {
-                                                        if expr_path.path.is_ident("self") {
-                                                            // 替换为 `self._<field>_mut()`
-                                                            let field_name = expr_path
-                                                                .path
-                                                                .segments
-                                                                .last()
-                                                                .unwrap()
-                                                                .ident
-                                                                .to_string();
-                                                            let new_arg =
-                                                                syn::parse_str::<syn::Expr>(
-                                                                    &format!(
-                                                                        "self._{}_mut()",
-                                                                        field_name
-                                                                    ),
-                                                                )
-                                                                .unwrap();
-                                                            new_args.push(new_arg);
-                                                            continue;
-                                                        }
-                                                    }
-                                                }
-                                            }
-                                            // 对于其他参数，使用原始参数
-                                            new_args.push(arg.clone());
+                                            let new_arg_str = replace_self_field(arg, true);
+                                            let new_arg: syn::Expr = syn::parse_str(&new_arg_str).expect("Failed to parse new arg");
+                                            new_args.push(new_arg);
                                         }
-                                        // way2: use regex, still wrong with compile error
-                                        // // 定义正则表达式
-                                        // let re_immutable =
-                                        //     Regex::new(r"& self\.([a-zA-Z_]\w*)").unwrap();
-                                        // let re_mutable =
-                                        //     Regex::new(r"&mut self\.([a-zA-Z_]\w*)").unwrap();
-                                        // // 遍历函数调用的参数
-                                        // let mut new_args = Vec::new();
-                                        // for arg in &expr_call.args {
-                                        //     let arg_str = quote!(#arg).to_string();
-                                        //     // 首先尝试匹配 &mut self.<field>
-                                        //     let new_arg_str = if let Some(caps) =
-                                        //         re_mutable.captures(&arg_str)
-                                        //     {
-                                        //         arg_str.replace(
-                                        //             &caps[0],
-                                        //             &format!("self._{}_mut()", &caps[1]),
-                                        //         )
-                                        //     } else if let Some(caps) = re_immutable.captures(&arg_str) {
-                                        //         // 如果没有匹配到 &mut self.<field>，则尝试匹配 &self.<field>
-                                        //         arg_str
-                                        //             .replace(&caps[0], &format!("self._{}()", &caps[1]))
-                                        //     } else {
-                                        //         // 如果都没有匹配到，保持原样
-                                        //         arg_str
-                                        //     };
-                                        //     // 将替换后的字符串转换回syn::Expr
-                                        //     let new_arg: syn::Expr = syn::parse_str(&new_arg_str)
-                                        //         .expect("Failed to parse new arg");
-                                        //     new_args.push(new_arg);
-                                        // }
-
                                         // 构建新的函数调用表达式
-                                        let new_expr_call = syn::ExprCall {
+                                        let new_expr_call = ExprCall {
                                             attrs: expr_call.attrs.clone(),
                                             func: expr_call.func.clone(),
                                             paren_token: expr_call.paren_token,
-                                            args: syn::punctuated::Punctuated::from_iter(new_args),
+                                            args: new_args.into_iter().collect(),
                                         };
                                         // 将新的函数调用表达式包装回Stmt::Semi或Stmt::Expr
                                         syn::Stmt::Semi(syn::Expr::Call(new_expr_call), semi)
                                     }
-
                                     // 其他类型的表达式(like trail expression)
                                     _ => {
                                         // TODO: block refine

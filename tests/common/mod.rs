@@ -1,4 +1,14 @@
 //↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓trait definition↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓
+fn test_with_param(a: i32) -> i32 {
+    a
+}
+fn test_with_ref_param_i32(a: &i32) -> i32 {
+    *a
+}
+fn test_with_mut_ref_param_i32(a: &mut i32) -> i32 {
+    *a
+}
+
 use trait_variable::{trait_var, trait_variable};
 trait_variable! {
     pub(crate) trait MyTrait {  // feel free to add `pub` when needed
@@ -12,6 +22,16 @@ trait_variable! {
         // 2.the order of the function definition doesn't matter
         fn get_number(&self, num:f32) -> f32 {
             num
+        }
+
+        fn test_param_i32(&self) {
+            assert_eq!(test_with_param(self.i), self.i);
+        }
+        fn test_ref_param_i32(&mut self) {
+            assert_eq!(test_with_ref_param_i32(&self.i), self.i);
+        }
+        fn test_mut_ref_param_i32(&mut self) {
+           assert_eq!(test_with_mut_ref_param_i32(&mut self.i), self.i);
         }
 
         fn get_print_field_b(&self) -> &bool;
