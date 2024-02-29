@@ -173,20 +173,6 @@ trait_variable! {
 
 
 
-        // fn get_print_field_z(&self) -> &f32;
-
-
-        // fn get_cloned_trait_field(&self) -> (i32, bool, f32) {
-        //     (*self.i, *self.b, *self.f)
-        // }
-
-        // fn get_mut_trait_field_x(&mut self) ->&mut i32 {
-        //     &mut self.i
-        // }
-
-        // fn get_mut_trait_field(&mut self) -> (&mut i32, &mut bool, &mut f32) {
-        //     (self.i, self.b, self.f)
-        // }
     }
 }
 //↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑trait definition↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑

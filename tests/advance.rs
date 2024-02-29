@@ -9,7 +9,7 @@ use crate::common::MyTrait;
 #[test]
 fn test() {
     let mut s = MyStruct::new(1, -2, true, -3.14);
-
+    // here only test advanced methods, no need to test the basics as in module `basic.rs`
     s.test_macro();
     s.test_assigntment();
     assert_eq!(s.test_return_ref_i32_by_return_statement(), &-2);
@@ -33,20 +33,4 @@ fn test() {
     s.test_match_arm();
     s.test_raw_loop();
     s.test_for_loop();
-    // // 3. test methods for the struct fields
-    // assert_eq!(s.get_print_field_a(), &1);
-    // assert_eq!(s.get_print_field_b(), &s.b);
-    // assert_eq!(s.test_return_ref_x_by_return_statement(), &-2);
-    // assert_eq!(s.get_print_field_y(), &s.y);
-    // assert_eq!(s.get_print_field_z(), &-3.14);
-    // assert_eq!(
-    //     s.change_get_print_field_z(
-    //         |z| {},
-    //         |z| {
-    //             *z = -*z;
-    //         }
-    //     ),
-    //     &-3.14
-    // );
-    // assert_eq!(s.get_cloned_trait_field(), (-2, s.y, -3.14));
 }
