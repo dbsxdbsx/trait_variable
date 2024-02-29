@@ -122,7 +122,7 @@ trait_variable! {
         /*↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑param test↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑*/
 
         /*↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓conditional/loop test↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓*/
-        fn test_if_else_block(&mut self) {
+        fn test_if_else(&mut self) {
             let bak_i = self.i;
             self.i = 5;
             if self.i<0 {
@@ -132,6 +132,40 @@ trait_variable! {
             }
             else {
                 assert!(self.i>=5);
+            }
+            self.i = bak_i;
+        }
+        fn test_match_arm(&mut self) {
+            let bak_i = self.i;
+            self.i = 5;
+            match self.i {
+                0 => unreachable!(),
+                1..=4 => unreachable!(), // 使用范围匹配来简化代码
+                5 => assert_eq!(self.i, 5),
+                _ if self.i > 5 => unreachable!(), // 使用匹配守卫来添加额外的条件
+                _ => unreachable!()
+
+            }
+            self.i = bak_i;
+        }
+        fn test_raw_loop(&mut self) {
+            let bak_i = self.i;
+            self.i = 100;
+            let mut j = 0;
+            loop {
+                if j>=self.i {
+                    break;
+                }
+                assert_eq!(j as i32, j);
+                j += 1;
+            }
+            self.i = bak_i;
+        }
+        fn test_for_loop(&mut self) {
+            let bak_i = self.i;
+            self.i = 100;
+            for (i,j) in (0..self.i).enumerate() {
+               assert_eq!(i as i32, j);
             }
             self.i = bak_i;
         }
