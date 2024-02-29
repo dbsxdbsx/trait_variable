@@ -175,13 +175,16 @@ trait_variable! {
         fn test_lambda(&mut self) {
             let bak_i = self.i;
             self.i = 5;
-            // 定义一个 lambda 表达式，捕获 self 的可变引用
-            let _lambda = |delta: i32| {
-                // self.i += delta;
+            // lambda with block
+            let mut lambda = |delta: i32| {
+                self.i += delta;
             };
-            // 使用 lambda 表达式
-            // lambda(10); // 增加 self.i 的值
+            lambda(10);
             assert_eq!(self.i, 15);
+            // lambda with expression
+            let mut lambda = |delta: i32| self.i += delta;
+            lambda(10);
+            assert_eq!(self.i, 25);
             self.i = bak_i;
         }
         /*↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑lambda↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑*/
