@@ -13,7 +13,7 @@ pub fn refine_trait_items(trait_items: Vec<TraitItem>) -> Vec<proc_macro2::Token
             if let TraitItem::Method(mut method) = item {
                 // if the method has body, convert the trait variable fields into corresponding get-method
                 if let Some(body) = &mut method.default {
-                    // 解析方法体为syn::Block
+                    // treat the body as `syn::Block`
                     let parsed_body: syn::Block =
                         syn::parse2(quote! { #body }).expect("Failed to parse method body");
                     let mut new_stmts = Vec::new();
@@ -50,9 +50,7 @@ fn process_stmt(re: &Regex, stmt: syn::Stmt) -> syn::Stmt {
         // local variable bindings (let statements)
         syn::Stmt::Local(local) => {
             let new_local_init = if let Some((eq, init)) = local.init {
-                // 使用 process_expr 函数处理初始化表达式
-                let processed_init = process_expr(re, *init);
-                Some((eq, Box::new(processed_init)))
+                Some((eq, Box::new(process_expr(re, *init))))
             } else {
                 None
             };
@@ -87,7 +85,7 @@ fn process_expr(re: &Regex, expr: syn::Expr) -> syn::Expr {
         }
         syn::Expr::Macro(expr_macro) => {
             let macro_tokens = &expr_macro.mac.tokens;
-            let new_macro_str = replace_self_field(macro_tokens, true);
+            let new_macro_str = replace_self_field(macro_tokens);
             let new_tokens = new_macro_str.parse().expect("Failed to parse tokens");
             syn::Expr::Macro(syn::ExprMacro {
                 attrs: expr_macro.attrs.clone(),
@@ -101,7 +99,7 @@ fn process_expr(re: &Regex, expr: syn::Expr) -> syn::Expr {
         }
         // for explicit return statement
         syn::Expr::Return(ref expr_return) => {
-            let replaced_expr_str = replace_self_field(expr_return, true);
+            let replaced_expr_str = replace_self_field(expr_return);
             let replaced_expr = syn::parse_str(&replaced_expr_str)
                 .expect("Failed to parse replaced expression in return statement");
             syn::Expr::Return(replaced_expr)
@@ -110,7 +108,7 @@ fn process_expr(re: &Regex, expr: syn::Expr) -> syn::Expr {
         syn::Expr::Call(expr_call) => {
             let mut new_args = Vec::new();
             for arg in &expr_call.args {
-                let new_arg_str = replace_self_field(arg, true);
+                let new_arg_str = replace_self_field(arg);
                 let new_arg: syn::Expr =
                     syn::parse_str(&new_arg_str).expect("Failed to parse new arg");
                 new_args.push(new_arg);
@@ -165,7 +163,7 @@ fn process_expr(re: &Regex, expr: syn::Expr) -> syn::Expr {
             })
         }
         _ => {
-            let new_expr_str = replace_self_field(&expr, true);
+            let new_expr_str = replace_self_field(&expr);
             syn::parse_str(&new_expr_str).expect("Failed to parse new expr")
         }
     }

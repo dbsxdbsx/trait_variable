@@ -22,7 +22,7 @@ pub fn process_assignment_expr(re: &Regex, expr: &Expr) -> Expr {
         syn::Expr::AssignOp(assign_op_expr) => &assign_op_expr.right,
         _ => unreachable!(),
     };
-    let new_right_str = replace_self_field(right, true);
+    let new_right_str = replace_self_field(right);
 
     // 3. rebuild the final expression and return
     let new_expr_str = match expr {
@@ -53,7 +53,7 @@ pub fn process_assignment_expr(re: &Regex, expr: &Expr) -> Expr {
 /// # 返回值
 ///
 /// 返回处理后的字符串
-pub fn replace_self_field<T: ToTokens>(expr: &T, deref: bool) -> String {
+pub fn replace_self_field<T: ToTokens>(expr: &T /* , deref: bool */) -> String {
     let expr_str = quote!(#expr).to_string();
     let re = Regex::new(
         r"(&\s*mut\s+self\.)([a-zA-Z_]\w*)|(&\s*self\.)([a-zA-Z_]\w*)|(self\.)([a-zA-Z_]\w*)",
@@ -74,32 +74,33 @@ pub fn replace_self_field<T: ToTokens>(expr: &T, deref: bool) -> String {
             (Some(_), _, _) => {
                 // 匹配到 &mut self.x
                 let name = &cap[2];
-                let replacement = if deref {
-                    format!("&mut (*self._{}_mut())", name)
-                } else {
-                    format!("&mut self._{}_mut()", name)
-                };
-                result.push_str(&replacement);
+                result.push_str(& format!("&mut (*self._{}_mut())", name));
             }
             (_, Some(_), _) => {
                 // 匹配到 & self.x
                 let name = &cap[4];
-                let replacement = if deref {
-                    format!("&(*self._{}())", name)
-                } else {
-                    format!("&self._{}()", name)
-                };
-                result.push_str(&replacement);
+                result.push_str(&format!("&(*self._{}())", name));
             }
             (_, _, Some(_)) => {
                 // 匹配到 self.x
                 let name = &cap[6];
-                let replacement = if deref {
-                    format!("(*self._{}())", name)
-                } else {
-                    format!("self._{}()", name)
-                };
-                result.push_str(&replacement);
+                result.push_str(&format!("(*self._{}())", name));
+                // let name = &cap[6];
+                // // 这里需要增加逻辑来判断是否应该使用 _mut 后缀
+                // let replacement = if 需要可变访问 {
+                //     if deref {
+                //         format!("(*self._{}_mut())", name)
+                //     } else {
+                //         format!("self._{}_mut()", name)
+                //     }
+                // } else {
+                //     if deref {
+                //         format!("(*self._{}())", name)
+                //     } else {
+                //         format!("self._{}()", name)
+                //     }
+                // };
+                // result.push_str(&replacement);
             }
             _ => unreachable!(),
         }
@@ -108,4 +109,25 @@ pub fn replace_self_field<T: ToTokens>(expr: &T, deref: bool) -> String {
     // 将最后一个匹配结束到字符串末尾之间的文本追加到结果中
     result.push_str(&expr_str[last_end..]);
     result
+}
+use syn::{visit::Visit, ExprMethodCall, FnArg, PatType, Signature};
+/// 检查方法调用是否需要可变引用
+fn needs_mutable_access(expr_call: &ExprMethodCall) -> bool {
+    // 创建一个访问者来检查方法签名
+    struct FindMutVisitor(bool);
+
+    impl<'ast> Visit<'ast> for FindMutVisitor {
+        fn visit_signature(&mut self, i: &'ast Signature) {
+            // 检查方法的第一个参数是否为`&mut self`
+            if let Some(FnArg::Receiver(receiver)) = i.inputs.first() {
+                if receiver.mutability.is_some() {
+                    self.0 = true;
+                }
+            }
+        }
+    }
+
+    let mut visitor = FindMutVisitor(false);
+    visitor.visit_expr_method_call(expr_call);
+    visitor.0
 }
