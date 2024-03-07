@@ -231,21 +231,20 @@ trait_variable! {
             self.i = bak_i;
         }
         fn test_lambda_for_vec_i32(&mut self) {
-            let _bak_v_i32 = self.v_i32.clone();
+            let bak_v_i32 = self.v_i32.clone();
             self.v_i32 = vec![1, 2, 3];
             // lambda with block
-            // let mut lambda = |delta: i32| {
-            //     self.v_i32.push(delta);
-            // };
-            // lambda(10);
-            // assert_eq!(self.v_i32, vec![1, 2, 3, 10]);
-            // // lambda with expression
-            // let mut lambda = |delta: i32| self.v_i32.push(delta);
-            // lambda(10);
-            // assert_eq!(self.v_i32, vec![1, 2, 3, 10, 10]);
-            // self.v_i32 = bak_v_i32;
+            let mut lambda = |delta: i32| {
+                self.v_i32.push(delta);
+            };
+            lambda(10);
+            assert_eq!(self.v_i32, vec![1, 2, 3, 10]);
+            // lambda with expression
+            let mut lambda = |delta: i32| self.v_i32.push(delta);
+            lambda(10);
+            assert_eq!(self.v_i32, vec![1, 2, 3, 10, 10]);
+            self.v_i32 = bak_v_i32;
         }
-
         /*↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑test lambda↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑*/
 
     }
