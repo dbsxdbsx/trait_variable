@@ -38,22 +38,18 @@ pub fn process_assignment_expr(re: &Regex, expr: &Expr, is_method_mut: bool) -> 
     };
     syn::parse_str(&new_expr_str).expect("Failed to parse new expr")
 }
-
-/// 根据匹配模式调整`expr`表达式中的内容，并根据`deref`参数决定是否进行解引用转换
+/// Replaces occurrences of `self.field`, `&self.field`, and `&mut self.field` in the given expression
+/// with their corresponding getter/setter method calls.
 ///
-/// 当遇到`&mut self.x`模式时，转换为`&mut self._x_mut()`，如果`deref`为`true`，则进一步转换为`&mut (*self._x_mut())`；
-/// 当遇到`& self.x`模式时，转换为`& self._x()`，如果`deref`为`true`，则进一步转换为`& (*self._x())`；
-/// 当遇到`self.x`模式时，转换为`self._x()`，如果`deref`为`true`，则进一步转换为`(*self._x())`。
-/// 不会匹配已经是函数调用的`self.x()`形式。
+/// # Arguments
 ///
-/// # 参数
+/// * `expr` - The expression to replace `self.field` occurrences in, as a `ToTokens` implementor.
+/// * `is_method_mut` - A boolean indicating whether the method being called is mutable or not.
 ///
-/// * `expr` - 待处理的表达式，实现了`ToTokens` trait
-/// * `deref` - 是否进行解引用转换
+/// # Returns
 ///
-/// # 返回值
-///
-/// 返回处理后的字符串
+/// A `String` containing the modified expression with `self.field` occurrences replaced.
+/// ```
 pub fn replace_self_field<T: ToTokens>(expr: &T, is_method_mut: bool) -> String {
     let raw_expr_str = quote!(#expr).to_string();
     let re = Regex::new(
@@ -94,12 +90,6 @@ pub fn replace_self_field<T: ToTokens>(expr: &T, is_method_mut: bool) -> String 
                 } else {
                     result.push_str(&format!("(*self._{}())", name));
                 }
-                // TODO: delete
-                // if trailing_fn_expr.is_empty() {
-                //     result.push_str(&format!("(*self._{}())", name));
-                // } else {
-                //     result.push_str(&transform_expr(name, trailing_fn_expr));
-                // }
             }
             _ => unreachable!(),
         }
@@ -132,40 +122,6 @@ fn extract_trailing_expr_until_to_1st_fn(raw_expr_str: &str, match_end: usize) -
     //
     ""
 }
-
-// // TODO: delete
-// fn transform_expr(name: &str, expr_after_name: &str) -> String {
-//     assert!(
-//         expr_after_name.starts_with('.'),
-//         "expr_after_name 必须以 '.' 开头"
-//     );
-
-//     let mut expr_parts = expr_after_name[1..].split('.');
-//     let current_part = expr_parts.next().unwrap();
-
-//     // 假设我们已经找到了 `b` 的定义，并且能够获取到 `a()` 方法的签名
-//     // 这里的 `method_signature` 是一个假设的字符串，表示 `a()` 方法的签名
-//     let method_signature = "fn a(&mut self)"; // 示例签名
-
-//     // 使用 `syn` 解析方法签名
-//     let sig: Signature = parse_str(method_signature).expect("解析签名失败");
-
-//     // 检查第一个参数是否为 &mut self
-//     let needs_mut = matches!(
-//         sig.inputs.first(),
-//         Some(FnArg::Receiver(Receiver {
-//             mutability: Some(_),
-//             ..
-//         }))
-//     );
-
-//     let remaining_expr = expr_parts.collect::<Vec<_>>().join(".");
-//     if needs_mut {
-//         format!("(*self._{}_mut()).{}{}", name, current_part, remaining_expr)
-//     } else {
-//         format!("(*self._{}()).{}{}", name, current_part, remaining_expr)
-//     }
-// }
 
 /// 检查一个方法签名是否表示一个可变方法。
 /// 返回 `Some(true)` 表示可变方法,`Some(false)` 表示不可变方法,
