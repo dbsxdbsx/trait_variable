@@ -62,7 +62,6 @@ trait_variable! {
             // bak
             let bak_i = self.i.clone();
             let bak_b = self.b;
-            // let bak_b = (*self._b_mut());
             let bak_f = self.f;
             let bak_v_i32 = self.v_i32.clone();
             let bak_s = self.s.clone();
@@ -78,6 +77,7 @@ trait_variable! {
                 self.i + 2 / 2
             };
             assert!(self.i == 2);
+
             // assignment of bool
             self.b = true;
             self.b = self.b.clone();
@@ -88,19 +88,35 @@ trait_variable! {
                 !!self.b
             };
             assert_eq!(self.b, false);
+
             // assignment of f32
             self.f = 3.14;
             self.f *= 0. + self.f - self.get_number(3.14); // ok, the expand logic is the same as `+=`
             assert!(3.14 -(self.get_number(3.14)+ self.f + 0.)<0.01);
+
             // assignment of Vec<i32>
             self.v_i32 = vec![1, 2, 3];
             self.v_i32.push(4); // this should be converted into `(*self._v_i32_mut()).push(1);`
             self.v_i32[0] += 3 + self.v_i32[1] - self.v_i32[2] * self.v_i32[3];
             assert_eq!(self.v_i32, vec![-6, 2, 3, 4]);
+
             // assignment of String
+            let str = self.s[0..1].to_string();
+            assert_eq!(str,"h");
+
             self.s = "hello".to_string();
             self.s.push_str(" world2");
             assert_eq!(self.s, "hello world2");
+
+            self.s.replace_range(0..5, "Hello");
+            assert_eq!(self.s,"Hello world2");
+
+            unsafe {
+                let bytes = self.s.as_bytes_mut();
+                bytes[6] = b'W';
+            }
+            assert_eq!(self.s,"Hello World2");
+
             // restore
             self.i = bak_i;
             self.b = bak_b;
