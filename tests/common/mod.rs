@@ -94,8 +94,9 @@ trait_variable! {
             assert!(3.14 -(self.get_number(3.14)+ self.f + 0.)<0.01);
             // assignment of Vec<i32>
             self.v_i32 = vec![1, 2, 3];
-            self.v_i32.push(1); // this should be converted into `(*self._v_i32_mut()).push(1);`
-            assert_eq!(self.v_i32, vec![1, 2, 3, 1]);
+            self.v_i32.push(4); // this should be converted into `(*self._v_i32_mut()).push(1);`
+            self.v_i32[0] += 3 + self.v_i32[1] - self.v_i32[2] * self.v_i32[3];
+            assert_eq!(self.v_i32, vec![-6, 2, 3, 4]);
             // assignment of String
             self.s = "hello".to_string();
             self.s.push_str(" world2");
@@ -270,6 +271,7 @@ trait_variable! {
         /*↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑test conditional/loop↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑*/
 
         /*↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓test lambda↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓*/
+        // for i32
         fn test_lambda_for_i32(&mut self) {
             let bak_i = self.i;
             self.i = 5;
@@ -285,6 +287,7 @@ trait_variable! {
             assert_eq!(self.i, 25);
             self.i = bak_i;
         }
+        // for Vec<i32>
         fn test_lambda_for_vec_i32(&mut self) {
             let bak_v_i32 = self.v_i32.clone();
             self.v_i32 = vec![1, 2, 3];
@@ -300,6 +303,7 @@ trait_variable! {
             assert_eq!(self.v_i32, vec![1, 2, 3, 10, 10]);
             self.v_i32 = bak_v_i32;
         }
+        // for String, &str
         fn test_lambda_for_string_and_str(&mut self) {
             let bak_s = self.s.clone();
             self.s = "hello".to_string();
