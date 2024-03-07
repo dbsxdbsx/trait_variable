@@ -79,7 +79,7 @@ trait_variable! {
             assert!(3.14 -(self.get_number(3.14)+ self.f + 0.)<0.01);
             // assignment of Vec<i32>
             self.v_i32 = vec![1, 2, 3];
-            // self.v_i32.push(1);
+            self.v_i32.push(1); // this should be converted into `(*self._v_i32_mut()).push(1);`
             assert_eq!(self.v_i32, vec![1, 2, 3, 1]);
             // restore
             self.i = bak_i;
@@ -231,7 +231,7 @@ trait_variable! {
             self.i = bak_i;
         }
         fn test_lambda_for_vec_i32(&mut self) {
-            let bak_v_i32 = self.v_i32.clone();
+            let _bak_v_i32 = self.v_i32.clone();
             self.v_i32 = vec![1, 2, 3];
             // lambda with block
             // let mut lambda = |delta: i32| {

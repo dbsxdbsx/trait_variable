@@ -47,7 +47,7 @@ fn test() {
     s.test_param_i32();
     s.test_ref_param_i32();
     s.test_mut_ref_param_i32();
-    // 
+    //
     s.test_param_vec_i32();
     s.test_ref_param_vec_i32();
     s.test_mut_ref_param_vec_i32();
