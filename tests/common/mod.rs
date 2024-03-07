@@ -1,3 +1,4 @@
+// for param (ref of)i32
 fn test_with_param_i32(i: i32) -> i32 {
     i
 }
@@ -7,6 +8,7 @@ fn test_with_ref_param_i32(i: &i32) -> i32 {
 fn test_with_mut_ref_param_i32(i: &mut i32) -> i32 {
     *i
 }
+// for param (ref of)vec<i32>
 fn test_with_param_vec_i32(v: Vec<i32>) -> Vec<i32> {
     v.clone()
 }
@@ -16,6 +18,17 @@ fn test_with_ref_param_vec_i32(v: &[i32]) -> Vec<i32> {
 fn test_with_mut_ref_param_vec_i32(v: &mut [i32]) -> Vec<i32> {
     v.to_vec()
 }
+// for param (ref of)String
+fn test_with_param_string(s: String) -> String {
+    s
+}
+fn test_with_ref_param_str(s: &str) -> String {
+    s.into()
+}
+fn test_with_mut_ref_param_str(s: &mut str) -> String {
+    s.into()
+}
+
 //↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓trait definition↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓
 use trait_variable::{trait_var, trait_variable};
 trait_variable! {
@@ -24,7 +37,7 @@ trait_variable! {
             i: i32;
         pub b: bool;
         pub f: f32;
-            // s: String;
+            s: String;
             v_i32: Vec<i32>;  // add return type test, iter like lambda test...
 
         // 2.the order of the function definition doesn't matter
@@ -35,13 +48,14 @@ trait_variable! {
 
         // the below is methods for testing trait variable fields:
         fn test_macro(&self) {
-            println!("i32: `{}`, bool: `{}`, f32: `{}`, v_i32: `{:?}`", self.i, self.b, self.f, self.v_i32); // for macro param `self.i`, it would convert to `*self._x()`
+            println!("i32: `{}`, bool: `{}`, f32: `{}`, v_i32: `{:?}`, s:`{}`", self.i, self.b, self.f, self.v_i32, self.s); // for macro param `self.i`, it would convert to `*self._x()`
             // println!("i32: `{self.i}`"); // the **Inline Replacement Style** is not supported yet
-            eprintln!("i32: `{}`, bool: `{}`, f32: `{}`, v_i32: `{:?}", self.i, self.b, self.f, self.v_i32); // the same as above
+            eprintln!("i32: `{}`, bool: `{}`, f32: `{}`, v_i32: `{:?}`, s:`{}`", self.i, self.b, self.f, self.v_i32, self.s); // the same as above
             assert!(self.i == self.i);
             assert_eq!(self.b, self.b);
             assert_ne!(self.f+1., self.f);
             assert_eq!(self.v_i32, self.v_i32);
+            assert_eq!(self.s, self.s);
         }
 
         fn test_assigntment(&mut self) {
@@ -51,6 +65,7 @@ trait_variable! {
             // let bak_b = (*self._b_mut());
             let bak_f = self.f;
             let bak_v_i32 = self.v_i32.clone();
+            let bak_s = self.s.clone();
             // println!("bak is:{:?}",std::any::type_name_of_val(bak_i));
 
             // assignment of i32
@@ -81,11 +96,16 @@ trait_variable! {
             self.v_i32 = vec![1, 2, 3];
             self.v_i32.push(1); // this should be converted into `(*self._v_i32_mut()).push(1);`
             assert_eq!(self.v_i32, vec![1, 2, 3, 1]);
+            // assignment of String
+            self.s = "hello".to_string();
+            self.s.push_str(" world2");
+            assert_eq!(self.s, "hello world2");
             // restore
             self.i = bak_i;
             self.b = bak_b;
             self.f = bak_f;
             self.v_i32 = bak_v_i32;
+            self.s = bak_s;
         }
 
         /*↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓test return type↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓*/
@@ -139,6 +159,31 @@ trait_variable! {
         fn test_return_cloned_vec_by_explicit_clone_expression(&self) ->Vec<i32>{
             self.v_i32.clone()
         }
+        // test return type String, &str
+        fn test_return_ref_string_by_return_statement(&self) -> &String{
+            return &self.s;
+        }
+        fn test_return_mut_ref_string_by_return_statement(&mut self) -> &mut String{
+            return &mut self.s;
+        }
+        fn test_return_ref_string_by_expression(&self) -> &String{
+            &self.s
+        }
+        fn test_return_mut_ref_string_by_expression(&mut self) -> &mut String{
+            &mut self.s
+        }
+        fn test_return_cloned_string_by_explicit_clone_return_statement(&self) -> String{
+            return self.s.clone();
+        }
+        fn test_return_cloned_string_by_explicit_clone_expression(&self) -> String{
+            self.s.clone()
+        }
+        fn test_return_ref_str_by_return_statement(&self) -> &str{
+            return &self.s;
+        }
+        fn test_return_ref_str_by_expression(&self) -> &str{
+            &self.s
+        }
         /*↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑test return type↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑*/
 
         /*↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓test param↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓*/
@@ -161,6 +206,16 @@ trait_variable! {
         }
         fn test_mut_ref_param_vec_i32(&mut self) {
            assert_eq!(test_with_mut_ref_param_vec_i32(&mut self.v_i32), self.v_i32);
+        }
+        // test param String, &str
+        fn test_param_string(&self) {
+            assert_eq!(test_with_param_string(self.s.clone()), self.s);
+        }
+        fn test_ref_param_str(&mut self) {
+            assert_eq!(test_with_ref_param_str(&self.s), self.s);
+        }
+        fn test_mut_ref_param_str(&mut self) {
+           assert_eq!(test_with_mut_ref_param_str(&mut self.s), self.s);
         }
         /*↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑test param↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑*/
 
@@ -245,6 +300,21 @@ trait_variable! {
             assert_eq!(self.v_i32, vec![1, 2, 3, 10, 10]);
             self.v_i32 = bak_v_i32;
         }
+        fn test_lambda_for_string_and_str(&mut self) {
+            let bak_s = self.s.clone();
+            self.s = "hello".to_string();
+            // lambda with block
+            let mut lambda = |s: &str| {
+                self.s.push_str(s);
+            };
+            lambda(" world");
+            assert_eq!(self.s, "hello world");
+            // lambda with expression
+            let mut lambda = |s: &str| self.s.push_str(s);
+            lambda(" world");
+            assert_eq!(self.s, "hello world world");
+            self.s = bak_s;
+        }
         /*↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑test lambda↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑*/
 
     }
@@ -270,8 +340,15 @@ pub struct MyStruct {
 
 /*↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓struct impl↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓*/
 impl MyStruct {
-    pub fn new(a: i32, i: i32, b: bool, f: f32, v_i32: Vec<i32>) -> Self {
-        Self { a, i, b, f, v_i32 }
+    pub fn new(a: i32, i: i32, b: bool, f: f32, v_i32: Vec<i32>, s: &str) -> Self {
+        Self {
+            a,
+            i,
+            b,
+            f,
+            v_i32,
+            s: s.into(),
+        }
     }
     pub fn get_print_field_a(&self) -> &i32 {
         println!("a: `{}`", self.a);

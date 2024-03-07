@@ -8,7 +8,7 @@ use crate::common::MyTrait;
 
 #[test]
 fn test() {
-    let mut s = MyStruct::new(1, -2, true, -3.14, vec![-1, 0, 1]);
+    let mut s = MyStruct::new(1, -2, true, -3.14, vec![-1, 0, 1], "hello world");
     // here only test advanced methods, no need to test the basics as in module `basic.rs`
     s.test_macro();
     s.test_assigntment();
