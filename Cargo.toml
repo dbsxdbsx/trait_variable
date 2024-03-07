@@ -12,9 +12,12 @@
         "language-implementations",
     ]
     readme="README.md"
-    exclude=["target/*", ".vscode/*", ".github/*", "tests/*", "justfile"]
     keywords=["trait", "variable", "type", "macro", "code-generation"]
-    include=["CHANGELOG.md"]
+    include=["CHANGELOG.md", "src/**/*", "Cargo.toml"]
+    exclude=["target/*", ".vscode/*", ".github/*", "tests/*", "justfile"]
+
+[badges]
+    maintenance={status="actively-developed"}
 
 [lib]
     proc-macro=true
