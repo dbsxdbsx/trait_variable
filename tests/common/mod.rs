@@ -28,6 +28,16 @@ fn test_with_ref_param_str(s: &str) -> String {
 fn test_with_mut_ref_param_str(s: &mut str) -> String {
     s.into()
 }
+// for param (ref of)Option<i32>
+fn test_with_param_opt_i32(opt: Option<i32>) -> Option<i32> {
+    opt
+}
+fn test_with_ref_param_opt_i32(opt: &Option<i32>) -> Option<i32> {
+    *opt
+}
+fn test_with_mut_ref_param_opt_i32(opt: &mut Option<i32>) -> Option<i32> {
+    *opt
+}
 
 //↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓trait definition↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓
 use trait_variable::{trait_var, trait_variable};
@@ -39,7 +49,7 @@ trait_variable! {
         pub f: f32;
             s: String;
             v_i32: Vec<i32>;
-            o_i32: Option<i32>;
+            opt_i32: Option<i32>;
 
         // 2.the order of the function definition doesn't matter
         fn get_number(&self, num:f32) -> f32 {
@@ -49,14 +59,15 @@ trait_variable! {
 
         // the below is methods for testing trait variable fields:
         fn test_macro(&self) {
-            println!("i32: `{}`, bool: `{}`, f32: `{}`, v_i32: `{:?}`, s:`{}`", self.i, self.b, self.f, self.v_i32, self.s); // for macro param `self.i`, it would convert to `*self._x()`
+            println!("i32: `{}`, bool: `{}`, f32: `{}`, v_i32: `{:?}`, s:`{}`, opt_i32: `{:?}`", self.i, self.b, self.f, self.v_i32, self.s , self.opt_i32); // for macro param `self.i`, it would convert to `*self._x()`
             // println!("i32: `{self.i}`"); // the **Inline Replacement Style** is not supported yet
-            eprintln!("i32: `{}`, bool: `{}`, f32: `{}`, v_i32: `{:?}`, s:`{}`", self.i, self.b, self.f, self.v_i32, self.s); // the same as above
+            eprintln!("i32: `{}`, bool: `{}`, f32: `{}`, v_i32: `{:?}`, s:`{}`, opt_i32: `{:?}`", self.i, self.b, self.f, self.v_i32, self.s, self.opt_i32); // the same as above
             assert!(self.i == self.i);
             assert_eq!(self.b, self.b);
             assert_ne!(self.f+1., self.f);
             assert_eq!(self.v_i32, self.v_i32);
             assert_eq!(self.s, self.s);
+            assert_eq!(self.opt_i32, self.opt_i32);
         }
 
         fn test_assigntment(&mut self) {
@@ -66,6 +77,7 @@ trait_variable! {
             let bak_f = self.f;
             let bak_v_i32 = self.v_i32.clone();
             let bak_s = self.s.clone();
+            let bak_opt_i32 = self.opt_i32.clone();
             // println!("bak is:{:?}",std::any::type_name_of_val(bak_i));
 
             // assignment of i32
@@ -117,6 +129,16 @@ trait_variable! {
                 bytes[6] = b'W';
             }
             assert_eq!(self.s,"Hello World2");
+            // assignment of Option<i32>
+            self.opt_i32 = Some(1);
+            if let Some(i) = self.opt_i32 {
+                assert_eq!(i, 1);
+                assert_eq!(self.opt_i32, Some(1));
+            }
+            assert_eq!(self.opt_i32.unwrap(), 1);
+            self.opt_i32 = self.opt_i32.clone();
+            self.opt_i32 = None;
+            assert!(self.opt_i32.is_none());
 
             // restore
             self.i = bak_i;
@@ -124,6 +146,7 @@ trait_variable! {
             self.f = bak_f;
             self.v_i32 = bak_v_i32;
             self.s = bak_s;
+            self.opt_i32 = bak_opt_i32;
         }
 
         /*↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓test return type↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓*/
@@ -202,6 +225,31 @@ trait_variable! {
         fn test_return_ref_str_by_expression(&self) -> &str{
             &self.s
         }
+        // test return type Option<i32>
+        fn test_return_ref_opt_i32_by_return_statement(&self) -> &Option<i32>{
+            return & self.opt_i32;
+        }
+        fn test_return_mut_ref_opt_i32_by_return_statement(&mut self) -> &mut Option<i32>{
+            return &  mut self.opt_i32;
+        }
+        fn test_return_ref_opt_i32_by_expression(&self) -> &Option<i32>{
+            &self.opt_i32
+        }
+        fn test_return_mut_ref_opt_i32_by_expression(&mut self) -> &mut Option<i32>{
+            &mut self.opt_i32
+        }
+        fn test_return_cloned_opt_i32_by_explicit_clone_return_statement(&self) -> Option<i32>{
+            return self.opt_i32.clone();
+        }
+        fn test_return_cloned_opt_i32_by_implicit_clone_return_statement(&self) -> Option<i32>{
+            return self.opt_i32;
+        }
+        fn test_return_cloned_opt_i32_by_explicit_clone_expression(&self) -> Option<i32>{
+            self.opt_i32.clone()
+        }
+        fn test_return_cloned_opt_i32_by_implicit_clone_expression(&self) -> Option<i32>{
+            self.opt_i32
+        }
         /*↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑test return type↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑*/
 
         /*↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓test param↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓*/
@@ -235,6 +283,16 @@ trait_variable! {
         fn test_mut_ref_param_str(&mut self) {
            assert_eq!(test_with_mut_ref_param_str(&mut self.s), self.s);
         }
+        // test param Option<i32>
+        fn test_param_opt_i32(&self) {
+            assert_eq!(test_with_param_opt_i32(self.opt_i32), self.opt_i32);
+        }
+        fn test_ref_param_opt_i32(&mut self) {
+            assert_eq!(test_with_ref_param_opt_i32(&self.opt_i32), self.opt_i32);
+        }
+        fn test_mut_ref_param_opt_i32(&mut self) {
+              assert_eq!(test_with_mut_ref_param_opt_i32(&mut self.opt_i32), self.opt_i32);
+        }
         /*↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑test param↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑*/
 
         /*↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓test conditional/loop↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓*/
@@ -252,7 +310,11 @@ trait_variable! {
             self.i = bak_i;
         }
         fn test_match_arm(&mut self) {
+            // bak
             let bak_i = self.i;
+            let bak_opt_i32 = self.opt_i32;
+
+            // test i32
             self.i = 5;
             match self.i {
                 0 => unreachable!(),
@@ -262,7 +324,16 @@ trait_variable! {
                 _ => unreachable!()
 
             }
+            // test Option<i32>
+            self.opt_i32 = Some(2);
+            match self.opt_i32 {
+                Some(i) => assert_eq!(i, 2),
+                None => unreachable!()
+            }
+
+            // restore
             self.i = bak_i;
+            self.opt_i32 = bak_opt_i32;
         }
         fn test_raw_loop(&mut self) {
             let bak_i = self.i;
@@ -291,6 +362,7 @@ trait_variable! {
         // for i32
         fn test_lambda_for_i32(&mut self) {
             let bak_i = self.i;
+
             self.i = 5;
             // lambda with block
             let mut lambda = |delta: i32| {
@@ -302,11 +374,13 @@ trait_variable! {
             let mut lambda = |delta: i32| self.i += delta;
             lambda(10);
             assert_eq!(self.i, 25);
+
             self.i = bak_i;
         }
         // for Vec<i32>
         fn test_lambda_for_vec_i32(&mut self) {
             let bak_v_i32 = self.v_i32.clone();
+
             self.v_i32 = vec![1, 2, 3];
             // lambda with block
             let mut lambda = |delta: i32| {
@@ -318,11 +392,13 @@ trait_variable! {
             let mut lambda = |delta: i32| self.v_i32.push(delta);
             lambda(10);
             assert_eq!(self.v_i32, vec![1, 2, 3, 10, 10]);
+
             self.v_i32 = bak_v_i32;
         }
         // for String, &str
         fn test_lambda_for_string_and_str(&mut self) {
             let bak_s = self.s.clone();
+
             self.s = "hello".to_string();
             // lambda with block
             let mut lambda = |s: &str| {
@@ -334,10 +410,28 @@ trait_variable! {
             let mut lambda = |s: &str| self.s.push_str(s);
             lambda(" world");
             assert_eq!(self.s, "hello world world");
+
             self.s = bak_s;
         }
-        /*↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑test lambda↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑*/
+        // for Option<i32>
+        fn test_lambda_for_opt_i32(&mut self) {
+            let bak_opt_i32 = self.opt_i32;
 
+            self.opt_i32 = Some(1);
+            // lambda with block
+            let mut lambda = |delta: i32| {
+                self.opt_i32 = Some(delta);
+            };
+            lambda(10);
+            assert_eq!(self.opt_i32, Some(10));
+            // lambda with expression
+            let mut lambda = |delta: i32| self.opt_i32 = Some(delta);
+            lambda(100);
+            assert_eq!(self.opt_i32, Some(100));
+
+            self.opt_i32 = bak_opt_i32;
+        }
+        /*↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑test lambda↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑*/
     }
 }
 //↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑trait definition↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑
@@ -368,7 +462,7 @@ impl MyStruct {
         f: f32,
         v_i32: Vec<i32>,
         s: &str,
-        o_i32: Option<i32>,
+        opt_i32: Option<i32>,
     ) -> Self {
         Self {
             a,
@@ -377,7 +471,7 @@ impl MyStruct {
             f,
             v_i32,
             s: s.into(),
-            o_i32,
+            opt_i32,
         }
     }
     pub fn get_print_field_a(&self) -> &i32 {
