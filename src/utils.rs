@@ -23,7 +23,7 @@ pub fn process_assignment_expr(re: &Regex, expr: &Expr, is_method_mut: bool) -> 
         syn::Expr::AssignOp(assign_op_expr) => &assign_op_expr.right,
         _ => unreachable!(),
     };
-    let new_right_str = replace_self_field(right, is_method_mut);
+    let new_right_str = replace_self_field(right, is_method_mut, false);
 
     // 3. rebuild the final expression and return
     let new_expr_str = match expr {
@@ -38,6 +38,22 @@ pub fn process_assignment_expr(re: &Regex, expr: &Expr, is_method_mut: bool) -> 
     };
     syn::parse_str(&new_expr_str).expect("Failed to parse new expr")
 }
+
+/// Helper function to check if a string contains `ref mut` adjacent to each other
+pub fn is_ref_mut(s: &str) -> bool {
+    let parts = s.split_whitespace();
+    let mut found_ref = false;
+
+    for part in parts {
+        if found_ref && part == "mut" {
+            return true;
+        }
+        found_ref = part == "ref";
+    }
+
+    false
+}
+
 /// Replaces occurrences of `self.field`, `&self.field`, and `&mut self.field` in the given expression
 /// with their corresponding getter/setter method calls.
 ///
@@ -50,7 +66,11 @@ pub fn process_assignment_expr(re: &Regex, expr: &Expr, is_method_mut: bool) -> 
 ///
 /// A `String` containing the modified expression with `self.field` occurrences replaced.
 /// ```
-pub fn replace_self_field<T: ToTokens>(expr: &T, is_method_mut: bool) -> String {
+pub fn replace_self_field<T: ToTokens>(
+    expr: &T,
+    is_method_mut: bool,
+    is_left_ref_mut: bool,
+) -> String {
     let raw_expr_str = quote!(#expr).to_string();
     let re = Regex::new(
         r"(&\s*mut\s+self\.)([a-zA-Z_]\w*)|(&\s*self\.)([a-zA-Z_]\w*)|(self\.)([a-zA-Z_]\w*)",
@@ -85,8 +105,12 @@ pub fn replace_self_field<T: ToTokens>(expr: &T, is_method_mut: bool) -> String 
                 let trailing_fn_expr =
                     extract_trailing_expr_until_to_1st_fn(&raw_expr_str, match_end);
                 // convert to mut or non-mut version accordingly
-                if !trailing_fn_expr.is_empty() && is_method_mut {
-                    result.push_str(&format!("(*self._{}_mut())", name));
+                if is_method_mut {
+                    if (!trailing_fn_expr.is_empty()) || is_left_ref_mut {
+                        result.push_str(&format!("(*self._{}_mut())", name));
+                    } else {
+                        result.push_str(&format!("(*self._{}())", name));
+                    }
                 } else {
                     result.push_str(&format!("(*self._{}())", name));
                 }
@@ -219,5 +243,18 @@ mod tests {
         let target_trail =
             extract_trailing_expr_until_to_1st_fn(raw_str, captures.get(0).unwrap().end());
         assert_eq!(target_trail, ".c.push(1)");
+    }
+
+    #[test]
+    fn test_is_ref_mut() {
+        assert!(is_ref_mut("ref mut"));
+        assert!(is_ref_mut("ref   mut"));
+        assert!(is_ref_mut("  ref   mut  "));
+        assert!(is_ref_mut("(_, ref  mut s, _)"));
+        assert!(!is_ref_mut("refmut"));
+        assert!(!is_ref_mut("aref mut"));
+        assert!(!is_ref_mut("ref mutxx"));
+        assert!(!is_ref_mut(""));
+        assert!(!is_ref_mut("hello world"));
     }
 }

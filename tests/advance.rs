@@ -87,6 +87,31 @@ fn test() {
         s.test_return_cloned_opt_i32_by_implicit_clone_expression(),
         Some(0)
     );
+    // test return tuple (i32, String, Vec<i32>)
+    assert_eq!(
+        s.test_return_ref_tuple_by_return_statement(),
+        &(0, "".into(), vec![])
+    );
+    assert_eq!(
+        s.test_return_mut_ref_tuple_by_return_statement(),
+        &mut (0, "".into(), vec![])
+    );
+    assert_eq!(
+        s.test_return_ref_tuple_by_expression(),
+        &(0, "".into(), vec![])
+    );
+    assert_eq!(
+        s.test_return_mut_ref_tuple_by_expression(),
+        &mut (0, "".into(), vec![])
+    );
+    assert_eq!(
+        s.test_return_cloned_tuple_by_explicit_clone_return_statement(),
+        (0, "".into(), vec![])
+    );
+    assert_eq!(
+        s.test_return_cloned_tuple_by_explicit_clone_expression(),
+        (0, "".into(), vec![])
+    );
     /*↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑test return type↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑*/
 
     /*↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓test param↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓*/
@@ -106,6 +131,10 @@ fn test() {
     s.test_param_opt_i32();
     s.test_ref_param_opt_i32();
     s.test_mut_ref_param_opt_i32();
+    // test param tuple (i32, String, Vec<i32>)
+    s.test_param_tuple();
+    s.test_ref_param_tuple();
+    s.test_mut_ref_param_tuple();
     /*↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑test param↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑*/
 
     /*↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓conditional/loop↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓*/
@@ -120,5 +149,6 @@ fn test() {
     s.test_lambda_for_vec_i32();
     s.test_lambda_for_string_and_str();
     s.test_lambda_for_opt_i32();
+    s.test_lambda_for_tuple();
     /*↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑test lambda↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑*/
 }

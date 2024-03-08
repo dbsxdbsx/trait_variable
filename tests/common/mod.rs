@@ -38,6 +38,16 @@ fn test_with_ref_param_opt_i32(opt: &Option<i32>) -> Option<i32> {
 fn test_with_mut_ref_param_opt_i32(opt: &mut Option<i32>) -> Option<i32> {
     *opt
 }
+// for param (ref of)tuple (i32, String, Vec<i32>)
+fn test_with_param_tuple(t: (i32, String, Vec<i32>)) -> (i32, String, Vec<i32>) {
+    t
+}
+fn test_with_ref_param_tuple(t: &(i32, String, Vec<i32>)) -> (i32, String, Vec<i32>) {
+    t.clone()
+}
+fn test_with_mut_ref_param_tuple(t: &mut (i32, String, Vec<i32>)) -> (i32, String, Vec<i32>) {
+    t.clone()
+}
 
 //↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓trait definition↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓
 use trait_variable::{trait_var, trait_variable};
@@ -50,6 +60,7 @@ trait_variable! {
             s: String;
             v_i32: Vec<i32>;
             opt_i32: Option<i32>;
+        pub t : (i32, String, Vec<i32>);
 
         // 2.the order of the function definition doesn't matter
         fn get_number(&self, num:f32) -> f32 {
@@ -59,15 +70,16 @@ trait_variable! {
 
         // the below is methods for testing trait variable fields:
         fn test_macro(&self) {
-            println!("i32: `{}`, bool: `{}`, f32: `{}`, v_i32: `{:?}`, s:`{}`, opt_i32: `{:?}`", self.i, self.b, self.f, self.v_i32, self.s , self.opt_i32); // for macro param `self.i`, it would convert to `*self._x()`
+            println!("i32: `{}`, bool: `{}`, f32: `{}`, v_i32: `{:?}`, s:`{}`, opt_i32: `{:?}`, tuple:`{:?}`", self.i, self.b, self.f, self.v_i32, self.s , self.opt_i32, self.t); // for macro param `self.i`, it would convert to `*self._x()`
             // println!("i32: `{self.i}`"); // the **Inline Replacement Style** is not supported yet
-            eprintln!("i32: `{}`, bool: `{}`, f32: `{}`, v_i32: `{:?}`, s:`{}`, opt_i32: `{:?}`", self.i, self.b, self.f, self.v_i32, self.s, self.opt_i32); // the same as above
+            eprintln!("i32: `{}`, bool: `{}`, f32: `{}`, v_i32: `{:?}`, s:`{}`, opt_i32: `{:?}`, tuple:`{:?}`", self.i, self.b, self.f, self.v_i32, self.s, self.opt_i32, self.t); // the same as above
             assert!(self.i == self.i);
             assert_eq!(self.b, self.b);
             assert_ne!(self.f+1., self.f);
             assert_eq!(self.v_i32, self.v_i32);
             assert_eq!(self.s, self.s);
             assert_eq!(self.opt_i32, self.opt_i32);
+            assert_eq!(self.t, self.t);
         }
 
         fn test_assigntment(&mut self) {
@@ -78,6 +90,7 @@ trait_variable! {
             let bak_v_i32 = self.v_i32.clone();
             let bak_s = self.s.clone();
             let bak_opt_i32 = self.opt_i32.clone();
+            let bak_t = self.t.clone();
             // println!("bak is:{:?}",std::any::type_name_of_val(bak_i));
 
             // assignment of i32
@@ -139,6 +152,20 @@ trait_variable! {
             self.opt_i32 = self.opt_i32.clone();
             self.opt_i32 = None;
             assert!(self.opt_i32.is_none());
+            // assignment of tuple
+            self.t.0 = 1;
+            self.t.1 = "hello".to_string();
+            self.t.2 = vec![1, 2, 3];
+            assert_eq!(self.t, (1, "hello".to_string(), vec![1, 2, 3]));
+            self.t = (2, "world".to_string(), vec![4, 5, 6]);
+            assert_eq!(self.t, (2, "world".to_string(), vec![4, 5, 6]));
+            let (_, ref s, ref v) = self.t; // the right side would be converted into `(*self._t())`
+            assert_eq!(s, "world");
+            assert_eq!(v, &vec![4, 5, 6]);
+            let (_, ref  mut s, _) = self.t; // the right side would be converted into `(*self._t_mut())`
+            assert_eq!(s, "world");
+            *s = "world2".into();
+            assert_eq!(self.t, (2, "world2".to_string(), vec![4, 5, 6]));
 
             // restore
             self.i = bak_i;
@@ -147,6 +174,7 @@ trait_variable! {
             self.v_i32 = bak_v_i32;
             self.s = bak_s;
             self.opt_i32 = bak_opt_i32;
+            self.t = bak_t;
         }
 
         /*↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓test return type↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓*/
@@ -250,6 +278,25 @@ trait_variable! {
         fn test_return_cloned_opt_i32_by_implicit_clone_expression(&self) -> Option<i32>{
             self.opt_i32
         }
+        // test return type tuple (i32, String, Vec<i32>)
+        fn test_return_ref_tuple_by_return_statement(&self) -> &(i32, String, Vec<i32>){
+            return &self.t;
+        }
+        fn test_return_mut_ref_tuple_by_return_statement(&mut self) -> &mut (i32, String, Vec<i32>){
+            return &mut self.t;
+        }
+        fn test_return_ref_tuple_by_expression(&self) -> &(i32, String, Vec<i32>){
+            &self.t
+        }
+        fn test_return_mut_ref_tuple_by_expression(&mut self) -> &mut (i32, String, Vec<i32>){
+            &mut self.t
+        }
+        fn test_return_cloned_tuple_by_explicit_clone_return_statement(&self) -> (i32, String, Vec<i32>){
+            return self.t.clone();
+        }
+        fn test_return_cloned_tuple_by_explicit_clone_expression(&self) -> (i32, String, Vec<i32>){
+            self.t.clone()
+        }
         /*↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑test return type↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑*/
 
         /*↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓test param↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓*/
@@ -292,6 +339,16 @@ trait_variable! {
         }
         fn test_mut_ref_param_opt_i32(&mut self) {
               assert_eq!(test_with_mut_ref_param_opt_i32(&mut self.opt_i32), self.opt_i32);
+        }
+        // test param tuple (i32, String, Vec<i32>)
+        fn test_param_tuple(&self) {
+            assert_eq!(test_with_param_tuple(self.t.clone()), self.t);
+        }
+        fn test_ref_param_tuple(&mut self) {
+            assert_eq!(test_with_ref_param_tuple(&self.t), self.t);
+        }
+        fn test_mut_ref_param_tuple(&mut self) {
+              assert_eq!(test_with_mut_ref_param_tuple(&mut self.t), self.t);
         }
         /*↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑test param↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑*/
 
@@ -431,6 +488,24 @@ trait_variable! {
 
             self.opt_i32 = bak_opt_i32;
         }
+        // for tuple (i32, String, Vec<i32>)
+        fn test_lambda_for_tuple(&mut self) {
+            let bak_t = self.t.clone();
+
+            self.t = (1, "hello".to_string(), vec![1, 2, 3]);
+            // lambda with block
+            let mut lambda = |delta: i32| {
+                self.t.0 += delta;
+            };
+            lambda(10);
+            assert_eq!(self.t, (11, "hello".to_string(), vec![1, 2, 3]));
+            // lambda with expression
+            let mut lambda = |delta: i32| self.t.0 += delta;
+            lambda(100);
+            assert_eq!(self.t, (111, "hello".to_string(), vec![1, 2, 3]));
+
+            self.t = bak_t;
+        }
         /*↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑test lambda↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑*/
     }
 }
@@ -472,6 +547,7 @@ impl MyStruct {
             v_i32,
             s: s.into(),
             opt_i32,
+            t: (0, "".into(), vec![]),
         }
     }
     pub fn get_print_field_a(&self) -> &i32 {

@@ -143,7 +143,6 @@ Choose the license that best fits your needs.
 
 ## todo list
  - [] syn::parse_str refactor;
- - [] test left value with tuple, like `(<trait_field>, _)`;
  - [] add more test cases for various trait field types, like HashMap, customized struct( sub_field assignment) etc;
  - [] test with trait with constant field, associated types, generic types, async methods, etc;
  - [] omit `use <trait_module>::<_hidden_parent_trait_name>;` statement when using `#[trait_var(<trait_name>)]` for a struct in an extra module;

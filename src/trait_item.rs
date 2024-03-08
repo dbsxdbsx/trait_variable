@@ -2,9 +2,11 @@ use quote::quote;
 use regex::{Captures, Regex};
 
 use syn::{parse::Parse, TraitItem};
-use syn::{ExprCall, Stmt};
+use syn::{ExprCall, Local, Stmt};
 
-use crate::utils::{is_trait_method_mutable, process_assignment_expr, replace_self_field};
+use crate::utils::{
+    is_ref_mut, is_trait_method_mutable, process_assignment_expr, replace_self_field,
+};
 
 pub fn refine_trait_items(trait_items: Vec<TraitItem>) -> Vec<proc_macro2::TokenStream> {
     trait_items
@@ -48,16 +50,26 @@ pub fn refine_trait_items(trait_items: Vec<TraitItem>) -> Vec<proc_macro2::Token
 
 fn process_stmt(re: &Regex, stmt: syn::Stmt, is_method_mut: bool) -> syn::Stmt {
     match stmt {
-        Stmt::Semi(expr, semi) => syn::Stmt::Semi(process_expr(re, expr, is_method_mut), semi),
-        syn::Stmt::Expr(expr) => syn::Stmt::Expr(process_expr(re, expr, is_method_mut)),
-        // local variable bindings (let statements)
+        Stmt::Semi(expr, semi) => {
+            syn::Stmt::Semi(process_expr(re, expr, is_method_mut, false), semi)
+        }
+        syn::Stmt::Expr(expr) => syn::Stmt::Expr(process_expr(re, expr, is_method_mut, false)),
+        // local variable bindings (`let` assignments)
         syn::Stmt::Local(local) => {
+            // Convert the pattern to a string to check for `ref mut`
+            let pat_str = quote!(#local.pat).to_string();
+            let is_left_ref_mut = is_ref_mut(&pat_str);
+            // Process the initializer expression if it exists
             let new_local_init = if let Some((eq, init)) = local.init {
-                Some((eq, Box::new(process_expr(re, *init, is_method_mut))))
+                Some((
+                    eq,
+                    Box::new(process_expr(re, *init, is_method_mut, is_left_ref_mut)),
+                ))
             } else {
                 None
             };
-            syn::Stmt::Local(syn::Local {
+
+            Stmt::Local(Local {
                 init: new_local_init,
                 ..local
             })
@@ -78,7 +90,12 @@ fn process_stmt(re: &Regex, stmt: syn::Stmt, is_method_mut: bool) -> syn::Stmt {
     }
 }
 
-fn process_expr(re: &Regex, expr: syn::Expr, is_method_mut: bool) -> syn::Expr {
+fn process_expr(
+    re: &Regex,
+    expr: syn::Expr,
+    is_method_mut: bool,
+    is_left_ref_mut: bool,
+) -> syn::Expr {
     match expr {
         syn::Expr::Assign(assign_expr) => {
             process_assignment_expr(re, &syn::Expr::Assign(assign_expr.clone()), is_method_mut)
@@ -90,7 +107,7 @@ fn process_expr(re: &Regex, expr: syn::Expr, is_method_mut: bool) -> syn::Expr {
         ),
         syn::Expr::Macro(expr_macro) => {
             let macro_tokens = &expr_macro.mac.tokens;
-            let new_macro_str = replace_self_field(macro_tokens, is_method_mut);
+            let new_macro_str = replace_self_field(macro_tokens, is_method_mut, is_left_ref_mut);
             let new_tokens = new_macro_str.parse().expect("Failed to parse tokens");
             syn::Expr::Macro(syn::ExprMacro {
                 attrs: expr_macro.attrs.clone(),
@@ -104,7 +121,7 @@ fn process_expr(re: &Regex, expr: syn::Expr, is_method_mut: bool) -> syn::Expr {
         }
         // for explicit return statement
         syn::Expr::Return(ref expr_return) => {
-            let replaced_expr_str = replace_self_field(expr_return, is_method_mut);
+            let replaced_expr_str = replace_self_field(expr_return, is_method_mut, is_left_ref_mut);
             let replaced_expr = syn::parse_str(&replaced_expr_str)
                 .expect("Failed to parse replaced expression in return statement");
             syn::Expr::Return(replaced_expr)
@@ -113,7 +130,7 @@ fn process_expr(re: &Regex, expr: syn::Expr, is_method_mut: bool) -> syn::Expr {
         syn::Expr::Call(expr_call) => {
             let mut new_args = Vec::new();
             for arg in &expr_call.args {
-                let new_arg_str = replace_self_field(arg, is_method_mut);
+                let new_arg_str = replace_self_field(arg, is_method_mut, is_left_ref_mut);
                 let new_arg: syn::Expr =
                     syn::parse_str(&new_arg_str).expect("Failed to parse new arg");
                 new_args.push(new_arg);
@@ -168,7 +185,7 @@ fn process_expr(re: &Regex, expr: syn::Expr, is_method_mut: bool) -> syn::Expr {
             })
         }
         _ => {
-            let new_expr_str = replace_self_field(&expr, is_method_mut);
+            let new_expr_str = replace_self_field(&expr, is_method_mut, is_left_ref_mut);
             syn::parse_str(&new_expr_str).expect("Failed to parse new expr")
         }
     }

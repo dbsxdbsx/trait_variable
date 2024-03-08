@@ -1,6 +1,9 @@
 # Changelog
 
 All notable changes to this project will be documented in this file.
+## 0.6.0(unreleased)
+* Refine tests
+* Add and fix feature/test for tuple as trait field
 
 ## 0.5.0 - March 7, 2024
 
