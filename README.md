@@ -123,6 +123,10 @@ Finally, `x` and `y` can be accessed as the struct (trait) fields as if they are
 
 NOTE: In this whole implementation, the `x` and `y` are still not the fields of `MyTrait` but the fields of `MyStruct`, technically. That is: There is no inheritance mechanism at all, since the status/manipulation of `x` and `y` here are only dealt within the implemented struct -- Yes, structs are still defined through interfaces (traits) as usual but not through inheritance.
 
+## Limitations
+
+This crate cannot get comprehensive intellisense and lint support in VSCode or other IDEs, as it uses procedural macros to simulate variable fields in traits. This is because most Rust IDE extensions currently cannot handle identifiers inside macros very well. Therefore, when using this crate, you may not get full code completion, refactoring, go-to-definition, and other intelligent awareness features. This is a known limitation that needs to be improved in future versions.
+
 ## Requirements
 
 - Rust edition 2021 or later is required.
