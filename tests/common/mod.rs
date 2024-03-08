@@ -38,7 +38,8 @@ trait_variable! {
         pub b: bool;
         pub f: f32;
             s: String;
-            v_i32: Vec<i32>;  // add return type test, iter like lambda test...
+            v_i32: Vec<i32>;
+            o_i32: Option<i32>;
 
         // 2.the order of the function definition doesn't matter
         fn get_number(&self, num:f32) -> f32 {
@@ -360,7 +361,15 @@ pub struct MyStruct {
 
 /*↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓struct impl↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓*/
 impl MyStruct {
-    pub fn new(a: i32, i: i32, b: bool, f: f32, v_i32: Vec<i32>, s: &str) -> Self {
+    pub fn new(
+        a: i32,
+        i: i32,
+        b: bool,
+        f: f32,
+        v_i32: Vec<i32>,
+        s: &str,
+        o_i32: Option<i32>,
+    ) -> Self {
         Self {
             a,
             i,
@@ -368,6 +377,7 @@ impl MyStruct {
             f,
             v_i32,
             s: s.into(),
+            o_i32,
         }
     }
     pub fn get_print_field_a(&self) -> &i32 {
