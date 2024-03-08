@@ -1,3 +1,4 @@
+/*↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓assistant fns↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓*/
 // for param (ref of)i32
 fn test_with_param_i32(i: i32) -> i32 {
     i
@@ -48,6 +49,7 @@ fn test_with_ref_param_tuple(t: &(i32, String, Vec<i32>)) -> (i32, String, Vec<i
 fn test_with_mut_ref_param_tuple(t: &mut (i32, String, Vec<i32>)) -> (i32, String, Vec<i32>) {
     t.clone()
 }
+/*↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑assistant fns↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑*/
 
 //↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓trait definition↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓
 use trait_variable::{trait_var, trait_variable};
@@ -56,8 +58,8 @@ trait_variable! {
         // 1.put the variable fields definition at the TOP of the target trait before any function
             i: i32;
         pub b: bool;
-        pub f: f32;
-            s: String;
+             f: f32;
+        pub  s: String;
             v_i32: Vec<i32>;
             opt_i32: Option<i32>;
         pub t : (i32, String, Vec<i32>);

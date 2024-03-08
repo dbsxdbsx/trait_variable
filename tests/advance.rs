@@ -10,6 +10,12 @@ use crate::common::MyTrait;
 fn test() {
     let mut s = MyStruct::new(1, -2, true, -3.14, vec![-1, 0, 1], "hello world", Some(0));
     // here only test advanced methods, no need to test the basics as in module `basic.rs`
+    /*↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓test trait fields values↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓*/
+    assert_eq!(s.b, true);
+    assert_eq!(s.s, "hello world");
+    assert_eq!(s.t, (0, "".into(), vec![]));
+    /*↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑test trait fields values↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑*/
+    
     s.test_macro();
     s.test_assigntment();
 

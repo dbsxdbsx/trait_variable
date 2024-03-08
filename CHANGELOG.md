@@ -10,3 +10,7 @@ All notable changes to this project will be documented in this file.
 * Refactor
 * Add feature/test for Vec as trait field
 * Add feature/test for String as trait field
+
+## 0.1.0~0.4.0
+
+* Initial release, under development
