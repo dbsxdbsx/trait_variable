@@ -157,8 +157,8 @@ trait_variable! {
             // assignment of tuple
             self.t.0 = 1;
             self.t.1 = "hello".to_string();
-            self.t.2 = vec![1, 2, 3];
-            assert_eq!(self.t, (1, "hello".to_string(), vec![1, 2, 3]));
+            self.t.2 = self.v_i32.clone();
+            assert_eq!(self.t, (1, "hello".to_string(), vec![-6, 2, 3, 4]));
             self.t = (2, "world".to_string(), vec![4, 5, 6]);
             assert_eq!(self.t, (2, "world".to_string(), vec![4, 5, 6]));
             let (_, ref s, ref v) = self.t; // the right side would be converted into `(*self._t())`
