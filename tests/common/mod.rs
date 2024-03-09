@@ -13,6 +13,14 @@ impl CustomType {
         }
     }
 }
+
+#[derive(PartialEq, Eq, Debug, Clone)]
+pub enum EnumType {
+    Unit,
+    Point { x: i32, y: i32 },
+    Message(String),
+    Rgb(i32, i32, i32),
+}
 /*↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓assistant fns↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓*/
 // for param (ref of)i32
 fn test_with_param_i32(i: i32) -> i32 {
@@ -94,6 +102,16 @@ fn test_with_ref_param_custom(custom: &CustomType) -> CustomType {
 fn test_with_mut_ref_param_custom(custom: &mut CustomType) -> CustomType {
     custom.clone()
 }
+// for param (ref of)enum type
+fn test_with_param_enum(e: EnumType) -> EnumType {
+    e
+}
+fn test_with_ref_param_enum(e: &EnumType) -> EnumType {
+    e.clone()
+}
+fn test_with_mut_ref_param_enum(e: &mut EnumType) -> EnumType {
+    e.clone()
+}
 /*↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑assistant fns↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑*/
 
 use std::collections::{BTreeMap, HashSet};
@@ -113,6 +131,7 @@ trait_variable! {
         pub(crate) set_i32: HashSet<i32>;
             bmap: BTreeMap<i32, String>;
         pub(super) custom: CustomType;
+        pub(in crate::common) e: EnumType;
 
         // 2.the order of the function definition doesn't matter
         fn get_number(&self, num:f32) -> f32 {
@@ -122,9 +141,9 @@ trait_variable! {
 
         // the below is methods for testing trait variable fields:
         fn test_macro(&self) {
-            println!("i32: `{}`, bool: `{}`, f32: `{}`, v_i32: `{:?}`, s:`{}`, opt_i32: `{:?}`, tuple:`{:?}`, set_i32:`{:?}`, btree_map:`{:?}`, custom_type:`{:#?}`", self.i, self.b, self.f, self.v_i32, self.s , self.opt_i32, self.t, self.set_i32, self.bmap, self.custom); // for macro param `self.i`, it would convert to `*self._x()`
+            println!("i32: `{}`, bool: `{}`, f32: `{}`, v_i32: `{:?}`, s:`{}`, opt_i32: `{:?}`, tuple:`{:?}`, set_i32:`{:?}`, btree_map:`{:?}`, custom_type:`{:#?}, enum::`{:?}`", self.i, self.b, self.f, self.v_i32, self.s , self.opt_i32, self.t, self.set_i32, self.bmap, self.custom, self.e); // for macro param `self.i`, it would convert to `*self._x()`
             // println!("i32: `{self.i}`"); // the **Inline Replacement Style** is not supported yet
-            eprintln!("i32: `{}`, bool: `{}`, f32: `{}`, v_i32: `{:?}`, s:`{}`, opt_i32: `{:?}`, tuple:`{:?}`, set_i32:`{:?}`, btree_map:`{:?}`, custom_type:`{:#?}`", self.i, self.b, self.f, self.v_i32, self.s, self.opt_i32, self.t, self.set_i32, self.bmap, self.custom); // the same as above
+            eprintln!("i32: `{}`, bool: `{}`, f32: `{}`, v_i32: `{:?}`, s:`{}`, opt_i32: `{:?}`, tuple:`{:?}`, set_i32:`{:?}`, btree_map:`{:?}`, custom_type:`{:#?}`, enum::`{:?}`", self.i, self.b, self.f, self.v_i32, self.s, self.opt_i32, self.t, self.set_i32, self.bmap, self.custom, self.e); // the same as above
             assert!(self.i == self.i);
             assert_eq!(self.b, self.b);
             assert_ne!(self.f+1., self.f);
@@ -134,6 +153,7 @@ trait_variable! {
             assert_eq!(self.t, self.t);
             assert_eq!(self.set_i32, self.set_i32);
             assert_eq!(self.bmap, self.bmap);
+            assert_eq!(self.custom, self.custom);
         }
 
         fn test_assigntment(&mut self) {
@@ -148,6 +168,7 @@ trait_variable! {
             let bak_set_i32 = self.set_i32.clone();
             let bak_bmap = self.bmap.clone();
             let bak_custom = self.custom.clone();
+            let bak_e = self.e.clone();
             // println!("bak is:{:?}",std::any::type_name_of_val(bak_i));
 
             // assignment of i32
@@ -246,6 +267,15 @@ trait_variable! {
             assert_eq!(self.custom.str, "hello");
             self.custom.str = self.custom.str.to_uppercase();
             assert_eq!(self.custom.str, "HELLO");
+            // assignment of enum type
+            self.e = EnumType::Unit;
+            assert_eq!(self.e, EnumType::Unit);
+            self.e = EnumType::Point { x: 1, y: 2 };
+            assert_eq!(self.e, EnumType::Point { x: 1, y: 2 });
+            self.e = EnumType::Message("hello".to_string());
+            assert_eq!(self.e, EnumType::Message("hello".to_string()));
+            self.e = EnumType::Rgb(1, 2, 3);
+            assert_eq!(self.e, EnumType::Rgb(1, 2, 3));
 
             // restore
             self.i = bak_i;
@@ -258,6 +288,7 @@ trait_variable! {
             self.set_i32 = bak_set_i32;
             self.bmap = bak_bmap;
             self.custom = bak_custom;
+            self.e = bak_e;
         }
 
         /*↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓test return type↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓*/
@@ -437,6 +468,25 @@ trait_variable! {
         fn test_return_cloned_custom_by_explicit_clone_expression(&self) -> CustomType{
             self.custom.clone()
         }
+        // test return type enum type
+        fn test_return_ref_enum_by_return_statement(&self) -> &EnumType{
+            return &self.e;
+        }
+        fn test_return_mut_ref_enum_by_return_statement(&mut self) -> &mut EnumType{
+            return &mut self.e;
+        }
+        fn test_return_ref_enum_by_expression(&self) -> &EnumType{
+            &self.e
+        }
+        fn test_return_mut_ref_enum_by_expression(&mut self) -> &mut EnumType{
+            &mut self.e
+        }
+        fn test_return_cloned_enum_by_explicit_clone_return_statement(&self) -> EnumType{
+            return self.e.clone();
+        }
+        fn test_return_cloned_enum_by_explicit_clone_expression(&self) -> EnumType{
+            self.e.clone()
+        }
         /*↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑test return type↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑*/
 
         /*↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓test param↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓*/
@@ -520,6 +570,16 @@ trait_variable! {
         fn test_mut_ref_param_custom(&mut self) {
               assert_eq!(test_with_mut_ref_param_custom(&mut self.custom), self.custom);
         }
+        // test param enum type
+        fn test_param_enum(&self) {
+            assert_eq!(test_with_param_enum(self.e.clone()), self.e);
+        }
+        fn test_ref_param_enum(&mut self) {
+            assert_eq!(test_with_ref_param_enum(&self.e), self.e);
+        }
+        fn test_mut_ref_param_enum(&mut self) {
+              assert_eq!(test_with_mut_ref_param_enum(&mut self.e), self.e);
+        }
         /*↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑test param↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑*/
 
         /*↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓test conditional/loop↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓*/
@@ -540,6 +600,7 @@ trait_variable! {
             // bak
             let bak_i = self.i;
             let bak_opt_i32 = self.opt_i32;
+            let bak_e = self.e.clone();
 
             // test i32
             self.i = 5;
@@ -557,10 +618,25 @@ trait_variable! {
                 Some(i) => assert_eq!(i, 2),
                 None => unreachable!()
             }
+            // test enum type
+            self.e = EnumType::Message("hello".to_string());
+            match &mut self.e {
+                EnumType::Message(s) => s.push_str(" world"),
+                _ => (),
+            }
+            assert_eq!(self.e, EnumType::Message("hello world".to_string()));
+
+            if let EnumType::Message(s) = &mut self.e {
+                s.push_str("!");
+            } else {
+                panic!("Expected EnumType::Message, got something else");
+            }
+            assert_eq!(self.e, EnumType::Message("hello world!".to_string()));
 
             // restore
             self.i = bak_i;
             self.opt_i32 = bak_opt_i32;
+            self.e = bak_e;
         }
         fn test_raw_loop(&mut self) {
             let bak_i = self.i;
@@ -804,6 +880,24 @@ trait_variable! {
 
             self.custom = bak_custom;
         }
+        // for enum type
+        fn test_lambda_for_enum(&mut self) {
+            let bak_e = self.e.clone();
+
+            self.e = EnumType::Unit;
+            // lambda with block
+            let mut lambda = |e: EnumType| {
+                self.e = e;
+            };
+            lambda(EnumType::Point { x: 1, y: 2 });
+            assert_eq!(self.e, EnumType::Point { x: 1, y: 2 });
+            // lambda with expression
+            let mut lambda = |e: EnumType| self.e = e;
+            lambda(EnumType::Message("hello".to_string()));
+            assert_eq!(self.e, EnumType::Message("hello".to_string()));
+
+            self.e = bak_e;
+        }
         /*↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑test lambda↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑*/
     }
 }
@@ -839,6 +933,7 @@ impl MyStruct {
         set_i32: HashSet<i32>,
         b_map: BTreeMap<i32, String>,
         custom: CustomType,
+        e: EnumType,
     ) -> Self {
         Self {
             a,
@@ -852,6 +947,7 @@ impl MyStruct {
             set_i32,
             bmap: b_map,
             custom,
+            e,
         }
     }
     pub fn get_print_field_a(&self) -> &i32 {

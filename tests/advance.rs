@@ -6,7 +6,7 @@ use std::collections::{BTreeMap, HashSet};
 
 use common::MyStruct;
 
-use crate::common::{CustomType, MyTrait};
+use crate::common::{CustomType, EnumType, MyTrait};
 
 #[test]
 fn test() {
@@ -21,6 +21,7 @@ fn test() {
         HashSet::from([0, 1, 2]),
         BTreeMap::new(),
         CustomType::new(),
+        EnumType::Unit,
     );
     /*↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑test trait fields values↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑*/
 
@@ -189,6 +190,28 @@ fn test() {
         s.test_return_cloned_custom_by_explicit_clone_expression(),
         CustomType::new()
     );
+    // test return EnumType
+    assert_eq!(
+        s.test_return_ref_enum_by_return_statement(),
+        &EnumType::Unit
+    );
+    assert_eq!(
+        s.test_return_mut_ref_enum_by_return_statement(),
+        &mut EnumType::Unit
+    );
+    assert_eq!(s.test_return_ref_enum_by_expression(), &EnumType::Unit);
+    assert_eq!(
+        s.test_return_mut_ref_enum_by_expression(),
+        &mut EnumType::Unit
+    );
+    assert_eq!(
+        s.test_return_cloned_enum_by_explicit_clone_return_statement(),
+        EnumType::Unit
+    );
+    assert_eq!(
+        s.test_return_cloned_enum_by_explicit_clone_expression(),
+        EnumType::Unit
+    );
     /*↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑test return type↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑*/
 
     /*↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓test param↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓*/
@@ -224,6 +247,10 @@ fn test() {
     s.test_param_custom();
     s.test_ref_param_custom();
     s.test_mut_ref_param_custom();
+    // test param EnumType
+    s.test_param_enum();
+    s.test_ref_param_enum();
+    s.test_mut_ref_param_enum();
     /*↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑test param↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑*/
 
     /*↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓conditional/loop↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓*/
@@ -242,5 +269,6 @@ fn test() {
     s.test_lambda_for_set_i32();
     s.test_lambda_for_bmap();
     s.test_lambda_for_custom();
+    s.test_lambda_for_enum();
     /*↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑test lambda↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑*/
 }
