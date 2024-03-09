@@ -2,20 +2,26 @@
 //!
 //! This file demonstrates a more complete and comprehensive usage of the `trait_variable` macro.
 mod common;
+use std::collections::HashSet;
+
 use common::MyStruct;
 
 use crate::common::MyTrait;
 
 #[test]
 fn test() {
-    let mut s = MyStruct::new(1, -2, true, -3.14, vec![-1, 0, 1], "hello world", Some(0));
-    // here only test advanced methods, no need to test the basics as in module `basic.rs`
-    /*↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓test trait fields values↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓*/
-    assert_eq!(s.b, true);
-    assert_eq!(s.s, "hello world");
-    assert_eq!(s.t, (0, "".into(), vec![]));
+    let mut s = MyStruct::new(
+        1,
+        -2,
+        true,
+        -3.14,
+        vec![-1, 0, 1],
+        "hello world",
+        Some(0),
+        HashSet::from([0, 1, 2]),
+    );
     /*↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑test trait fields values↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑*/
-    
+
     s.test_macro();
     s.test_assigntment();
 
@@ -118,6 +124,25 @@ fn test() {
         s.test_return_cloned_tuple_by_explicit_clone_expression(),
         (0, "".into(), vec![])
     );
+    // test return HashSet<i32>
+    assert_eq!(s.test_return_ref_set_i32_by_return_statement(), &s.set_i32);
+    assert_eq!(
+        s.test_return_mut_ref_set_i32_by_return_statement().clone(),
+        s.set_i32
+    );
+    assert_eq!(s.test_return_ref_set_i32_by_expression(), &s.set_i32);
+    assert_eq!(
+        s.test_return_mut_ref_set_i32_by_expression().clone(),
+        s.set_i32
+    );
+    assert_eq!(
+        s.test_return_cloned_set_i32_by_explicit_clone_return_statement(),
+        s.set_i32
+    );
+    assert_eq!(
+        s.test_return_cloned_set_i32_by_explicit_clone_expression(),
+        s.set_i32
+    );
     /*↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑test return type↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑*/
 
     /*↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓test param↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓*/
@@ -141,6 +166,10 @@ fn test() {
     s.test_param_tuple();
     s.test_ref_param_tuple();
     s.test_mut_ref_param_tuple();
+    // test param HashSet<i32>
+    s.test_param_set_i32();
+    s.test_ref_param_set_i32();
+    s.test_mut_ref_param_set_i32();
     /*↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑test param↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑*/
 
     /*↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓conditional/loop↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓*/
@@ -156,5 +185,6 @@ fn test() {
     s.test_lambda_for_string_and_str();
     s.test_lambda_for_opt_i32();
     s.test_lambda_for_tuple();
+    s.test_lambda_for_set_i32();
     /*↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑test lambda↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑*/
 }

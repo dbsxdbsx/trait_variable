@@ -49,7 +49,19 @@ fn test_with_ref_param_tuple(t: &(i32, String, Vec<i32>)) -> (i32, String, Vec<i
 fn test_with_mut_ref_param_tuple(t: &mut (i32, String, Vec<i32>)) -> (i32, String, Vec<i32>) {
     t.clone()
 }
+// for param (ref of)HashSet<i32>
+fn test_with_param_set_i32(set: HashSet<i32>) -> HashSet<i32> {
+    set
+}
+fn test_with_ref_param_set_i32(set: &HashSet<i32>) -> HashSet<i32> {
+    set.clone()
+}
+fn test_with_mut_ref_param_set_i32(set: &mut HashSet<i32>) -> HashSet<i32> {
+    set.clone()
+}
 /*↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑assistant fns↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑*/
+
+use std::collections::HashSet;
 
 //↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓trait definition↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓
 use trait_variable::{trait_var, trait_variable};
@@ -58,11 +70,12 @@ trait_variable! {
         // 1.put the variable fields definition at the TOP of the target trait before any function
             i: i32;
         pub b: bool;
-             f: f32;
-        pub  s: String;
+            f: f32;
+        pub s: String;
             v_i32: Vec<i32>;
             opt_i32: Option<i32>;
         pub t : (i32, String, Vec<i32>);
+        pub(crate) set_i32: HashSet<i32>;
 
         // 2.the order of the function definition doesn't matter
         fn get_number(&self, num:f32) -> f32 {
@@ -72,9 +85,9 @@ trait_variable! {
 
         // the below is methods for testing trait variable fields:
         fn test_macro(&self) {
-            println!("i32: `{}`, bool: `{}`, f32: `{}`, v_i32: `{:?}`, s:`{}`, opt_i32: `{:?}`, tuple:`{:?}`", self.i, self.b, self.f, self.v_i32, self.s , self.opt_i32, self.t); // for macro param `self.i`, it would convert to `*self._x()`
+            println!("i32: `{}`, bool: `{}`, f32: `{}`, v_i32: `{:?}`, s:`{}`, opt_i32: `{:?}`, tuple:`{:?}`, set_i32:`{:?}`", self.i, self.b, self.f, self.v_i32, self.s , self.opt_i32, self.t, self.set_i32); // for macro param `self.i`, it would convert to `*self._x()`
             // println!("i32: `{self.i}`"); // the **Inline Replacement Style** is not supported yet
-            eprintln!("i32: `{}`, bool: `{}`, f32: `{}`, v_i32: `{:?}`, s:`{}`, opt_i32: `{:?}`, tuple:`{:?}`", self.i, self.b, self.f, self.v_i32, self.s, self.opt_i32, self.t); // the same as above
+            eprintln!("i32: `{}`, bool: `{}`, f32: `{}`, v_i32: `{:?}`, s:`{}`, opt_i32: `{:?}`, tuple:`{:?}`, set_i32:`{:?}`", self.i, self.b, self.f, self.v_i32, self.s, self.opt_i32, self.t, self.set_i32); // the same as above
             assert!(self.i == self.i);
             assert_eq!(self.b, self.b);
             assert_ne!(self.f+1., self.f);
@@ -82,6 +95,7 @@ trait_variable! {
             assert_eq!(self.s, self.s);
             assert_eq!(self.opt_i32, self.opt_i32);
             assert_eq!(self.t, self.t);
+            assert_eq!(self.set_i32, self.set_i32);
         }
 
         fn test_assigntment(&mut self) {
@@ -93,6 +107,7 @@ trait_variable! {
             let bak_s = self.s.clone();
             let bak_opt_i32 = self.opt_i32.clone();
             let bak_t = self.t.clone();
+            let bak_set_i32 = self.set_i32.clone();
             // println!("bak is:{:?}",std::any::type_name_of_val(bak_i));
 
             // assignment of i32
@@ -168,6 +183,12 @@ trait_variable! {
             assert_eq!(s, "world");
             *s = "world2".into();
             assert_eq!(self.t, (2, "world2".to_string(), vec![4, 5, 6]));
+            // assignment of HashSet<i32>
+            self.set_i32 = HashSet::from([-1,0,1]);
+            let new_set =  HashSet::from([0,1,2]);
+            let diff_set = HashSet::from([-1, 0, 1, 2]);
+            let union_set =  self.set_i32.union(&new_set).copied().collect::<HashSet<_>>();
+            assert_eq!(diff_set.difference(&union_set).copied().collect::<Vec<_>>(), vec![]);
 
             // restore
             self.i = bak_i;
@@ -177,6 +198,7 @@ trait_variable! {
             self.s = bak_s;
             self.opt_i32 = bak_opt_i32;
             self.t = bak_t;
+            self.set_i32 = bak_set_i32;
         }
 
         /*↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓test return type↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓*/
@@ -299,6 +321,25 @@ trait_variable! {
         fn test_return_cloned_tuple_by_explicit_clone_expression(&self) -> (i32, String, Vec<i32>){
             self.t.clone()
         }
+        // test return type HashSet<i32>
+        fn test_return_ref_set_i32_by_return_statement(&self) -> &HashSet<i32>{
+            return &self.set_i32;
+        }
+        fn test_return_mut_ref_set_i32_by_return_statement(&mut self) -> &mut HashSet<i32>{
+            return &mut self.set_i32;
+        }
+        fn test_return_ref_set_i32_by_expression(&self) -> &HashSet<i32>{
+            &self.set_i32
+        }
+        fn test_return_mut_ref_set_i32_by_expression(&mut self) -> &mut HashSet<i32>{
+            &mut self.set_i32
+        }
+        fn test_return_cloned_set_i32_by_explicit_clone_return_statement(&self) -> HashSet<i32>{
+            return self.set_i32.clone();
+        }
+        fn test_return_cloned_set_i32_by_explicit_clone_expression(&self) -> HashSet<i32>{
+            self.set_i32.clone()
+        }
         /*↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑test return type↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑*/
 
         /*↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓test param↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓*/
@@ -352,6 +393,16 @@ trait_variable! {
         fn test_mut_ref_param_tuple(&mut self) {
               assert_eq!(test_with_mut_ref_param_tuple(&mut self.t), self.t);
         }
+        // test param HashSet<i32>
+        fn test_param_set_i32(&self) {
+            assert_eq!(test_with_param_set_i32(self.set_i32.clone()), self.set_i32);
+        }
+        fn test_ref_param_set_i32(&mut self) {
+            assert_eq!(test_with_ref_param_set_i32(&self.set_i32), self.set_i32);
+        }
+        fn test_mut_ref_param_set_i32(&mut self) {
+              assert_eq!(test_with_mut_ref_param_set_i32(&mut self.set_i32), self.set_i32);
+        }
         /*↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑test param↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑*/
 
         /*↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓test conditional/loop↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓*/
@@ -396,6 +447,9 @@ trait_variable! {
         }
         fn test_raw_loop(&mut self) {
             let bak_i = self.i;
+            let bak_set_i32 = self.set_i32.clone();
+
+            // test i32
             self.i = 100;
             let mut j = 0;
             loop {
@@ -405,15 +459,40 @@ trait_variable! {
                 assert_eq!(j as i32, j);
                 j += 1;
             }
+            // test HashSet<i32>
+            self.set_i32 = HashSet::from([1, 2, 3]);
+            let mut sum = 0;
+            let mut iter = self.set_i32.iter();
+            loop {
+                match iter.next() {
+                    Some(i) => sum += i,
+                    None => break,
+                }
+            }
+            assert_eq!(sum, 6);
+
             self.i = bak_i;
+            self.set_i32 = bak_set_i32;
         }
         fn test_for_loop(&mut self) {
             let bak_i = self.i;
+            let bak_set_i32 = self.set_i32.clone();
+
+            // test i32
             self.i = 100;
             for (i,j) in (0..self.i).enumerate() {
                assert_eq!(i as i32, j);
             }
+            // test HashSet<i32>
+            self.set_i32 = HashSet::from([1, 2, 3]);
+            let mut sum = 0;
+            for i in &self.set_i32 {
+                sum += i;
+            }
+            assert_eq!(sum, 6);
+
             self.i = bak_i;
+            self.set_i32 = bak_set_i32;
         }
         /*↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑test conditional/loop↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑*/
 
@@ -508,6 +587,28 @@ trait_variable! {
 
             self.t = bak_t;
         }
+        // for HashSet<i32>
+        fn test_lambda_for_set_i32(&mut self) {
+            let bak_set_i32 = self.set_i32.clone();
+
+            self.set_i32 = HashSet::from([1, 2, 3]);
+            // lambda with block
+            let mut lambda = |delta: i32| {
+                self.set_i32.insert(delta);
+            };
+            lambda(10);
+            let expected_set: HashSet<i32> = HashSet::from([1, 2, 3, 10]);
+            let difference: HashSet<_> = self.set_i32.difference(&expected_set).cloned().collect();
+            assert!(difference.is_empty());
+            // lambda with expression
+            let mut lambda = |delta: i32| self.set_i32.insert(delta);
+            lambda(100);
+            let expected_set: HashSet<i32> = HashSet::from([1, 2, 3, 10, 100]);
+            let difference: HashSet<_> = self.set_i32.difference(&expected_set).cloned().collect();
+            assert!(difference.is_empty());
+
+            self.set_i32 = bak_set_i32;
+        }
         /*↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑test lambda↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑*/
     }
 }
@@ -540,6 +641,7 @@ impl MyStruct {
         v_i32: Vec<i32>,
         s: &str,
         opt_i32: Option<i32>,
+        set_i32: HashSet<i32>,
     ) -> Self {
         Self {
             a,
@@ -550,6 +652,7 @@ impl MyStruct {
             s: s.into(),
             opt_i32,
             t: (0, "".into(), vec![]),
+            set_i32,
         }
     }
     pub fn get_print_field_a(&self) -> &i32 {
