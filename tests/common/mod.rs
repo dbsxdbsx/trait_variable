@@ -1,3 +1,18 @@
+// customized type used as a trait variable field
+#[derive(PartialEq, Eq, Debug, Clone)]
+pub struct CustomType {
+    pub i: i32,
+    pub str: String,
+}
+
+impl CustomType {
+    pub fn new() -> Self {
+        Self {
+            i: 0,
+            str: "".to_string(),
+        }
+    }
+}
 /*↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓assistant fns↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓*/
 // for param (ref of)i32
 fn test_with_param_i32(i: i32) -> i32 {
@@ -69,6 +84,16 @@ fn test_with_ref_param_bmap(bmap: &BTreeMap<i32, String>) -> BTreeMap<i32, Strin
 fn test_with_mut_ref_param_bmap(bmap: &mut BTreeMap<i32, String>) -> BTreeMap<i32, String> {
     bmap.clone()
 }
+// for param (ref of)custom type
+fn test_with_param_custom(custom: CustomType) -> CustomType {
+    custom
+}
+fn test_with_ref_param_custom(custom: &CustomType) -> CustomType {
+    custom.clone()
+}
+fn test_with_mut_ref_param_custom(custom: &mut CustomType) -> CustomType {
+    custom.clone()
+}
 /*↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑assistant fns↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑*/
 
 use std::collections::{BTreeMap, HashSet};
@@ -87,6 +112,7 @@ trait_variable! {
         pub t : (i32, String, Vec<i32>);
         pub(crate) set_i32: HashSet<i32>;
             bmap: BTreeMap<i32, String>;
+        pub(super) custom: CustomType;
 
         // 2.the order of the function definition doesn't matter
         fn get_number(&self, num:f32) -> f32 {
@@ -96,9 +122,9 @@ trait_variable! {
 
         // the below is methods for testing trait variable fields:
         fn test_macro(&self) {
-            println!("i32: `{}`, bool: `{}`, f32: `{}`, v_i32: `{:?}`, s:`{}`, opt_i32: `{:?}`, tuple:`{:?}`, set_i32:`{:?}`, btree_map:`{:?}`", self.i, self.b, self.f, self.v_i32, self.s , self.opt_i32, self.t, self.set_i32, self.bmap); // for macro param `self.i`, it would convert to `*self._x()`
+            println!("i32: `{}`, bool: `{}`, f32: `{}`, v_i32: `{:?}`, s:`{}`, opt_i32: `{:?}`, tuple:`{:?}`, set_i32:`{:?}`, btree_map:`{:?}`, custom_type:`{:#?}`", self.i, self.b, self.f, self.v_i32, self.s , self.opt_i32, self.t, self.set_i32, self.bmap, self.custom); // for macro param `self.i`, it would convert to `*self._x()`
             // println!("i32: `{self.i}`"); // the **Inline Replacement Style** is not supported yet
-            eprintln!("i32: `{}`, bool: `{}`, f32: `{}`, v_i32: `{:?}`, s:`{}`, opt_i32: `{:?}`, tuple:`{:?}`, set_i32:`{:?}`, btree_map:`{:?}`", self.i, self.b, self.f, self.v_i32, self.s, self.opt_i32, self.t, self.set_i32, self.bmap); // the same as above
+            eprintln!("i32: `{}`, bool: `{}`, f32: `{}`, v_i32: `{:?}`, s:`{}`, opt_i32: `{:?}`, tuple:`{:?}`, set_i32:`{:?}`, btree_map:`{:?}`, custom_type:`{:#?}`", self.i, self.b, self.f, self.v_i32, self.s, self.opt_i32, self.t, self.set_i32, self.bmap, self.custom); // the same as above
             assert!(self.i == self.i);
             assert_eq!(self.b, self.b);
             assert_ne!(self.f+1., self.f);
@@ -121,6 +147,7 @@ trait_variable! {
             let bak_t = self.t.clone();
             let bak_set_i32 = self.set_i32.clone();
             let bak_bmap = self.bmap.clone();
+            let bak_custom = self.custom.clone();
             // println!("bak is:{:?}",std::any::type_name_of_val(bak_i));
 
             // assignment of i32
@@ -207,6 +234,18 @@ trait_variable! {
             self.bmap.insert(2, "world".to_string());
             assert_eq!(self.bmap.get(&1), Some(&"hello".to_string()));
             assert_eq!(self.bmap.get(&2), Some(&"world".to_string()));
+            // assignment of custom type
+            self.custom = CustomType::new();
+            self.custom.i = 1;
+            assert_eq!(self.custom.i, 1);
+            self.i = -1;
+            self.custom.i = self.custom.i + self.i;
+            assert_eq!(self.custom.i, 0);
+
+            self.custom.str = "hello".to_string();
+            assert_eq!(self.custom.str, "hello");
+            self.custom.str = self.custom.str.to_uppercase();
+            assert_eq!(self.custom.str, "HELLO");
 
             // restore
             self.i = bak_i;
@@ -218,6 +257,7 @@ trait_variable! {
             self.t = bak_t;
             self.set_i32 = bak_set_i32;
             self.bmap = bak_bmap;
+            self.custom = bak_custom;
         }
 
         /*↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓test return type↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓*/
@@ -378,6 +418,25 @@ trait_variable! {
         fn test_return_cloned_bmap_by_explicit_clone_expression(&self) -> BTreeMap<i32, String>{
             self.bmap.clone()
         }
+        // test return type custom type
+        fn test_return_ref_custom_by_return_statement(&self) -> &CustomType{
+            return &self.custom;
+        }
+        fn test_return_mut_ref_custom_by_return_statement(&mut self) -> &mut CustomType{
+            return &mut self.custom;
+        }
+        fn test_return_ref_custom_by_expression(&self) -> &CustomType{
+            &self.custom
+        }
+        fn test_return_mut_ref_custom_by_expression(&mut self) -> &mut CustomType{
+            &mut self.custom
+        }
+        fn test_return_cloned_custom_by_explicit_clone_return_statement(&self) -> CustomType{
+            return self.custom.clone();
+        }
+        fn test_return_cloned_custom_by_explicit_clone_expression(&self) -> CustomType{
+            self.custom.clone()
+        }
         /*↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑test return type↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑*/
 
         /*↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓test param↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓*/
@@ -450,6 +509,16 @@ trait_variable! {
         }
         fn test_mut_ref_param_bmap(&mut self) {
               assert_eq!(test_with_mut_ref_param_bmap(&mut self.bmap), self.bmap);
+        }
+        // test param custom type
+        fn test_param_custom(&self) {
+            assert_eq!(test_with_param_custom(self.custom.clone()), self.custom);
+        }
+        fn test_ref_param_custom(&mut self) {
+            assert_eq!(test_with_ref_param_custom(&self.custom), self.custom);
+        }
+        fn test_mut_ref_param_custom(&mut self) {
+              assert_eq!(test_with_mut_ref_param_custom(&mut self.custom), self.custom);
         }
         /*↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑test param↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑*/
 
@@ -711,6 +780,30 @@ trait_variable! {
 
             self.bmap = bak_bmap;
         }
+        // for custom type
+        fn test_lambda_for_custom(&mut self) {
+            let bak_custom = self.custom.clone();
+
+            self.custom = CustomType::new();
+            // lambda with block
+            let mut lambda = |prop: i32, str: String| {
+                self.custom.i = prop;
+                self.custom.str = str;
+            };
+            lambda(1, "hello".to_string());
+            assert_eq!(self.custom.i, 1);
+            assert_eq!(self.custom.str, "hello");
+            // lambda with expression
+            let mut lambda = |prop: i32, str: String| {
+                self.custom.i = prop;
+                self.custom.str = str;
+            };
+            lambda(2, "world".to_string());
+            assert_eq!(self.custom.i, 2);
+            assert_eq!(self.custom.str, "world");
+
+            self.custom = bak_custom;
+        }
         /*↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑test lambda↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑*/
     }
 }
@@ -745,6 +838,7 @@ impl MyStruct {
         opt_i32: Option<i32>,
         set_i32: HashSet<i32>,
         b_map: BTreeMap<i32, String>,
+        custom: CustomType,
     ) -> Self {
         Self {
             a,
@@ -757,6 +851,7 @@ impl MyStruct {
             t: (0, "".into(), vec![]),
             set_i32,
             bmap: b_map,
+            custom,
         }
     }
     pub fn get_print_field_a(&self) -> &i32 {

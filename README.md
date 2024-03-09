@@ -146,9 +146,8 @@ This crate is dual-licensed under either:
 Choose the license that best fits your needs.
 
 ## todo list
- - [] syn::parse_str refactor;
- - [] add more test cases for various trait field types, like customized struct( sub_field assignment) etc;
- - [] test with trait with constant field, associated types, generic types(`Box<dyn Trait>` type), async methods, etc;
+ - [] test with trait with trait constant field, associated types, generic types(`Box<dyn Trait>` type), async methods, etc;
  - [] omit `use <trait_module>::<_hidden_parent_trait_name>;` statement when using `#[trait_var(<trait_name>)]` for a struct in an extra module;
- - [] try to let smart intellisense extension(like `Rust Analyzer`) support idents inside macro(Maybe impossible).
+ - [] `syn::parse_str` refactor;
  - [] to English comment;
+ - [] try to let smart intellisense extension(like `Rust Analyzer`) support idents inside macro(Maybe impossible).

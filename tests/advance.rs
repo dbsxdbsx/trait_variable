@@ -6,7 +6,7 @@ use std::collections::{BTreeMap, HashSet};
 
 use common::MyStruct;
 
-use crate::common::MyTrait;
+use crate::common::{CustomType, MyTrait};
 
 #[test]
 fn test() {
@@ -20,6 +20,7 @@ fn test() {
         Some(0),
         HashSet::from([0, 1, 2]),
         BTreeMap::new(),
+        CustomType::new(),
     );
     /*↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑test trait fields values↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑*/
 
@@ -166,6 +167,28 @@ fn test() {
         s.test_return_cloned_bmap_by_explicit_clone_expression(),
         BTreeMap::new()
     );
+    // test return CustomType
+    assert_eq!(
+        s.test_return_ref_custom_by_return_statement(),
+        &CustomType::new()
+    );
+    assert_eq!(
+        s.test_return_mut_ref_custom_by_return_statement(),
+        &mut CustomType::new()
+    );
+    assert_eq!(s.test_return_ref_custom_by_expression(), &CustomType::new());
+    assert_eq!(
+        s.test_return_mut_ref_custom_by_expression().clone(),
+        CustomType::new()
+    );
+    assert_eq!(
+        s.test_return_cloned_custom_by_explicit_clone_return_statement(),
+        CustomType::new()
+    );
+    assert_eq!(
+        s.test_return_cloned_custom_by_explicit_clone_expression(),
+        CustomType::new()
+    );
     /*↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑test return type↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑*/
 
     /*↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓test param↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓*/
@@ -197,6 +220,10 @@ fn test() {
     s.test_param_bmap();
     s.test_ref_param_bmap();
     s.test_mut_ref_param_bmap();
+    // test param CustomType
+    s.test_param_custom();
+    s.test_ref_param_custom();
+    s.test_mut_ref_param_custom();
     /*↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑test param↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑*/
 
     /*↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓conditional/loop↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓*/
@@ -214,5 +241,6 @@ fn test() {
     s.test_lambda_for_tuple();
     s.test_lambda_for_set_i32();
     s.test_lambda_for_bmap();
+    s.test_lambda_for_custom();
     /*↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑test lambda↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑*/
 }
