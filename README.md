@@ -146,7 +146,7 @@ This crate is dual-licensed under either:
 Choose the license that best fits your needs.
 
 ## todo list
- - [] test with trait with trait constant field, associated types, generic types(`Box<dyn Trait>` type), async methods, etc;
+ - [] add a new integrated test for complex situation: trait with trait constant field, associated types, generic types(`Box<dyn Trait>` type), async methods, etc;
  - [] omit `use <trait_module>::<_hidden_parent_trait_name>;` statement when using `#[trait_var(<trait_name>)]` for a struct in an extra module;
  - [] `syn::parse_str` refactor;
  - [] to English comment;
