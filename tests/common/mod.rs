@@ -59,9 +59,19 @@ fn test_with_ref_param_set_i32(set: &HashSet<i32>) -> HashSet<i32> {
 fn test_with_mut_ref_param_set_i32(set: &mut HashSet<i32>) -> HashSet<i32> {
     set.clone()
 }
+// for param (ref of)BTreeMap<i32, String>
+fn test_with_param_bmap(bmap: BTreeMap<i32, String>) -> BTreeMap<i32, String> {
+    bmap
+}
+fn test_with_ref_param_bmap(bmap: &BTreeMap<i32, String>) -> BTreeMap<i32, String> {
+    bmap.clone()
+}
+fn test_with_mut_ref_param_bmap(bmap: &mut BTreeMap<i32, String>) -> BTreeMap<i32, String> {
+    bmap.clone()
+}
 /*↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑assistant fns↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑*/
 
-use std::collections::HashSet;
+use std::collections::{BTreeMap, HashSet};
 
 //↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓trait definition↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓
 use trait_variable::{trait_var, trait_variable};
@@ -76,6 +86,7 @@ trait_variable! {
             opt_i32: Option<i32>;
         pub t : (i32, String, Vec<i32>);
         pub(crate) set_i32: HashSet<i32>;
+            bmap: BTreeMap<i32, String>;
 
         // 2.the order of the function definition doesn't matter
         fn get_number(&self, num:f32) -> f32 {
@@ -85,9 +96,9 @@ trait_variable! {
 
         // the below is methods for testing trait variable fields:
         fn test_macro(&self) {
-            println!("i32: `{}`, bool: `{}`, f32: `{}`, v_i32: `{:?}`, s:`{}`, opt_i32: `{:?}`, tuple:`{:?}`, set_i32:`{:?}`", self.i, self.b, self.f, self.v_i32, self.s , self.opt_i32, self.t, self.set_i32); // for macro param `self.i`, it would convert to `*self._x()`
+            println!("i32: `{}`, bool: `{}`, f32: `{}`, v_i32: `{:?}`, s:`{}`, opt_i32: `{:?}`, tuple:`{:?}`, set_i32:`{:?}`, btree_map:`{:?}`", self.i, self.b, self.f, self.v_i32, self.s , self.opt_i32, self.t, self.set_i32, self.bmap); // for macro param `self.i`, it would convert to `*self._x()`
             // println!("i32: `{self.i}`"); // the **Inline Replacement Style** is not supported yet
-            eprintln!("i32: `{}`, bool: `{}`, f32: `{}`, v_i32: `{:?}`, s:`{}`, opt_i32: `{:?}`, tuple:`{:?}`, set_i32:`{:?}`", self.i, self.b, self.f, self.v_i32, self.s, self.opt_i32, self.t, self.set_i32); // the same as above
+            eprintln!("i32: `{}`, bool: `{}`, f32: `{}`, v_i32: `{:?}`, s:`{}`, opt_i32: `{:?}`, tuple:`{:?}`, set_i32:`{:?}`, btree_map:`{:?}`", self.i, self.b, self.f, self.v_i32, self.s, self.opt_i32, self.t, self.set_i32, self.bmap); // the same as above
             assert!(self.i == self.i);
             assert_eq!(self.b, self.b);
             assert_ne!(self.f+1., self.f);
@@ -96,6 +107,7 @@ trait_variable! {
             assert_eq!(self.opt_i32, self.opt_i32);
             assert_eq!(self.t, self.t);
             assert_eq!(self.set_i32, self.set_i32);
+            assert_eq!(self.bmap, self.bmap);
         }
 
         fn test_assigntment(&mut self) {
@@ -108,6 +120,7 @@ trait_variable! {
             let bak_opt_i32 = self.opt_i32.clone();
             let bak_t = self.t.clone();
             let bak_set_i32 = self.set_i32.clone();
+            let bak_bmap = self.bmap.clone();
             // println!("bak is:{:?}",std::any::type_name_of_val(bak_i));
 
             // assignment of i32
@@ -189,6 +202,11 @@ trait_variable! {
             let diff_set = HashSet::from([-1, 0, 1, 2]);
             let union_set =  self.set_i32.union(&new_set).copied().collect::<HashSet<_>>();
             assert_eq!(diff_set.difference(&union_set).copied().collect::<Vec<_>>(), vec![]);
+            // assignment of BTreeMap<i32, String>
+            self.bmap.insert(1, "hello".to_string());
+            self.bmap.insert(2, "world".to_string());
+            assert_eq!(self.bmap.get(&1), Some(&"hello".to_string()));
+            assert_eq!(self.bmap.get(&2), Some(&"world".to_string()));
 
             // restore
             self.i = bak_i;
@@ -199,6 +217,7 @@ trait_variable! {
             self.opt_i32 = bak_opt_i32;
             self.t = bak_t;
             self.set_i32 = bak_set_i32;
+            self.bmap = bak_bmap;
         }
 
         /*↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓test return type↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓*/
@@ -340,6 +359,25 @@ trait_variable! {
         fn test_return_cloned_set_i32_by_explicit_clone_expression(&self) -> HashSet<i32>{
             self.set_i32.clone()
         }
+        // test return type BTreeMap<i32, String>
+        fn test_return_ref_bmap_by_return_statement(&self) -> &BTreeMap<i32, String>{
+            return &self.bmap;
+        }
+        fn test_return_mut_ref_bmap_by_return_statement(&mut self) -> &mut BTreeMap<i32, String>{
+            return &mut self.bmap;
+        }
+        fn test_return_ref_bmap_by_expression(&self) -> &BTreeMap<i32, String>{
+            &self.bmap
+        }
+        fn test_return_mut_ref_bmap_by_expression(&mut self) -> &mut BTreeMap<i32, String>{
+            &mut self.bmap
+        }
+        fn test_return_cloned_bmap_by_explicit_clone_return_statement(&self) -> BTreeMap<i32, String>{
+            return self.bmap.clone();
+        }
+        fn test_return_cloned_bmap_by_explicit_clone_expression(&self) -> BTreeMap<i32, String>{
+            self.bmap.clone()
+        }
         /*↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑test return type↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑*/
 
         /*↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓test param↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓*/
@@ -403,6 +441,16 @@ trait_variable! {
         fn test_mut_ref_param_set_i32(&mut self) {
               assert_eq!(test_with_mut_ref_param_set_i32(&mut self.set_i32), self.set_i32);
         }
+        // test param BTreeMap<i32, String>
+        fn test_param_bmap(&self) {
+            assert_eq!(test_with_param_bmap(self.bmap.clone()), self.bmap);
+        }
+        fn test_ref_param_bmap(&mut self) {
+            assert_eq!(test_with_ref_param_bmap(&self.bmap), self.bmap);
+        }
+        fn test_mut_ref_param_bmap(&mut self) {
+              assert_eq!(test_with_mut_ref_param_bmap(&mut self.bmap), self.bmap);
+        }
         /*↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑test param↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑*/
 
         /*↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓test conditional/loop↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓*/
@@ -448,6 +496,7 @@ trait_variable! {
         fn test_raw_loop(&mut self) {
             let bak_i = self.i;
             let bak_set_i32 = self.set_i32.clone();
+            let bak_bmap = self.bmap.clone();
 
             // test i32
             self.i = 100;
@@ -470,13 +519,33 @@ trait_variable! {
                 }
             }
             assert_eq!(sum, 6);
+            // test BTreeMap<i32, String>
+            self.bmap = BTreeMap::new();
+            self.bmap.insert(1, "hello".to_string());
+            self.bmap.insert(2, "world".to_string());
+            let mut sum = 0;
+            let mut vec = Vec::new();
+            let mut iter = self.bmap.iter();
+            loop {
+                match iter.next() {
+                    Some((k, v)) => {
+                        sum += k;
+                        vec.push(v.clone());
+                    },
+                    None => break,
+                }
+            }
+            assert_eq!(sum, 3);
+            assert_eq!(vec, vec!["hello".to_string(), "world".to_string()]);
 
             self.i = bak_i;
             self.set_i32 = bak_set_i32;
+            self.bmap = bak_bmap;
         }
         fn test_for_loop(&mut self) {
             let bak_i = self.i;
             let bak_set_i32 = self.set_i32.clone();
+            let bak_bmap = self.bmap.clone();
 
             // test i32
             self.i = 100;
@@ -490,9 +559,22 @@ trait_variable! {
                 sum += i;
             }
             assert_eq!(sum, 6);
+            // test BTreeMap<i32, String>
+            self.bmap = BTreeMap::new();
+            self.bmap.insert(1, "hello".to_string());
+            self.bmap.insert(2, "world".to_string());
+            let mut sum = 0;
+            let mut vec = Vec::new();
+            for (k, v) in &self.bmap {
+                sum += k;
+                vec.push(v.clone());
+            }
+            assert_eq!(sum, 3);
+            assert_eq!(vec, vec!["hello".to_string(), "world".to_string()]);
 
             self.i = bak_i;
             self.set_i32 = bak_set_i32;
+            self.bmap = bak_bmap;
         }
         /*↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑test conditional/loop↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑*/
 
@@ -609,6 +691,26 @@ trait_variable! {
 
             self.set_i32 = bak_set_i32;
         }
+        // for BTreeMap<i32, String>
+        fn test_lambda_for_bmap(&mut self) {
+            let bak_bmap = self.bmap.clone();
+
+            self.bmap = BTreeMap::new();
+            self.bmap.insert(1, "hello".to_string());
+            self.bmap.insert(2, "world".to_string());
+            // lambda with block
+            let mut lambda = |k: i32, v: String| {
+                self.bmap.insert(k, v);
+            };
+            lambda(3, "hello world".to_string());
+            assert_eq!(self.bmap.get(&3), Some(&"hello world".to_string()));
+            // lambda with expression
+            let mut lambda = |k: i32, v: String| self.bmap.insert(k, v);
+            lambda(4, "hello world2".to_string());
+            assert_eq!(self.bmap.get(&4), Some(&"hello world2".to_string()));
+
+            self.bmap = bak_bmap;
+        }
         /*↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑test lambda↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑*/
     }
 }
@@ -642,6 +744,7 @@ impl MyStruct {
         s: &str,
         opt_i32: Option<i32>,
         set_i32: HashSet<i32>,
+        b_map: BTreeMap<i32, String>,
     ) -> Self {
         Self {
             a,
@@ -653,6 +756,7 @@ impl MyStruct {
             opt_i32,
             t: (0, "".into(), vec![]),
             set_i32,
+            bmap: b_map,
         }
     }
     pub fn get_print_field_a(&self) -> &i32 {

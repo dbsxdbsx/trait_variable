@@ -5,6 +5,8 @@ All notable changes to this project will be documented in this file.
 * Refine tests
 * Add section "Limitations" to README.md
 * Add and fix feature/test for tuple as trait field
+* Add feature/test for HashSet as trait field
+* Add feature/test for Dict(BtreeMap, similar to HashMap, but in order) as trait field
 
 ## 0.5.0 - March 7, 2024
 

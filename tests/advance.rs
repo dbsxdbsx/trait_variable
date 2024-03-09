@@ -2,7 +2,7 @@
 //!
 //! This file demonstrates a more complete and comprehensive usage of the `trait_variable` macro.
 mod common;
-use std::collections::HashSet;
+use std::collections::{BTreeMap, HashSet};
 
 use common::MyStruct;
 
@@ -19,6 +19,7 @@ fn test() {
         "hello world",
         Some(0),
         HashSet::from([0, 1, 2]),
+        BTreeMap::new(),
     );
     /*↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑test trait fields values↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑*/
 
@@ -143,6 +144,28 @@ fn test() {
         s.test_return_cloned_set_i32_by_explicit_clone_expression(),
         s.set_i32
     );
+    // test return BTreeMap<i32, String>
+    assert_eq!(
+        s.test_return_ref_bmap_by_return_statement(),
+        &BTreeMap::new()
+    );
+    assert_eq!(
+        s.test_return_mut_ref_bmap_by_return_statement().clone(),
+        BTreeMap::new()
+    );
+    assert_eq!(s.test_return_ref_bmap_by_expression(), &BTreeMap::new());
+    assert_eq!(
+        s.test_return_mut_ref_bmap_by_expression().clone(),
+        BTreeMap::new()
+    );
+    assert_eq!(
+        s.test_return_cloned_bmap_by_explicit_clone_return_statement(),
+        BTreeMap::new()
+    );
+    assert_eq!(
+        s.test_return_cloned_bmap_by_explicit_clone_expression(),
+        BTreeMap::new()
+    );
     /*↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑test return type↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑*/
 
     /*↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓test param↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓*/
@@ -170,6 +193,10 @@ fn test() {
     s.test_param_set_i32();
     s.test_ref_param_set_i32();
     s.test_mut_ref_param_set_i32();
+    // test param BTreeMap<i32, String>
+    s.test_param_bmap();
+    s.test_ref_param_bmap();
+    s.test_mut_ref_param_bmap();
     /*↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑test param↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑*/
 
     /*↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓conditional/loop↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓*/
@@ -186,5 +213,6 @@ fn test() {
     s.test_lambda_for_opt_i32();
     s.test_lambda_for_tuple();
     s.test_lambda_for_set_i32();
+    s.test_lambda_for_bmap();
     /*↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑test lambda↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑*/
 }
