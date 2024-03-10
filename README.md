@@ -19,7 +19,7 @@ Then, incorporate the macros into your Rust code as follows:
 use trait_variable::{trait_var, trait_variable};
 trait_variable! {
     pub(crate) trait MyTrait {  // feel free to add `pub` when needed
-        // 1.put the variable fields definition at the TOP of the target trait before any function
+        // 1.put the variable fields definition at the VERY TOP of the target trait before any vaild trait item
             x: i32;
         pub y: bool;
 
