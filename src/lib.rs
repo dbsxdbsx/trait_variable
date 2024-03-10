@@ -14,6 +14,7 @@ use syn::{
 };
 use trait_item::refine_trait_items;
 
+/// The struct used to support `pub var:i32;` like trait variable declaration
 struct TraitVarField {
     var_vis: Visibility,
     var_name: Ident,
@@ -43,6 +44,7 @@ struct TraitInput {
 impl Parse for TraitInput {
     fn parse(input: ParseStream) -> syn::Result<Self> {
         let content;
+
         Ok(TraitInput {
             trait_vis: input.parse()?,
             _trait_token: input.parse()?,
@@ -51,7 +53,12 @@ impl Parse for TraitInput {
             // Parse all variable declarations until a method or end of input is encountered
             trait_variables: {
                 let mut vars = Punctuated::new();
-                while !content.peek(Token![fn]) && !content.peek(Token![;]) && !content.is_empty() {
+                while !content.peek(Token![type])
+                    && !content.peek(Token![const])
+                    && !content.peek(Token![fn])
+                    && !content.peek(Token![;])
+                    && !content.is_empty()
+                {
                     vars.push_value(content.parse()?);
                     // Ensure that a semicolon follows the variable declaration
                     if !content.peek(Token![;]) {
@@ -61,7 +68,7 @@ impl Parse for TraitInput {
                 }
                 vars
             },
-            // Parse all method declarations
+            // Parse all valid trait items, including methods, constants, and associated types
             trait_items: {
                 let mut items = Vec::new();
                 while !content.is_empty() {

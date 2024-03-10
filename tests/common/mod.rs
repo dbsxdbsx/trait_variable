@@ -121,7 +121,7 @@ use trait_variable::{trait_var, trait_variable};
 trait_variable! {
     pub(crate) trait MyTrait {  // feel free to add `pub` when needed
         // 1.put the variable fields definition at the TOP of the target trait before any function
-            i: i32;
+        pub i: i32;
         pub b: bool;
             f: f32;
         pub s: String;
@@ -132,6 +132,14 @@ trait_variable! {
             bmap: BTreeMap<i32, String>;
         pub(super) custom: CustomType;
         pub(in crate::common) e: EnumType;
+
+        // 2. For all valid trait items, like fn, constant values and associated types,
+        // they should NOT be above of the trait variables---it is designed on purpose for readability of the target trait
+        const VALUE: i32; // constant value
+        type Output; // associated type
+
+        // 定义一个使用关联类型的方法
+        fn test_associated_type_and_constant_value(&self) -> Self::Output;
 
         // 2.the order of the function definition doesn't matter
         fn get_number(&self, num:f32) -> f32 {
@@ -957,6 +965,14 @@ impl MyStruct {
 }
 
 impl MyTrait for MyStruct {
+    type Output = i32;
+    const VALUE: i32 = 10;
+
+    // impl trait method with associated type
+    fn test_associated_type_and_constant_value(&self) -> Self::Output {
+        Self::VALUE * self.i
+    }
+
     fn get_print_field_b(&self) -> &bool {
         println!("b: `{}`", self.b);
         &self.b

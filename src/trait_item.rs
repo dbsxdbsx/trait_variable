@@ -12,37 +12,45 @@ pub fn refine_trait_items(trait_items: Vec<TraitItem>) -> Vec<proc_macro2::Token
     trait_items
         .into_iter()
         .map(|item| {
-            if let TraitItem::Method(mut trait_method) = item {
-                // Determine if the method is mutable
-                let is_method_mut = is_trait_method_mutable(&trait_method);
+            match item {
+                TraitItem::Method(mut trait_method) => {
+                    // Determine if the method is mutable
+                    let is_method_mut = is_trait_method_mutable(&trait_method);
 
-                // if the method has body, convert the trait variable fields into corresponding get-method
-                if let Some(body) = &mut trait_method.default {
-                    // treat the body as `syn::Block`
-                    let parsed_body: syn::Block =
-                        syn::parse2(quote! { #body }).expect("Failed to parse method body");
-                    let mut new_stmts = Vec::new();
-                    let re = Regex::new(r"\bself\.([a-zA-Z_]\w*)").unwrap();
-                    // Iterate over each statement in the method body
-                    for stmt in parsed_body.stmts {
-                        let refined_stmt = process_stmt(&re, stmt, is_method_mut);
-                        new_stmts.push(refined_stmt);
+                    // if the method has body, convert the trait variable fields into corresponding get-method
+                    if let Some(body) = &mut trait_method.default {
+                        // treat the body as `syn::Block`
+                        let parsed_body: syn::Block =
+                            syn::parse2(quote! { #body }).expect("Failed to parse method body");
+                        let mut new_stmts = Vec::new();
+                        let re = Regex::new(r"\bself\.([a-zA-Z_]\w*)").unwrap();
+                        // Iterate over each statement in the method body
+                        for stmt in parsed_body.stmts {
+                            let refined_stmt = process_stmt(&re, stmt, is_method_mut);
+                            new_stmts.push(refined_stmt);
+                        }
+                        // rebuild function body
+                        let new_body = syn::Block {
+                            brace_token: parsed_body.brace_token,
+                            stmts: new_stmts,
+                        };
+                        trait_method.default = Some(
+                            syn::parse(quote!(#new_body).into())
+                                .expect("Failed to parse modified method body"),
+                        );
                     }
-                    // rebuild function body
-                    let new_body = syn::Block {
-                        brace_token: parsed_body.brace_token,
-                        stmts: new_stmts,
-                    };
-                    trait_method.default = Some(
-                        syn::parse(quote!(#new_body).into())
-                            .expect("Failed to parse modified method body"),
-                    );
+                    // return the (refined, if it has body) method
+                    quote! { #trait_method }
                 }
-                // return the (refined, if it has body) method
-                quote! { #trait_method }
-            } else {
-                // if it is not a method, just return it
-                quote! { #item }
+                TraitItem::Type(trait_type) => {
+                    quote! { #trait_type }
+                }
+                TraitItem::Const(trait_const) => {
+                    quote! { #trait_const }
+                }
+                _ => {
+                    quote! { #item }
+                }
             }
         })
         .collect::<Vec<_>>()

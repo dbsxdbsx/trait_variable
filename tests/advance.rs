@@ -24,7 +24,10 @@ fn test() {
         EnumType::Unit,
     );
     /*↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑test trait fields values↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑*/
-
+    assert_eq!(
+        s.test_associated_type_and_constant_value(),
+        s.i * MyStruct::VALUE
+    );
     s.test_macro();
     s.test_assigntment();
 

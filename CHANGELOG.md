@@ -1,6 +1,9 @@
 # Changelog
 
 All notable changes to this project will be documented in this file.
+## 0.7.0 - unreleased
+* Add feature/test for trait constant and associated type as trait field
+
 ## 0.6.0- March 9, 2024
 * Refine tests
 * Add section "Limitations" to README.md
