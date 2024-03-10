@@ -23,7 +23,7 @@ trait_variable! {
             x: i32;
         pub y: bool;
 
-        // 2.the order of the function definition doesn't matter
+        // 2.the order of the original valid trait items doesn't matter
         fn print_x(&self){
             println!("x: `{}`", self.x);
         }
