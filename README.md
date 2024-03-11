@@ -125,7 +125,7 @@ NOTE: In this whole implementation, the `x` and `y` are still not the fields of 
 
 ## Limitations
 
-This crate cannot get comprehensive intellisense and lint support in VSCode or other IDEs, as it uses procedural macros to simulate variable fields in traits. This is because most Rust IDE extensions currently cannot handle identifiers inside macros very well. Therefore, when using this crate, you may not get full code completion, refactoring, go-to-definition, and other intelligent awareness features. This is a known limitation that needs to be improved in future versions.
+The code inside the `trait_variable` macro may not receive comprehensive intellisense and lint support from Rust extensions (like [Rust Analyzer](https://github.com/rust-lang/rust-analyzer)). This is because most Rust extensions currently struggle to handle identifiers inside macros effectively. Therefore, when using this crate, you may not have access to full code completion, refactoring, go-to-definition, and other intelligent awareness features. This is a known limitation that may be improved (if it is technically possible) in future versions.
 
 ## Requirements
 
