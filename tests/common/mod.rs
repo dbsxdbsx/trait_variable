@@ -1,120 +1,7 @@
-// customized type used as a trait variable field
-#[derive(PartialEq, Eq, Debug, Clone)]
-pub struct CustomType {
-    pub i: i32,
-    pub str: String,
-}
-
-impl CustomType {
-    pub fn new() -> Self {
-        Self {
-            i: 0,
-            str: "".to_string(),
-        }
-    }
-}
-
-#[derive(PartialEq, Eq, Debug, Clone)]
-pub enum EnumType {
-    Unit,
-    Point { x: i32, y: i32 },
-    Message(String),
-    Rgb(i32, i32, i32),
-}
-/*↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓assistant fns↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓*/
-// for param (ref of)i32
-fn test_with_param_i32(i: i32) -> i32 {
-    i
-}
-fn test_with_ref_param_i32(i: &i32) -> i32 {
-    *i
-}
-fn test_with_mut_ref_param_i32(i: &mut i32) -> i32 {
-    *i
-}
-// for param (ref of)vec<i32>
-fn test_with_param_vec_i32(v: Vec<i32>) -> Vec<i32> {
-    v.clone()
-}
-fn test_with_ref_param_vec_i32(v: &[i32]) -> Vec<i32> {
-    v.to_vec()
-}
-fn test_with_mut_ref_param_vec_i32(v: &mut [i32]) -> Vec<i32> {
-    v.to_vec()
-}
-// for param (ref of)String
-fn test_with_param_string(s: String) -> String {
-    s
-}
-fn test_with_ref_param_str(s: &str) -> String {
-    s.into()
-}
-fn test_with_mut_ref_param_str(s: &mut str) -> String {
-    s.into()
-}
-// for param (ref of)Option<i32>
-fn test_with_param_opt_i32(opt: Option<i32>) -> Option<i32> {
-    opt
-}
-fn test_with_ref_param_opt_i32(opt: &Option<i32>) -> Option<i32> {
-    *opt
-}
-fn test_with_mut_ref_param_opt_i32(opt: &mut Option<i32>) -> Option<i32> {
-    *opt
-}
-// for param (ref of)tuple (i32, String, Vec<i32>)
-fn test_with_param_tuple(t: (i32, String, Vec<i32>)) -> (i32, String, Vec<i32>) {
-    t
-}
-fn test_with_ref_param_tuple(t: &(i32, String, Vec<i32>)) -> (i32, String, Vec<i32>) {
-    t.clone()
-}
-fn test_with_mut_ref_param_tuple(t: &mut (i32, String, Vec<i32>)) -> (i32, String, Vec<i32>) {
-    t.clone()
-}
-// for param (ref of)HashSet<i32>
-fn test_with_param_set_i32(set: HashSet<i32>) -> HashSet<i32> {
-    set
-}
-fn test_with_ref_param_set_i32(set: &HashSet<i32>) -> HashSet<i32> {
-    set.clone()
-}
-fn test_with_mut_ref_param_set_i32(set: &mut HashSet<i32>) -> HashSet<i32> {
-    set.clone()
-}
-// for param (ref of)BTreeMap<i32, String>
-fn test_with_param_bmap(bmap: BTreeMap<i32, String>) -> BTreeMap<i32, String> {
-    bmap
-}
-fn test_with_ref_param_bmap(bmap: &BTreeMap<i32, String>) -> BTreeMap<i32, String> {
-    bmap.clone()
-}
-fn test_with_mut_ref_param_bmap(bmap: &mut BTreeMap<i32, String>) -> BTreeMap<i32, String> {
-    bmap.clone()
-}
-// for param (ref of)custom type
-fn test_with_param_custom(custom: CustomType) -> CustomType {
-    custom
-}
-fn test_with_ref_param_custom(custom: &CustomType) -> CustomType {
-    custom.clone()
-}
-fn test_with_mut_ref_param_custom(custom: &mut CustomType) -> CustomType {
-    custom.clone()
-}
-// for param (ref of)enum type
-fn test_with_param_enum(e: EnumType) -> EnumType {
-    e
-}
-fn test_with_ref_param_enum(e: &EnumType) -> EnumType {
-    e.clone()
-}
-fn test_with_mut_ref_param_enum(e: &mut EnumType) -> EnumType {
-    e.clone()
-}
-/*↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑assistant fns↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑*/
-
 use std::collections::{BTreeMap, HashSet};
+mod utils;
+use utils::*;
+pub use utils::{CustomType, EnumType};
 
 //↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓trait definition↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓
 use trait_variable::{trait_var, trait_variable};
@@ -141,7 +28,7 @@ trait_variable! {
         const VALUE: i32; // constant value
         type Output; // associated type
 
-        // 定义一个使用关联类型的方法
+        // define a method that uses an associated type
         fn test_associated_type_and_constant_value(&self) -> Self::Output;
         // define a method with a generic type
         fn test_generics_with_trait_display(&self, data: T){

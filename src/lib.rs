@@ -152,13 +152,7 @@ pub fn trait_variable(input: TokenStream) -> TokenStream {
                 }
             });
 
-    // 3.1 Extract the generics, if present
-    // let trait_bound = trait_bound.unwrap_or_else(|| Generics::default());
-    // let (_, trait_bound, _) = trait_bound.split_for_impl();
-    let trait_bound = trait_bound.clone();
-    let where_clause = where_clause.clone();
-
-    // 3.2 refine the body of methods from the original trait
+    // 3. refine the body of methods from the original trait
     let trait_items = refine_trait_items(trait_items);
 
     // 4. generate the hidden declarative macro for target struct
