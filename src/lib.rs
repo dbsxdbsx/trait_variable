@@ -5,7 +5,7 @@ mod utils;
 use proc_macro::TokenStream;
 use quote::quote;
 
-use syn::{braced, token, Visibility};
+use syn::{braced, token, Generics, Visibility, WhereClause};
 use syn::{
     parse::{Parse, ParseStream},
     parse_macro_input,
@@ -36,9 +36,11 @@ struct TraitInput {
     trait_vis: Visibility,
     _trait_token: Token![trait],
     trait_name: Ident,
+    trait_bound: Option<Generics>, // optional generic parameters for the trait
+    where_clause: Option<WhereClause>, // optional where clause for the trait
     _brace_token: token::Brace,
     trait_variables: Punctuated<TraitVarField, Token![;]>,
-    trait_items: Vec<TraitItem>,
+    trait_items: Vec<TraitItem>, // all valid trait items, including methods, constants, and associated types
 }
 
 impl Parse for TraitInput {
@@ -49,6 +51,16 @@ impl Parse for TraitInput {
             trait_vis: input.parse()?,
             _trait_token: input.parse()?,
             trait_name: input.parse()?,
+            trait_bound: if input.peek(Token![<]) {
+                Some(input.parse()?) // Use the parse method to parse the generics
+            } else {
+                None
+            },
+            where_clause: if input.peek(syn::token::Where) {
+                Some(input.parse()?)
+            } else {
+                None
+            },
             _brace_token: braced!(content in input),
             // Parse all variable declarations until a method or end of input is encountered
             trait_variables: {
@@ -86,6 +98,8 @@ pub fn trait_variable(input: TokenStream) -> TokenStream {
     let TraitInput {
         trait_vis,
         trait_name,
+        trait_bound,
+        where_clause,
         trait_variables,
         trait_items,
         ..
@@ -138,7 +152,13 @@ pub fn trait_variable(input: TokenStream) -> TokenStream {
                 }
             });
 
-    // 3. refine the body of methods from the original trait
+    // 3.1 Extract the generics, if present
+    // let trait_bound = trait_bound.unwrap_or_else(|| Generics::default());
+    // let (_, trait_bound, _) = trait_bound.split_for_impl();
+    let trait_bound = trait_bound.clone();
+    let where_clause = where_clause.clone();
+
+    // 3.2 refine the body of methods from the original trait
     let trait_items = refine_trait_items(trait_items);
 
     // 4. generate the hidden declarative macro for target struct
@@ -173,7 +193,7 @@ pub fn trait_variable(input: TokenStream) -> TokenStream {
         #trait_vis trait #parent_trait_name {
             #(#parent_trait_methods)*
         }
-        #trait_vis trait #trait_name: #parent_trait_name {
+        #trait_vis trait #trait_name #trait_bound: #parent_trait_name #where_clause{
             #(#trait_items)*
         }
 

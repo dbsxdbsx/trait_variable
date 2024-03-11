@@ -119,7 +119,10 @@ use std::collections::{BTreeMap, HashSet};
 //↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓trait definition↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓
 use trait_variable::{trait_var, trait_variable};
 trait_variable! {
-    pub(crate) trait MyTrait {  // feel free to add `pub` when needed
+    pub(crate) trait MyTrait<T: std::fmt::Debug>
+    where
+        T: std::fmt::Display
+    {  // feel free to add `pub` when needed
         // 1.put the variable fields definition at the TOP of the target trait before any function
         pub i: i32;
         pub b: bool;
@@ -140,8 +143,16 @@ trait_variable! {
 
         // 定义一个使用关联类型的方法
         fn test_associated_type_and_constant_value(&self) -> Self::Output;
+        // define a method with a generic type
+        fn test_generics_with_trait_display(&self, data: T){
+            let _i = self.i; // the statement is just to use to test validation of trait variable
+            println!("the param data is:{}", data);
+        }
+        fn test_generics_with_trait_debug(&self, data: T){
+            let _i = self.i; // the statement is just to use to test validation of trait variable
+            println!("the param data is:{:?}", data);
+        }
 
-        // 2.the order of the function definition doesn't matter
         fn get_number(&self, num:f32) -> f32 {
             num
         }
@@ -964,13 +975,18 @@ impl MyStruct {
     }
 }
 
-impl MyTrait for MyStruct {
+impl MyTrait<i32> for MyStruct {
     type Output = i32;
     const VALUE: i32 = 10;
 
     // impl trait method with associated type
     fn test_associated_type_and_constant_value(&self) -> Self::Output {
         Self::VALUE * self.i
+    }
+
+    // impl trait method with generic type
+    fn test_generics_with_trait_display(&self, data: i32) {
+        println!("the generic type data is: {}", data);
     }
 
     fn get_print_field_b(&self) -> &bool {

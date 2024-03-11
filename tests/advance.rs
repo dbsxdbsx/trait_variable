@@ -28,9 +28,13 @@ fn test() {
         s.test_associated_type_and_constant_value(),
         s.i * MyStruct::VALUE
     );
-    s.test_macro();
-    s.test_assigntment();
 
+    s.test_generics_with_trait_display(-1);
+    s.test_generics_with_trait_debug(-1);
+
+    s.test_macro();
+
+    s.test_assigntment();
     /*↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓test return type↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓*/
     // test return i32
     assert_eq!(s.test_return_ref_i32_by_return_statement(), &-2);
