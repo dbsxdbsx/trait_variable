@@ -3,10 +3,15 @@ mod utils;
 use utils::*;
 pub use utils::{CustomType, EnumType};
 
+trait ParentTrait {
+    fn parent_trait_method(&self) {
+        println!("this is a parent trait method");
+    }
+}
 //↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓trait definition↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓
 use trait_variable::{trait_var, trait_variable};
 trait_variable! {
-    pub(crate) trait MyTrait<T: std::fmt::Debug>
+    pub(crate) trait MyTrait<T: std::fmt::Debug>: ParentTrait
     where
         T: std::fmt::Display
     {  // feel free to add `pub` when needed
@@ -861,6 +866,9 @@ impl MyStruct {
         &self.a
     }
 }
+
+// Don't forget to implement the original parent trait for the struct
+impl ParentTrait for MyStruct {}
 
 impl MyTrait<i32> for MyStruct {
     type Output = i32;

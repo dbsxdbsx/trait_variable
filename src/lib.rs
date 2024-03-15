@@ -5,7 +5,7 @@ mod utils;
 use proc_macro::TokenStream;
 use quote::quote;
 
-use syn::{braced, token, Generics, Visibility, WhereClause};
+use syn::{braced, token, Generics, TypeParamBound, Visibility, WhereClause};
 use syn::{
     parse::{Parse, ParseStream},
     parse_macro_input,
@@ -37,6 +37,7 @@ struct TraitInput {
     _trait_token: Token![trait],
     trait_name: Ident,
     trait_bound: Option<Generics>, // optional generic parameters for the trait
+    parent_traits: Option<TypeParamBound>, // optional parent trait bound
     where_clause: Option<WhereClause>, // optional where clause for the trait
     _brace_token: token::Brace,
     trait_variables: Punctuated<TraitVarField, Token![;]>,
@@ -53,6 +54,12 @@ impl Parse for TraitInput {
             trait_name: input.parse()?,
             trait_bound: if input.peek(Token![<]) {
                 Some(input.parse()?) // Use the parse method to parse the generics
+            } else {
+                None
+            },
+            parent_traits: if input.peek(Token![:]) {
+                input.parse::<Token![:]>()?;
+                Some(input.parse()?) // Parse the parent trait bound
             } else {
                 None
             },
@@ -99,11 +106,13 @@ pub fn trait_variable(input: TokenStream) -> TokenStream {
         trait_vis,
         trait_name,
         trait_bound,
+        parent_traits,
         where_clause,
         trait_variables,
         trait_items,
         ..
     } = parse_macro_input!(input as TraitInput);
+
     // 1.1 get parent trait name
     let parent_trait_name = Ident::new(&format!("_{}", trait_name), trait_name.span());
     // 1.2 get trait declarative macro name
@@ -182,15 +191,15 @@ pub fn trait_variable(input: TokenStream) -> TokenStream {
             };
         }
     };
+
     // 5. expand the final code
     let expanded = quote! {
         #trait_vis trait #parent_trait_name {
             #(#parent_trait_methods)*
         }
-        #trait_vis trait #trait_name #trait_bound: #parent_trait_name #where_clause{
+        #trait_vis trait #trait_name #trait_bound: #parent_trait_name + #parent_traits #where_clause {
             #(#trait_items)*
         }
-
         #decl_macro_code
     };
     TokenStream::from(expanded)
