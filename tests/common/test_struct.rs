@@ -10,7 +10,7 @@ use crate::MyTrait_for_struct;
 // }
 // way2: use the hidden declarative macro to expand the struct (Not recommended)
 MyTrait_for_struct! {
-    (_MyTrait) // inputput the hiddent parent trait
+    (_MyTrait) // input the hiddent parent trait
     pub struct MyStruct { // feel free to add `pub` when needed
     // feel free to add any fields as usual or leave it empty
     a: i32,

@@ -146,7 +146,7 @@ This crate is dual-licensed under either:
 Choose the license that best fits your needs.
 
 ## todo list
- - [] add a new integrated test for complex situation: (multi-parent trait w/o generics with genric of the original trait（甚至宏）嵌套 and where clause of the origianl trait [multi genereics in both trait bound and where clause])trait with generic types(`Box<dyn Trait>` type), async methods, etc;
+ - [] add a new integrated test for complex situation: (multi-parent trait w/o generics with genric of the original trait（甚至宏）嵌套 and where clause of the origianl trait [multi genereics in both trait bound and where clause])trait with generic types(`Box<dyn Trait>` type),GAT, async methods, etc;
  - [] omit `use <trait_module>::<_hidden_parent_trait_name>;` statement when using `#[trait_var(<trait_name>)]` for a struct in an extra module;
  - [] `syn::parse_str` refactor;
  - [] to English comment;
