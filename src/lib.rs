@@ -3,6 +3,7 @@ mod trait_item;
 mod utils;
 
 use proc_macro2::TokenStream;
+use proc_macro2::TokenTree;
 use quote::{quote, ToTokens};
 
 use syn::parse::discouraged::Speculative;
@@ -22,7 +23,7 @@ struct TraitVarField {
     var_vis: Visibility,
     var_name: Ident,
     _colon_token: Token![:],
-    type_name: syn::Type, // Changed from TokenStream to syn::Type
+    type_name: TokenStream,
     is_generic_type: bool,
     _semicolon_token: Token![;],
 }
@@ -32,22 +33,30 @@ impl Parse for TraitVarField {
         let var_vis: Visibility = input.parse()?;
         let var_name: Ident = input.parse()?;
         let _colon_token: Token![:] = input.parse()?;
-        let type_name: syn::Type = input.parse()?; // Adjusted to parse into syn::Type
-        let is_generic_type = type_name.to_token_stream().to_string().len() == 1
-            && type_name
-                .to_token_stream()
+
+        // Parse the type_name as a TokenStream up to the semicolon
+        let mut type_tokens = TokenStream::new();
+        while !input.peek(Token![;]) {
+            type_tokens.extend(Some(input.parse::<TokenTree>()?));
+        }
+
+        // Determine if the type_name is a generic type based on its string representation
+        let is_generic_type = type_tokens.to_string().len() == 1
+            && type_tokens
                 .to_string()
                 .chars()
                 .next()
                 .unwrap()
                 .is_uppercase();
+
+        // Consume the semicolon from the input
         let _semicolon_token: Token![;] = input.parse()?;
 
         Ok(TraitVarField {
             var_vis,
             var_name,
             _colon_token,
-            type_name,
+            type_name: type_tokens,
             is_generic_type,
             _semicolon_token,
         })
@@ -123,7 +132,7 @@ pub fn trait_variable(input: proc_macro::TokenStream) -> proc_macro::TokenStream
         trait_vis,
         trait_name,
         trait_bounds,
-        parent_traits,
+        parent_traits: normal_parent_traits,
         where_clause,
         trait_variables,
         trait_items,
@@ -201,13 +210,24 @@ pub fn trait_variable(input: proc_macro::TokenStream) -> proc_macro::TokenStream
     // 3. refine the body of methods from the original trait
     let trait_items = refine_trait_items(trait_items);
 
-    // 4. generate the hidden declarative macro for target struct
+    // 4. expand the trait code
+    let hidden_parent_trait_with_bounds =
+        quote! {#hidden_parent_trait_name #hidden_parent_trait_bounds};
+    let trait_expanded_code = quote! {
+        #trait_vis trait #hidden_parent_trait_with_bounds {
+            #(#parent_trait_methods_signatures)*
+        }
+        #trait_vis trait #trait_name #trait_bounds: #hidden_parent_trait_with_bounds + #normal_parent_traits #where_clause {
+            #(#trait_items)*
+        }
+    };
+
+    // 5. generate the hidden declarative macro for target struct
     let decl_macro_code = quote! {
         #[doc(hidden)]
         #[macro_export] // it is ok to always export the declarative macro
         macro_rules! #trait_decl_macro_name { // NOTE: the reexpanded macro is used for rust struct onl
             (
-                ($hidden_parent_trait:path)
                 $(#[$struct_attr:meta])* // NOTE: make sure the style is consistent with that in arm 2 output
                 $vis:vis struct $struct_name:ident
                 $(<$($generic_param:ident),* $(, $generic_lifetime:lifetime)* $(,)? >)?
@@ -232,7 +252,7 @@ pub fn trait_variable(input: proc_macro::TokenStream) -> proc_macro::TokenStream
                 // 2.1 the struct generic+lifetime parameters, if any
                 $(<$($generic_param),* $(, $generic_lifetime)*>)?
                 // 2.2 the hidden parent trait
-                $hidden_parent_trait #hidden_parent_trait_bounds
+                #hidden_parent_trait_with_bounds
                 for
                 // 2.3 the struct name with generic parameters, if any
                 $struct_name
@@ -247,18 +267,11 @@ pub fn trait_variable(input: proc_macro::TokenStream) -> proc_macro::TokenStream
         }
     };
 
-    // 5. expand the final code
-    let expanded = quote! {
-        #trait_vis trait #hidden_parent_trait_name #hidden_parent_trait_bounds {
-            #(#parent_trait_methods_signatures)*
-        }
-        #trait_vis trait #trait_name #trait_bounds: #hidden_parent_trait_name + #parent_traits #where_clause {
-            #(#trait_items)*
-        }
-
+    // 6 integrate all expanded code
+    proc_macro::TokenStream::from(quote! {
+        #trait_expanded_code
         #decl_macro_code
-    };
-    proc_macro::TokenStream::from(expanded)
+    })
 }
 
 /// attribute macro: used to tag Rust struct like: `#[trait_var(<trait_name>)]`
@@ -296,7 +309,7 @@ pub fn trait_var(
     let hidden_parent_trait_name = Ident::new(&format!("_{}", trait_name), trait_name.span());
     let expanded = quote! {
         #trait_macro_name! {
-            (#hidden_parent_trait_name)
+            // (#hidden_parent_trait_name)
             // (#hidden_trait_path) // TODO: delete?
             #visible struct #struct_name #generics {
                 #(#original_struct_fields)*
