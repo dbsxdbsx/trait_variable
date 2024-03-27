@@ -13,6 +13,7 @@ use std::hash::Hash;
 use trait_variable::{trait_var, trait_variable};
 
 pub struct CustomGenericType<U> {
+    // pub id: T,
     pub name: U,
 }
 
@@ -41,9 +42,9 @@ trait_variable! {
         // the trait variable fields, don't forget to put them at the very TOP place
             id: i32;
         pub data: V;
-        pub _phantom_type: K; // TODO: delete?
         pub(crate) cache: HashMap<K, V>;
-        custom_generic_obj: CustomGenericType<V>;
+        pub _phantom_type: K; // TODO: delete?
+        custom_generic_obj: CustomGenericType<V>; // TODO: add more generic `P` to it
 
         // constant value and associated type
         type HashMapLen;

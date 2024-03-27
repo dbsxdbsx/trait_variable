@@ -36,6 +36,7 @@ impl Parse for TraitVarField {
             type_tokens.extend(Some(input.parse::<TokenTree>()?));
         }
 
+        
         // TODO: Determine if the type_name is a generic type based on its string representation
         let is_generic_type = type_tokens.to_string().len() == 1
             && type_tokens
@@ -64,7 +65,6 @@ struct TraitInput {
     _trait_token: Token![trait],
     trait_name: Ident,
     trait_bounds: Option<Generics>, // optional generic parameters for the trait
-    // explicit_parent_traits: Option<TypeParamBound>, //
     explicit_parent_traits: Option<Punctuated<TypeParamBound, Token![+]>>, // explicit parent traits
     where_clause: Option<WhereClause>, // optional where clause for the trait
     _brace_token: token::Brace,
@@ -112,7 +112,6 @@ impl Parse for TraitInput {
                 while !content.peek(Token![type])
                     && !content.peek(Token![const])
                     && !content.peek(Token![fn])
-                    // && !content.peek(Token![;]) // TODO: delete?
                     && !content.is_empty()
                 {
                     vars.push(content.parse()?);
@@ -315,7 +314,6 @@ pub fn trait_var(
     let _hidden_parent_trait_name = Ident::new(&format!("_{}", trait_name), trait_name.span());
     let expanded = quote! {
         #trait_macro_name! {
-            // (#hidden_parent_trait_name)
             // (#hidden_trait_path) // TODO: delete?
             #visible struct #struct_name #generics {
                 #(#original_struct_fields)*

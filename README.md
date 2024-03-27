@@ -129,7 +129,7 @@ The code inside the `trait_variable` macro may not receive comprehensive intelli
 ## Requirements
 
 - Rust edition 2021 or later is required.
-- The crate has been tested with Rust version 1.76.0, but the minimum compatible version is not specified.
+- The crate has been tested with Rust version 1.77.0, but the minimum compatible version is not specified.
 
 ## Contributing
 

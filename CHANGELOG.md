@@ -8,6 +8,7 @@ All notable changes to this project will be documented in this file.
 * Add feature/test for trait with more complex corner cases, like generics with bounds, where clauses along with explicit parent trait(s), etc.
 * Refine and add 3 integrated tests---`basic.rs`, `practical.rs`, and `complex.rs`---to cover all the features
 * Refine `README.md` accrodingly
+* Checking tests under Rust version 1.77.0 as default version
 
 ## 0.6.0- March 9, 2024
 * Refine tests
