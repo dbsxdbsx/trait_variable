@@ -79,7 +79,7 @@ fn test() {
 }
 ```
 
-This example demonstrates how to define a trait with variable fields and implement it for a struct. The `trait_variable!` macro facilitates the inclusion of variable fields in traits, and the `#[trait_var]` attribute macro automates the implementation details, allowing the struct to use these fields as if they were its own. For a complete example, please refer to the [basic example](https://github.com/dbsxdbsx/trait_variable/blob/main/tests/basic.rs), and for a more comprehensive example, please refer to the [advanced example](https://github.com/dbsxdbsx/trait_variable/blob/main/tests/advance.rs).
+This example demonstrates how to define a trait with variable fields and implement it for a struct. The `trait_variable!` macro facilitates the inclusion of variable fields in traits, and the `#[trait_var]` attribute macro automates the implementation details, allowing the struct to use these fields as if they were its own. For a complete example, please refer to the [basic example](https://github.com/dbsxdbsx/trait_variable/blob/main/tests/basic.rs)(There is a more [comprehensive and practical example](https://github.com/dbsxdbsx/trait_variable/blob/main/tests/practical.rs), a more [complex example](https://github.com/dbsxdbsx/trait_variable/blob/main/tests/complex.rs) with generics you can refer to).
 
 Specifically, `x` and `y` are the variable fields of the trait `MyTrait`, and `MyStruct` is a struct that implements `MyTrait`. The `trait_variable!` functional macro will automatically transfer the trait variables into a new parent trait with `_` as the prefix of the trait (`_MyTrait` in this case). Here is an example of how the hidden declarative macro generates a default implementation for `_MyTrait`:
 ```rust
@@ -145,7 +145,7 @@ This crate is dual-licensed under either:
 Choose the license that best fits your needs.
 
 ## todo list
- - [] add a new integrated test for complex situation: (multi-parent trait w/o generics with genric of the original trait（甚至宏）嵌套 and where clause of the origianl trait [multi genereics in both trait bound and where clause])trait with generic types(`Box<dyn Trait>` type),GAT, async methods, etc;
+ - [] GAT, async methods, etc;
  - [] omit `use <trait_module>::<_hidden_parent_trait_name>;` statement when using `#[trait_var(<trait_name>)]` for a struct in an extra module;
  - [] `syn::parse_str` refactor;
  - [] to English comment;

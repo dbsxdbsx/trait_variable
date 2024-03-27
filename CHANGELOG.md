@@ -4,8 +4,10 @@ All notable changes to this project will be documented in this file.
 
 ## 0.7.0 - unreleased
 * Add feature/test for trait constant and associated type as trait field
-* Add feature/test for trait generics, including both trait_bound and where_clause styles
 * Add feature/test for original trait parents(bound) of the target trait
+* Add feature/test for trait with more complex corner cases, like generics with bounds, where clauses along with explicit parent trait(s), etc.
+* Refine and add 3 integrated tests---`basic.rs`, `practical.rs`, and `complex.rs`---to cover all the features
+* Refine `README.md` accrodingly
 
 ## 0.6.0- March 9, 2024
 * Refine tests

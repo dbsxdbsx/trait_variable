@@ -1,6 +1,9 @@
-//! # Comprehensive Usage of the `trait_variable` Macro
+//! # Comprehensive and Practical Usage of the `trait_variable` Macro
 //!
 //! This file demonstrates a more complete and comprehensive usage of the `trait_variable` macro.
+//! It is practical, so the trait definition and struct implementation are
+//! quite heavy and defined in anthor file.
+
 mod common;
 use std::collections::{BTreeMap, HashSet};
 

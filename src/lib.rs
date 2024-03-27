@@ -6,16 +6,12 @@ use proc_macro2::TokenStream;
 use proc_macro2::TokenTree;
 use quote::{quote, ToTokens};
 
-use syn::parse::discouraged::Speculative;
-use syn::{
-    braced, token, Generics, PathArguments, PathSegment, TypeParamBound, TypePath, Visibility,
-    WhereClause,
-};
+use syn::{braced, token, Generics, TypeParamBound, Visibility, WhereClause};
 use syn::{
     parse::{Parse, ParseStream},
     parse_macro_input,
     punctuated::Punctuated,
-    Ident, Token, TraitItem, Type,
+    Ident, Token, TraitItem,
 };
 use trait_item::refine_trait_items;
 
@@ -40,7 +36,7 @@ impl Parse for TraitVarField {
             type_tokens.extend(Some(input.parse::<TokenTree>()?));
         }
 
-        // Determine if the type_name is a generic type based on its string representation
+        // TODO: Determine if the type_name is a generic type based on its string representation
         let is_generic_type = type_tokens.to_string().len() == 1
             && type_tokens
                 .to_string()
@@ -68,7 +64,8 @@ struct TraitInput {
     _trait_token: Token![trait],
     trait_name: Ident,
     trait_bounds: Option<Generics>, // optional generic parameters for the trait
-    parent_traits: Option<TypeParamBound>, // optional parent trait bound
+    // explicit_parent_traits: Option<TypeParamBound>, //
+    explicit_parent_traits: Option<Punctuated<TypeParamBound, Token![+]>>, // explicit parent traits
     where_clause: Option<WhereClause>, // optional where clause for the trait
     _brace_token: token::Brace,
     trait_variables: Vec<TraitVarField>,
@@ -88,9 +85,18 @@ impl Parse for TraitInput {
             } else {
                 None
             },
-            parent_traits: if input.peek(Token![:]) {
+            explicit_parent_traits: if input.peek(Token![:]) {
                 input.parse::<Token![:]>()?;
-                Some(input.parse()?) // Parse the parent trait bound
+                let mut parent_traits = Punctuated::new();
+                while !input.peek(Token![where]) && !input.peek(token::Brace) {
+                    parent_traits.push_value(input.parse()?);
+                    if input.peek(Token![+]) {
+                        parent_traits.push_punct(input.parse()?);
+                    } else {
+                        break;
+                    }
+                }
+                Some(parent_traits)
             } else {
                 None
             },
@@ -132,7 +138,7 @@ pub fn trait_variable(input: proc_macro::TokenStream) -> proc_macro::TokenStream
         trait_vis,
         trait_name,
         trait_bounds,
-        parent_traits: normal_parent_traits,
+        explicit_parent_traits,
         where_clause,
         trait_variables,
         trait_items,
@@ -146,7 +152,7 @@ pub fn trait_variable(input: proc_macro::TokenStream) -> proc_macro::TokenStream
         Ident::new(&format!("{}_for_struct", trait_name), trait_name.span());
 
     // 2.1 generate parent trait methods declaration
-    let parent_trait_methods_signatures = trait_variables.iter().map(
+    let hidden_parent_trait_methods_signatures = trait_variables.iter().map(
         |TraitVarField {
              var_name,
              type_name,
@@ -213,17 +219,17 @@ pub fn trait_variable(input: proc_macro::TokenStream) -> proc_macro::TokenStream
     // 4. expand the trait code
     let hidden_parent_trait_with_bounds =
         quote! {#hidden_parent_trait_name #hidden_parent_trait_bounds};
-    let trait_expanded_code = quote! {
+    let expanded_trait_code = quote! {
         #trait_vis trait #hidden_parent_trait_with_bounds {
-            #(#parent_trait_methods_signatures)*
+            #(#hidden_parent_trait_methods_signatures)*
         }
-        #trait_vis trait #trait_name #trait_bounds: #hidden_parent_trait_with_bounds + #normal_parent_traits #where_clause {
+        #trait_vis trait #trait_name #trait_bounds: #hidden_parent_trait_with_bounds + #explicit_parent_traits #where_clause {
             #(#trait_items)*
         }
     };
 
     // 5. generate the hidden declarative macro for target struct
-    let decl_macro_code = quote! {
+    let declarative_macro_code = quote! {
         #[doc(hidden)]
         #[macro_export] // it is ok to always export the declarative macro
         macro_rules! #trait_decl_macro_name { // NOTE: the reexpanded macro is used for rust struct onl
@@ -267,10 +273,10 @@ pub fn trait_variable(input: proc_macro::TokenStream) -> proc_macro::TokenStream
         }
     };
 
-    // 6 integrate all expanded code
+    // 6. integrate all expanded code
     proc_macro::TokenStream::from(quote! {
-        #trait_expanded_code
-        #decl_macro_code
+        #expanded_trait_code
+        #declarative_macro_code
     })
 }
 
@@ -306,7 +312,7 @@ pub fn trait_var(
 
     // expand code
     let trait_macro_name = Ident::new(&format!("{}_for_struct", trait_name), trait_name.span());
-    let hidden_parent_trait_name = Ident::new(&format!("_{}", trait_name), trait_name.span());
+    let _hidden_parent_trait_name = Ident::new(&format!("_{}", trait_name), trait_name.span());
     let expanded = quote! {
         #trait_macro_name! {
             // (#hidden_parent_trait_name)
