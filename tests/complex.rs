@@ -36,15 +36,15 @@ trait_variable! {
     pub trait ComplexTrait<P, K: Hash + Eq + Debug + fmt::Display, V>: ExplicitParentTrait + ExplicitParentTraitWithGeneric<P>
 
     where
-        P:AsRef<str> + From<String>,
+        P: AsRef<str> + From<String>,
         V: fmt::Display+ Debug + Clone,
     {
         // the trait variable fields, don't forget to put them at the very TOP place
         pub data: V;
             id: i32;
-            // _phantom_k:K;// TODO: delete
-        // pub(crate) cache: HashMap<K, V>; // TODO: 
-        custom_generic_obj: CustomGenericType<V>; // TODO: add more generic `P` to it
+        pub(crate) cache: HashMap<K, V>;
+        custom_generic_obj: CustomGenericType<V>;
+        // TODO: add more generic, like `P` to it
 
         // constant value and associated type
         type HashMapLen;
@@ -105,7 +105,6 @@ fn test() {
         custom_generic_obj: CustomGenericType {
             name: "hello_world".to_string(),
         },
-        _phantom_k: 42,
     };
 
     complex_struct.cache.insert(42, "key".to_string());
