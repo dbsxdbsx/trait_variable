@@ -1,13 +1,29 @@
 use quote::{quote, ToTokens};
 use regex::{Captures, Regex};
 
-use syn::{parse_str, Expr, FnArg, Receiver, Signature, TraitItemMethod};
+use syn::{parse_str, BinOp, Expr, FnArg, Receiver, Signature, TraitItemFn};
 
 pub fn process_assignment_expr(re: &Regex, expr: &Expr, is_method_mut: bool) -> Expr {
     // 1. left side
     let left = match expr {
         syn::Expr::Assign(assign_expr) => &assign_expr.left,
-        syn::Expr::AssignOp(assign_op_expr) => &assign_op_expr.left,
+        syn::Expr::Binary(binary_expr)
+            if matches!(
+                binary_expr.op,
+                BinOp::AddAssign(_)
+                    | BinOp::SubAssign(_)
+                    | BinOp::MulAssign(_)
+                    | BinOp::DivAssign(_)
+                    | BinOp::RemAssign(_)
+                    | BinOp::BitXorAssign(_)
+                    | BinOp::BitAndAssign(_)
+                    | BinOp::BitOrAssign(_)
+                    | BinOp::ShlAssign(_)
+                    | BinOp::ShrAssign(_)
+            ) =>
+        {
+            &binary_expr.left
+        }
         _ => unreachable!(),
     };
     let left_str = quote!(#left).to_string();
@@ -20,7 +36,23 @@ pub fn process_assignment_expr(re: &Regex, expr: &Expr, is_method_mut: bool) -> 
     // 2. right side
     let right = match expr {
         syn::Expr::Assign(assign_expr) => &assign_expr.right,
-        syn::Expr::AssignOp(assign_op_expr) => &assign_op_expr.right,
+        syn::Expr::Binary(binary_expr)
+            if matches!(
+                binary_expr.op,
+                BinOp::AddAssign(_)
+                    | BinOp::SubAssign(_)
+                    | BinOp::MulAssign(_)
+                    | BinOp::DivAssign(_)
+                    | BinOp::RemAssign(_)
+                    | BinOp::BitXorAssign(_)
+                    | BinOp::BitAndAssign(_)
+                    | BinOp::BitOrAssign(_)
+                    | BinOp::ShlAssign(_)
+                    | BinOp::ShrAssign(_)
+            ) =>
+        {
+            &binary_expr.right
+        }
         _ => unreachable!(),
     };
     let new_right_str = replace_self_field(right, is_method_mut, false);
@@ -28,12 +60,36 @@ pub fn process_assignment_expr(re: &Regex, expr: &Expr, is_method_mut: bool) -> 
     // 3. rebuild the final expression and return
     let new_expr_str = match expr {
         syn::Expr::Assign(_) => format!("{} = {}", new_left_str, new_right_str),
-        syn::Expr::AssignOp(assign_op_expr) => format!(
-            "{} {} {}",
-            new_left_str,
-            assign_op_expr.op.to_token_stream(),
-            new_right_str
-        ),
+        syn::Expr::Binary(binary_expr)
+            if matches!(
+                binary_expr.op,
+                BinOp::AddAssign(_)
+                    | BinOp::SubAssign(_)
+                    | BinOp::MulAssign(_)
+                    | BinOp::DivAssign(_)
+                    | BinOp::RemAssign(_)
+                    | BinOp::BitXorAssign(_)
+                    | BinOp::BitAndAssign(_)
+                    | BinOp::BitOrAssign(_)
+                    | BinOp::ShlAssign(_)
+                    | BinOp::ShrAssign(_)
+            ) =>
+        {
+            let op = match binary_expr.op {
+                BinOp::AddAssign(_) => "+=",
+                BinOp::SubAssign(_) => "-=",
+                BinOp::MulAssign(_) => "*=",
+                BinOp::DivAssign(_) => "/=",
+                BinOp::RemAssign(_) => "%=",
+                BinOp::BitXorAssign(_) => "^=",
+                BinOp::BitAndAssign(_) => "&=",
+                BinOp::BitOrAssign(_) => "|=",
+                BinOp::ShlAssign(_) => "<<=",
+                BinOp::ShrAssign(_) => ">>=",
+                _ => unreachable!(),
+            };
+            format!("{} {} {}", new_left_str, op, new_right_str)
+        }
         _ => unreachable!(),
     };
     syn::parse_str(&new_expr_str).expect("Failed to parse new expr")
@@ -181,7 +237,7 @@ pub fn is_method_mut(method_signature: &str) -> Option<bool> {
     }
 }
 
-pub fn is_trait_method_mutable(method: &TraitItemMethod) -> bool {
+pub fn is_trait_method_mutable(method: &TraitItemFn) -> bool {
     let method_sig = &method.sig;
     let method_sig_str = quote!(#method_sig).to_string();
     is_method_mut(&method_sig_str).unwrap()

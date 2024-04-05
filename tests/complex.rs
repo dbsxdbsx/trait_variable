@@ -40,10 +40,10 @@ trait_variable! {
         V: fmt::Display+ Debug + Clone,
     {
         // the trait variable fields, don't forget to put them at the very TOP place
-            id: i32;
         pub data: V;
-        pub(crate) cache: HashMap<K, V>;
-        pub _phantom_type: K; // TODO: delete?
+            id: i32;
+            // _phantom_k:K;// TODO: delete
+        // pub(crate) cache: HashMap<K, V>; // TODO: 
         custom_generic_obj: CustomGenericType<V>; // TODO: add more generic `P` to it
 
         // constant value and associated type
@@ -61,15 +61,13 @@ trait_variable! {
 }
 /*↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑trait definition↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑*/
 
-/*↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓struct definition↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓*/
+// /*↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓struct definition↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓*/
 // way1: use the attribute macro to expand the struct (Recommended)
 #[trait_var(ComplexTrait)]
 pub struct ComplexStruct<K, V>;
 // way2: use the hidden declarative macro to expand the struct (Not recommended)
 // ComplexTrait_for_struct! {
 //     pub struct ComplexStruct<K, V> { // feel free to add `pub` when needed
-//         // feel free to add any fields as usual or leave it empty
-//         pub(crate) extra: String,
 //     }
 // }
 /*↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑struct definition↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑*/
@@ -104,10 +102,10 @@ fn test() {
         id: 42,
         data: "data".to_string(),
         cache: HashMap::new(),
-        _phantom_type: 42,
         custom_generic_obj: CustomGenericType {
             name: "hello_world".to_string(),
         },
+        _phantom_k: 42,
     };
 
     complex_struct.cache.insert(42, "key".to_string());

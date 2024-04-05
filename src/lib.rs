@@ -1,12 +1,17 @@
-extern crate proc_macro;
 mod trait_item;
 mod utils;
+
+use std::collections::HashSet;
 
 use proc_macro2::TokenStream;
 use proc_macro2::TokenTree;
 use quote::{quote, ToTokens};
 
-use syn::{braced, token, Generics, TypeParamBound, Visibility, WhereClause};
+use syn::visit::{self, Visit};
+use syn::{
+    braced, parse2, token, AngleBracketedGenericArguments, Attribute, DeriveInput, GenericArgument,
+    GenericParam, Generics, PathArguments, Type, TypeParamBound, TypePath, Visibility, WhereClause,
+};
 use syn::{
     parse::{Parse, ParseStream},
     parse_macro_input,
@@ -15,49 +20,152 @@ use syn::{
 };
 use trait_item::refine_trait_items;
 
+struct GenericTypeVisitor {
+    generics: Vec<String>,
+}
+impl<'ast> Visit<'ast> for GenericTypeVisitor {
+    fn visit_type(&mut self, i: &'ast Type) {
+        if let Type::Path(TypePath { path, .. }) = i {
+            if let Some(PathArguments::AngleBracketed(AngleBracketedGenericArguments {
+                args,
+                ..
+            })) = path.segments.last().map(|seg| &seg.arguments)
+            {
+                for arg in args {
+                    if let GenericArgument::Type(Type::Path(tp)) = arg {
+                        if let Some(ident) = tp.path.get_ident() {
+                            let ident_str = ident.to_string();
+                            if ident_str.len() == 1
+                                && ident_str.chars().next().unwrap().is_uppercase()
+                            {
+                                self.generics.push(ident_str);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        // Continue the traversal to nested types
+        visit::visit_type(self, i);
+    }
+}
+#[test]
+fn test_generic_type_visitor() {
+    let code = quote! { Vec<T, HashMap<K, V>> }; // the quoted type is invalid, but ok for test
+    let syntax_tree: syn::Type = syn::parse2(code).unwrap();
+    let mut visitor = GenericTypeVisitor {
+        generics: Vec::new(),
+    };
+    visitor.visit_type(&syntax_tree);
+
+    assert_eq!(visitor.generics, vec!["T", "K", "V"]);
+}
+
+/// Define the enum to represent different kinds of trait variable types.
+/*↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓*/
+struct TraitVarType {
+    name: TokenStream, // the whole type name, including generics, like `HashMap<K, V>`, `i32`, `T`, etc.
+    generics: Vec<String>, // the generic type elements in the trait type, like `K, V` in `HashMap<K, V>`
+}
+impl ToTokens for TraitVarType {
+    fn to_tokens(&self, tokens: &mut TokenStream) {
+        tokens.extend(self.name.clone());
+    }
+}
+impl Parse for TraitVarType {
+    fn parse(input: ParseStream) -> syn::Result<Self> {
+        let mut name = TokenStream::new();
+        let mut generics = Vec::new();
+
+        // 1. Parse until a semicolon is found, indicating the end of a type definition
+        while !input.is_empty() {
+            if input.peek(Token![;]) {
+                println!("the EXIT token is: {}", input.parse::<TokenTree>()?);
+                break;
+            }
+            let token = input.parse::<TokenTree>()?;
+            println!("the token is:{}", token.to_string());
+            name.extend(Some(token));
+        }
+
+        println!("finally， the name is:{}", name.to_string());
+
+        // 2. Parse generics
+        if let Ok(type_parsed) = syn::parse2::<Type>(name.clone().into()) {
+            let mut visitor = GenericTypeVisitor {
+                generics: Vec::new(),
+            };
+            visitor.visit_type(&type_parsed);
+            generics.extend(visitor.generics);
+        }
+
+        // 3. Return
+        Ok(TraitVarType { name, generics })
+    }
+}
+
+#[test]
+fn test_trait_var_type() {
+    let raw_code = quote! { Vec<T, HashMap<K, V>>;};
+    println!("the raw code is:`{}`", raw_code);
+    let parsed = parse2::<TraitVarType>(raw_code.clone()).expect("Failed to parse");
+    println!("the raw code is:`{}`", raw_code);
+
+    assert_eq!(
+        parsed.name.to_string(),
+        "Vec < T , HashMap < K , V >>".to_string()
+    );
+    assert_eq!(
+        parsed.generics,
+        vec!["T".to_string(), "K".to_string(), "V".to_string()]
+    );
+}
+/*↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑*/
+
+/// Define the struct to represent a single trait variable field.
 struct TraitVarField {
     var_vis: Visibility,
     var_name: Ident,
-    _colon_token: Token![:],
-    type_name: TokenStream,
-    is_generic_type: bool,
-    _semicolon_token: Token![;],
+    type_name: TraitVarType,
 }
-
 impl Parse for TraitVarField {
     fn parse(input: ParseStream) -> syn::Result<Self> {
-        let var_vis: Visibility = input.parse()?;
-        let var_name: Ident = input.parse()?;
-        let _colon_token: Token![:] = input.parse()?;
-
-        // Parse the type_name as a TokenStream up to the semicolon
-        let mut type_tokens = TokenStream::new();
-        while !input.peek(Token![;]) {
-            type_tokens.extend(Some(input.parse::<TokenTree>()?));
-        }
-
-        
-        // TODO: Determine if the type_name is a generic type based on its string representation
-        let is_generic_type = type_tokens.to_string().len() == 1
-            && type_tokens
-                .to_string()
-                .chars()
-                .next()
-                .unwrap()
-                .is_uppercase();
-
-        // Consume the semicolon from the input
-        let _semicolon_token: Token![;] = input.parse()?;
+        println!("the orig input is:{}", input);
+        let var_vis: Visibility = input.parse().expect("Failed to Parse to `var_vis`");
+        println!("the input is:{}", input);
+        let var_name: Ident = input.parse().expect("Failed to Parse to `var_name`");
+        println!("the input is:{}", input);
+        let _: Token![:] = input.parse().expect("Failed to Parse to `:`");
+        println!("the input before TraitVarType is:{}", input);
+        let type_name: TraitVarType = input.parse().expect("Failed to Parse to `type_name`");
+        println!("the input after TraitVarType is:{}", input);
+        let _: Token![;] = input.parse().expect("Failed to Parse to `;`");
 
         Ok(TraitVarField {
             var_vis,
             var_name,
-            _colon_token,
-            type_name: type_tokens,
-            is_generic_type,
-            _semicolon_token,
+            type_name,
         })
     }
+}
+#[test]
+fn test_trait_var_field() {
+    let raw_code = quote! { pub var_name: Vec<T, HashMap<K, V>>; };
+    let parsed = parse2::<TraitVarField>(raw_code).expect("Failed to parse to `TraitVarField`");
+
+    assert!(
+        matches!(parsed.var_vis, Visibility::Public(_)),
+        "Visibility is not public"
+    );
+    assert_eq!(parsed.var_name.to_string(), "var_name".to_string());
+    assert_eq!(
+        parsed.type_name.name.to_string(),
+        "Vec < T , HashMap < K , V >>".to_string()
+    );
+    assert_eq!(
+        parsed.type_name.generics,
+        vec!["T".to_string(), "K".to_string(), "V".to_string()]
+    );
 }
 
 struct TraitInput {
@@ -68,6 +176,7 @@ struct TraitInput {
     explicit_parent_traits: Option<Punctuated<TypeParamBound, Token![+]>>, // explicit parent traits
     where_clause: Option<WhereClause>, // optional where clause for the trait
     _brace_token: token::Brace,
+    // trait_variables: Punctuated<TraitVarField, Token![;]>,// TODO: delete
     trait_variables: Vec<TraitVarField>,
     trait_items: Vec<TraitItem>, // all valid trait items, including methods, constants, and associated types
 }
@@ -108,6 +217,16 @@ impl Parse for TraitInput {
             _brace_token: braced!(content in input),
             // Parse all variable declarations until a method or end of input is encountered
             trait_variables: {
+                // TODO: delete
+                // if !content.peek(Token![type])
+                //     && !content.peek(Token![const])
+                //     && !content.peek(Token![fn])
+                //     && !content.is_empty()
+                // {
+                //     content.parse_terminated(TraitVarField::parse, Token![;])?
+                // } else {
+                //     Punctuated::new()
+                // }
                 let mut vars = Vec::new();
                 while !content.peek(Token![type])
                     && !content.peek(Token![const])
@@ -199,11 +318,16 @@ pub fn trait_variable(input: proc_macro::TokenStream) -> proc_macro::TokenStream
     );
     // 2.4 check if the parent trait has generic type
     let hidden_parent_trait_bounds = {
-        let generic_types: Vec<_> = trait_variables
-            .iter()
-            .filter(|field| field.is_generic_type)
-            .map(|field| &field.type_name)
-            .collect();
+        let mut generic_types = Vec::new();
+        for trait_var in trait_variables.iter() {
+            for generic in &trait_var.type_name.generics {
+                if generic_types.contains(generic) {
+                    continue;
+                }
+                generic_types.push(generic.clone());
+            }
+        }
+
         if !generic_types.is_empty() {
             let generics_list = quote! { <#(#generic_types),*> };
             generics_list.into_token_stream()
@@ -279,18 +403,22 @@ pub fn trait_variable(input: proc_macro::TokenStream) -> proc_macro::TokenStream
     })
 }
 
+struct AttrArgs(Ident);
+
+impl syn::parse::Parse for AttrArgs {
+    fn parse(input: syn::parse::ParseStream) -> syn::Result<Self> {
+        let ident = input.parse()?;
+        Ok(AttrArgs(ident))
+    }
+}
 /// attribute macro: used to tag Rust struct like: `#[trait_var(<trait_name>)]`
 #[proc_macro_attribute]
 pub fn trait_var(
     args: proc_macro::TokenStream,
     input: proc_macro::TokenStream,
 ) -> proc_macro::TokenStream {
-    // parse attributes
-    let args = parse_macro_input!(args as syn::AttributeArgs);
-    let trait_name = match args.first().unwrap() {
-        syn::NestedMeta::Meta(syn::Meta::Path(path)) => path.get_ident().unwrap(),
-        _ => panic!("Expected a trait name"),
-    };
+    // 将 TokenStream 转换为 ParseStream
+    let AttrArgs(trait_name) = parse_macro_input!(args as AttrArgs);
 
     // parse input, only accept `struct`
     let input_struct = parse_macro_input!(input as syn::ItemStruct);

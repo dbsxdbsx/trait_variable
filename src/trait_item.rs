@@ -2,7 +2,7 @@ use quote::quote;
 use regex::{Captures, Regex};
 
 use syn::{parse::Parse, TraitItem};
-use syn::{ExprCall, Local, Stmt};
+use syn::{parse_str, ExprCall, Local, LocalInit, Stmt};
 
 use crate::utils::{
     is_ref_mut, is_trait_method_mutable, process_assignment_expr, replace_self_field,
@@ -13,7 +13,7 @@ pub fn refine_trait_items(trait_items: Vec<TraitItem>) -> Vec<proc_macro2::Token
         .into_iter()
         .map(|item| {
             match item {
-                TraitItem::Method(mut trait_method) => {
+                TraitItem::Fn(mut trait_method) => {
                     // Determine if the method is mutable
                     let is_method_mut = is_trait_method_mutable(&trait_method);
 
@@ -56,23 +56,22 @@ pub fn refine_trait_items(trait_items: Vec<TraitItem>) -> Vec<proc_macro2::Token
         .collect::<Vec<_>>()
 }
 
-fn process_stmt(re: &Regex, stmt: syn::Stmt, is_method_mut: bool) -> syn::Stmt {
+fn process_stmt(re: &Regex, stmt: Stmt, is_method_mut: bool) -> Stmt {
     match stmt {
-        Stmt::Semi(expr, semi) => {
-            syn::Stmt::Semi(process_expr(re, expr, is_method_mut, false), semi)
-        }
-        syn::Stmt::Expr(expr) => syn::Stmt::Expr(process_expr(re, expr, is_method_mut, false)),
-        // local variable bindings (`let` assignments)
-        syn::Stmt::Local(local) => {
+        // Expression with an optional trailing semicolon
+        Stmt::Expr(expr, semi) => Stmt::Expr(process_expr(re, expr, is_method_mut, false), semi),
+        // Local variable bindings (`let` assignments)
+        Stmt::Local(local) => {
             // Convert the pattern to a string to check for `ref mut`
             let pat_str = quote!(#local.pat).to_string();
             let is_left_ref_mut = is_ref_mut(&pat_str);
             // Process the initializer expression if it exists
-            let new_local_init = if let Some((eq, init)) = local.init {
-                Some((
-                    eq,
-                    Box::new(process_expr(re, *init, is_method_mut, is_left_ref_mut)),
-                ))
+            let new_local_init = if let Some(init) = local.init {
+                Some(LocalInit {
+                    eq_token: init.eq_token,
+                    expr: Box::new(process_expr(re, *init.expr, is_method_mut, is_left_ref_mut)),
+                    diverge: init.diverge,
+                })
             } else {
                 None
             };
@@ -82,6 +81,7 @@ fn process_stmt(re: &Regex, stmt: syn::Stmt, is_method_mut: bool) -> syn::Stmt {
                 ..local
             })
         }
+        // Other cases remain the same
         _ => {
             // TODO: check this block logic
             let stmt_str = quote!(#stmt).to_string();
@@ -91,8 +91,7 @@ fn process_stmt(re: &Regex, stmt: syn::Stmt, is_method_mut: bool) -> syn::Stmt {
                     format!("self._{}()", field_name)
                 })
                 .to_string();
-            let new_stmt: syn::Stmt =
-                syn::parse_str(&new_stmt_str).expect("Failed to parse new stmt");
+            let new_stmt: Stmt = parse_str(&new_stmt_str).expect("Failed to parse new stmt");
             new_stmt
         }
     }
@@ -108,22 +107,19 @@ fn process_expr(
         syn::Expr::Assign(assign_expr) => {
             process_assignment_expr(re, &syn::Expr::Assign(assign_expr.clone()), is_method_mut)
         }
-        syn::Expr::AssignOp(assign_op_expr) => process_assignment_expr(
-            re,
-            &syn::Expr::AssignOp(assign_op_expr.clone()),
-            is_method_mut,
-        ),
+        syn::Expr::Binary(binary_expr) => {
+            process_assignment_expr(re, &syn::Expr::Binary(binary_expr.clone()), is_method_mut)
+        }
         syn::Expr::Macro(expr_macro) => {
             let macro_tokens = &expr_macro.mac.tokens;
             let new_macro_str = replace_self_field(macro_tokens, is_method_mut, is_left_ref_mut);
-            let new_tokens = new_macro_str.parse().expect("Failed to parse tokens");
             syn::Expr::Macro(syn::ExprMacro {
                 attrs: expr_macro.attrs.clone(),
                 mac: syn::Macro {
                     path: expr_macro.mac.path.clone(),
                     bang_token: expr_macro.mac.bang_token,
                     delimiter: expr_macro.mac.delimiter.clone(),
-                    tokens: new_tokens,
+                    tokens: new_macro_str.parse().expect("Failed to parse tokens"),
                 },
             })
         }
@@ -172,12 +168,12 @@ fn process_expr(
                 }
                 // 如果闭包体不是一个块表达式，将其包装在一个块中然后处理
                 _ => {
-                    let stmt = syn::Stmt::Expr(*closure.body);
+                    let stmt = syn::Stmt::Expr(*closure.body, None);
                     let processed_stmt = process_stmt(re, stmt, is_method_mut);
                     match processed_stmt {
-                        syn::Stmt::Expr(expr) => syn::Expr::Block(syn::ExprBlock {
+                        syn::Stmt::Expr(expr, _) => syn::Expr::Block(syn::ExprBlock {
                             block: syn::Block {
-                                stmts: vec![syn::Stmt::Expr(expr)],
+                                stmts: vec![syn::Stmt::Expr(expr, None)],
                                 brace_token: Default::default(),
                             },
                             attrs: Vec::new(),
