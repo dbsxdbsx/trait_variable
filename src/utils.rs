@@ -145,6 +145,11 @@ pub fn replace_self_field<T: ToTokens>(
                     extract_trailing_expr_until_to_1st_fn(&raw_expr_str, match_end);
                 // convert to mut or non-mut version accordingly
                 if is_method_mut {
+                    // NOTE: techniqically, no need to care `is_method_mut`,
+                    // but since it is hard to know if the field trailing fn is a mutalbe methond,
+                    // so here for simplicity, decided to treat it as a mutable reference by both the root
+                    // method mutablity(`is_method_mut`) and the exitance of trailing fn expr.
+                    // then the field is being used as a mutable reference for simplicity
                     if (!trailing_fn_expr.is_empty()) || is_left_ref_mut {
                         result.push_str(&format!("(*self._{}_mut())", name));
                     } else {

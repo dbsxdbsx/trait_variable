@@ -145,11 +145,10 @@ This crate is dual-licensed under either:
 Choose the license that best fits your needs.
 
 ## todo list
-refactor `syn::Expr::Binary(binary_expr)`
-`process_assignment_expr` refactor;
-  erase phantom trait var field;
-  where clause in struct;
+
   array,tuple with generic in struct;
+  where clause in struct;
+ - [] fn `replace_self_field` params necessity check;
  - [] lifetime, add generics to both trait param and return type in complex.rs;
  - [] GAT, async methods, etc;
  - [] omit `use <trait_module>::<_hidden_parent_trait_name>;` statement when using `#[trait_var(<trait_name>)]` for a struct in an extra module;
