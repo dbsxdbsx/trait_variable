@@ -1,116 +1,99 @@
+use std::fmt;
+
+use proc_macro2::TokenStream;
 use quote::{quote, ToTokens};
 use regex::{Captures, Regex};
 
 use syn::{parse_str, BinOp, Expr, FnArg, Receiver, Signature, TraitItemFn};
 
-pub fn process_assignment_expr(re: &Regex, expr: &Expr, is_method_mut: bool) -> Expr {
+/*↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓custom Assignment Object↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓*/
+pub struct MyAssignExpr {
+    #[allow(unused)]
+    attrs: Vec<syn::Attribute>,
+    left: TokenStream,
+    op: TokenStream,
+    right: TokenStream,
+}
+impl fmt::Display for MyAssignExpr {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "l:`{}` op:`{}` r:`{}`", self.left, self.op, self.right)
+    }
+}
+pub enum MyAssignOp {
+    AssignOp(MyAssignExpr),
+    NoAssignOp,
+}
+impl From<syn::Expr> for MyAssignOp {
+    fn from(expr: syn::Expr) -> Self {
+        match expr {
+            Expr::Assign(assign) => {
+                let attrs = assign.attrs.clone();
+                let left = assign.left.to_token_stream();
+                let op = assign.eq_token.to_token_stream();
+                let right = assign.right.to_token_stream();
+                MyAssignOp::AssignOp(MyAssignExpr {
+                    attrs,
+                    left,
+                    op,
+                    right,
+                })
+            }
+            Expr::Binary(binary)
+                if matches!(
+                    binary.op,
+                    BinOp::AddAssign(_)
+                        | BinOp::SubAssign(_)
+                        | BinOp::MulAssign(_)
+                        | BinOp::DivAssign(_)
+                        | BinOp::RemAssign(_)
+                        | BinOp::BitXorAssign(_)
+                        | BinOp::BitAndAssign(_)
+                        | BinOp::BitOrAssign(_)
+                        | BinOp::ShlAssign(_)
+                        | BinOp::ShrAssign(_)
+                ) =>
+            {
+                let attrs = binary.attrs.clone();
+                let left = binary.left.to_token_stream();
+                let op = binary.op.to_token_stream();
+                let right = binary.right.to_token_stream();
+                MyAssignOp::AssignOp(MyAssignExpr {
+                    attrs,
+                    left,
+                    op,
+                    right,
+                })
+            }
+            _ => MyAssignOp::NoAssignOp,
+        }
+    }
+}
+/*↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑custom Assignment Object↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑*/
+
+pub fn parse_assignment_expr(expr: MyAssignExpr, is_method_mut: bool) -> Expr {
     // 1. left side
-    let left = match expr {
-        syn::Expr::Assign(assign_expr) => &assign_expr.left,
-        syn::Expr::Binary(binary_expr)
-            if matches!(
-                binary_expr.op,
-                BinOp::AddAssign(_)
-                    | BinOp::SubAssign(_)
-                    | BinOp::MulAssign(_)
-                    | BinOp::DivAssign(_)
-                    | BinOp::RemAssign(_)
-                    | BinOp::BitXorAssign(_)
-                    | BinOp::BitAndAssign(_)
-                    | BinOp::BitOrAssign(_)
-                    | BinOp::ShlAssign(_)
-                    | BinOp::ShrAssign(_)
-            ) =>
-        {
-            &binary_expr.left
-        }
-        _ => unreachable!(),
-    };
-    let left_str = quote!(#left).to_string();
-    let new_left_str = re
-        .replace_all(&left_str, |caps: &Captures| {
-            format!("(*self._{}_mut())", &caps[1])
-        })
-        .to_string();
-
+    let new_left_str = replace_self_field(&expr.left, is_method_mut, true);
     // 2. right side
-    let right = match expr {
-        syn::Expr::Assign(assign_expr) => &assign_expr.right,
-        syn::Expr::Binary(binary_expr)
-            if matches!(
-                binary_expr.op,
-                BinOp::AddAssign(_)
-                    | BinOp::SubAssign(_)
-                    | BinOp::MulAssign(_)
-                    | BinOp::DivAssign(_)
-                    | BinOp::RemAssign(_)
-                    | BinOp::BitXorAssign(_)
-                    | BinOp::BitAndAssign(_)
-                    | BinOp::BitOrAssign(_)
-                    | BinOp::ShlAssign(_)
-                    | BinOp::ShrAssign(_)
-            ) =>
-        {
-            &binary_expr.right
-        }
-        _ => unreachable!(),
-    };
-    let new_right_str = replace_self_field(right, is_method_mut, false);
-
+    let new_right_str = replace_self_field(&expr.right, is_method_mut, false);
     // 3. rebuild the final expression and return
-    let new_expr_str = match expr {
-        syn::Expr::Assign(_) => format!("{} = {}", new_left_str, new_right_str),
-        syn::Expr::Binary(binary_expr)
-            if matches!(
-                binary_expr.op,
-                BinOp::AddAssign(_)
-                    | BinOp::SubAssign(_)
-                    | BinOp::MulAssign(_)
-                    | BinOp::DivAssign(_)
-                    | BinOp::RemAssign(_)
-                    | BinOp::BitXorAssign(_)
-                    | BinOp::BitAndAssign(_)
-                    | BinOp::BitOrAssign(_)
-                    | BinOp::ShlAssign(_)
-                    | BinOp::ShrAssign(_)
-            ) =>
-        {
-            let op = match binary_expr.op {
-                BinOp::AddAssign(_) => "+=",
-                BinOp::SubAssign(_) => "-=",
-                BinOp::MulAssign(_) => "*=",
-                BinOp::DivAssign(_) => "/=",
-                BinOp::RemAssign(_) => "%=",
-                BinOp::BitXorAssign(_) => "^=",
-                BinOp::BitAndAssign(_) => "&=",
-                BinOp::BitOrAssign(_) => "|=",
-                BinOp::ShlAssign(_) => "<<=",
-                BinOp::ShrAssign(_) => ">>=",
-                _ => unreachable!(),
-            };
-            format!("{} {} {}", new_left_str, op, new_right_str)
-        }
-        _ => unreachable!(),
-    };
+    let new_expr_str = format!("{} {} {}", new_left_str, expr.op, new_right_str);
     syn::parse_str(&new_expr_str).expect("Failed to parse new expr")
 }
 
-/// Helper function to check if a string contains `ref mut` adjacent to each other
+/// Check if a string contains `ref mut` adjacent to each other
 pub fn is_ref_mut(s: &str) -> bool {
     let parts = s.split_whitespace();
     let mut found_ref = false;
-
     for part in parts {
         if found_ref && part == "mut" {
             return true;
         }
         found_ref = part == "ref";
     }
-
     false
 }
 
-/// Replaces occurrences of `self.field`, `&self.field`, and `&mut self.field` in the given expression
+/// Replaces all occurrences of `self.field`, `&self.field`, and `&mut self.field` in the given expression
 /// with their corresponding getter/setter method calls.
 ///
 /// # Arguments
@@ -125,7 +108,7 @@ pub fn is_ref_mut(s: &str) -> bool {
 pub fn replace_self_field<T: ToTokens>(
     expr: &T,
     is_method_mut: bool,
-    is_left_ref_mut: bool,
+    is_left_ref_mut: bool, // TODO: change to Option and refine doc
 ) -> String {
     let raw_expr_str = quote!(#expr).to_string();
     let re = Regex::new(
@@ -171,12 +154,15 @@ pub fn replace_self_field<T: ToTokens>(
                     result.push_str(&format!("(*self._{}())", name));
                 }
             }
-            _ => unreachable!(),
+            _ => unreachable!(
+                "fn `replace_self_field`: Regex should not match without a capture group"
+            ),
         }
         last_end = match_end;
     }
     // 将最后一个匹配结束到字符串末尾之间的文本追加到结果中
     result.push_str(&raw_expr_str[last_end..]);
+
     result
 }
 

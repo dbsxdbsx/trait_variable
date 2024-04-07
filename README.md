@@ -145,6 +145,7 @@ This crate is dual-licensed under either:
 Choose the license that best fits your needs.
 
 ## todo list
+refactor `syn::Expr::Binary(binary_expr)`
 `process_assignment_expr` refactor;
   erase phantom trait var field;
   where clause in struct;
