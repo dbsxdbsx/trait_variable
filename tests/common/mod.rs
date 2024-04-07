@@ -864,6 +864,9 @@ impl MyStruct {
     pub fn get_explicit_field_a(&self) -> i32 {
         self.a
     }
+    pub fn get_impl_trait_field_i(&self) -> i32 {
+        self.i
+    }
 }
 
 // don't forget to implement the original parent trait for the struct
