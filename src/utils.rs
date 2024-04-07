@@ -2,7 +2,7 @@ use std::fmt;
 
 use proc_macro2::TokenStream;
 use quote::{quote, ToTokens};
-use regex::{Captures, Regex};
+use regex::Regex;
 
 use syn::{parse_str, BinOp, Expr, FnArg, Receiver, Signature, TraitItemFn};
 

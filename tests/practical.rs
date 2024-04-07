@@ -26,7 +26,8 @@ fn test() {
         CustomType::new(),
         EnumType::Unit,
     );
-    /*↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑test trait fields values↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑*/
+
+    assert_eq!(s.get_explicit_field_a(), 1);
     assert_eq!(
         s.test_associated_type_and_constant_value(),
         s.i * MyStruct::VALUE

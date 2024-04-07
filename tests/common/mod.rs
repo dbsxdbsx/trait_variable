@@ -861,9 +861,8 @@ impl MyStruct {
             e,
         }
     }
-    pub fn get_print_field_a(&self) -> &i32 {
-        println!("a: `{}`", self.a);
-        &self.a
+    pub fn get_explicit_field_a(&self) -> i32 {
+        self.a
     }
 }
 

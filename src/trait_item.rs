@@ -1,8 +1,8 @@
-use quote::{quote, ToTokens};
-use regex::{Captures, Regex};
+use quote::quote;
+use regex::Regex;
 
-use syn::{parse::Parse, TraitItem};
-use syn::{parse_str, ExprCall, Local, LocalInit, Stmt};
+use syn::TraitItem;
+use syn::{ExprCall, Local, LocalInit, Stmt};
 
 use crate::utils::{
     is_ref_mut, is_trait_method_mutable, parse_assignment_expr, replace_self_field, MyAssignOp,
@@ -200,8 +200,7 @@ fn parse_expr(
         }
         _ => match MyAssignOp::from(expr.clone()) {
             MyAssignOp::AssignOp(assign_expr) => {
-                let r = parse_assignment_expr(assign_expr, is_method_mut);
-                r
+                parse_assignment_expr(assign_expr, is_method_mut)
                 // todo!("Expression: {}", r.to_token_stream().to_string());
             }
             _ => {

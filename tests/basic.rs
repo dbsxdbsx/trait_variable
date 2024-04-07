@@ -61,6 +61,8 @@ impl MyTrait for MyStruct {
 fn test() {
     let s = MyStruct::new(1, "hello".into(), -2, true);
     s.print_all();
+    assert_eq!(s.a, 1);
+    assert_eq!(s.b, "hello");
     assert_eq!(s.x, -2); // if not in a unit test, then `self.x`` is not accessible, since it is private
     assert!(s.y);
 }

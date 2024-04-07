@@ -1,17 +1,14 @@
 mod trait_item;
 mod utils;
 
-use std::collections::HashSet;
-
 use proc_macro2::TokenStream;
-use proc_macro2::TokenTree;
+
 use quote::{quote, ToTokens};
 
-use syn::parse::Parser;
 use syn::visit::{self, Visit};
 use syn::{
-    braced, parse2, token, AngleBracketedGenericArguments, Attribute, DeriveInput, GenericArgument,
-    GenericParam, Generics, PathArguments, Type, TypeParamBound, TypePath, Visibility, WhereClause,
+    braced, token, AngleBracketedGenericArguments, GenericArgument, Generics, PathArguments, Type,
+    TypeParamBound, TypePath, Visibility, WhereClause,
 };
 use syn::{
     parse::{Parse, ParseStream},
@@ -41,7 +38,9 @@ impl<'ast> Visit<'ast> for GenericTypeVisitor {
                     if let GenericArgument::Type(Type::Path(tp)) = arg {
                         if let Some(ident) = tp.path.get_ident() {
                             let ident_str = ident.to_string();
-                            if self.is_single_upper_letter(&ident_str) {
+                            if self.is_single_upper_letter(&ident_str)
+                                && !self.generics.contains(&ident_str)
+                            {
                                 self.generics.push(ident_str);
                             }
                         }
@@ -49,7 +48,7 @@ impl<'ast> Visit<'ast> for GenericTypeVisitor {
                 }
             } else if let Some(seg) = path.segments.last() {
                 let ident_str = seg.ident.to_string();
-                if self.is_single_upper_letter(&ident_str) {
+                if self.is_single_upper_letter(&ident_str) && !self.generics.contains(&ident_str) {
                     self.generics.push(ident_str);
                 }
             }
@@ -111,7 +110,8 @@ impl Parse for TraitVarField {
 #[test]
 fn test_trait_var_field() {
     let raw_code = quote! { pub var_name: Vec<T, HashMap<K, V>> };
-    let parsed = parse2::<TraitVarField>(raw_code).expect("Failed to parse to `TraitVarField`");
+    let parsed =
+        syn::parse2::<TraitVarField>(raw_code).expect("Failed to parse to `TraitVarField`");
 
     assert!(
         matches!(parsed.var_vis, Visibility::Public(_)),
@@ -221,13 +221,13 @@ fn test_trait_input() {
             fn print_all(&self);
         }
     };
-    let parsed = parse2::<TraitInput>(raw_code).unwrap();
+    let parsed = syn::parse2::<TraitInput>(raw_code).unwrap();
 
     assert!(matches!(parsed.trait_vis, Visibility::Public(_)));
     assert_eq!(parsed.trait_name.to_string(), "MyTrait".to_string());
-    assert!(matches!(parsed.trait_bounds, None));
-    assert!(matches!(parsed.explicit_parent_traits, None));
-    assert!(matches!(parsed.where_clause, None));
+    assert!(parsed.trait_bounds.is_none());
+    assert!(parsed.explicit_parent_traits.is_none());
+    assert!(parsed.where_clause.is_none());
     assert_eq!(parsed.trait_variables.len(), 2);
     assert_eq!(
         parsed.trait_variables[0].var_name.to_string(),
