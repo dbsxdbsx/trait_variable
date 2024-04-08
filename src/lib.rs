@@ -318,16 +318,13 @@ pub fn trait_variable(input: proc_macro::TokenStream) -> proc_macro::TokenStream
         for trait_var in trait_variables.iter() {
             for generic in &trait_var.type_generics {
                 let generic_ident = syn::Ident::new(generic, proc_macro2::Span::call_site());
-                if generic_types.contains(&generic_ident) {
-                    continue;
+                if !generic_types.contains(&generic_ident) {
+                    generic_types.push(generic_ident);
                 }
-                generic_types.push(generic_ident);
             }
         }
-
         if !generic_types.is_empty() {
-            let generics_list = quote! { <#(#generic_types),*> };
-            generics_list.into_token_stream()
+            quote! { <#(#generic_types),*> }
         } else {
             TokenStream::new()
         }
@@ -357,23 +354,23 @@ pub fn trait_variable(input: proc_macro::TokenStream) -> proc_macro::TokenStream
                 $(#[$struct_attr:meta])* // NOTE: make sure the style is consistent with that in arm 2 output
                 $vis:vis struct $struct_name:ident
                 $(<$($generic_param:ident),* $(, $generic_lifetime:lifetime)* $(,)? >)?
-                // $(where $($where_clause:tt)+)? // TODO
+                $(where $($where_clause:tt)*)?
                 {
                     $($struct_content:tt)*
                 }
             ) => {
-                // 1. the struct definition:
+                // 1. the struct definition block with trait variable fields:
                 $(#[$struct_attr])*
                 $vis struct $struct_name
                 $(<$($generic_param),* $(, $generic_lifetime)*>)?
-                // TODO: $(where $($where_clause)+)?
+                $(where $($where_clause)*)?
                 {
                     $($struct_content)*
                     #(
                         #trait_fields_in_struct
                     )*
                 }
-                // 2. the struct impl block:
+                // 2. the struct impl block for the hidden parent trait:
                 impl
                 // 2.1 the struct generic+lifetime parameters, if any
                 $(<$($generic_param),* $(, $generic_lifetime)*>)?
@@ -383,7 +380,6 @@ pub fn trait_variable(input: proc_macro::TokenStream) -> proc_macro::TokenStream
                 // 2.3 the struct name with generic parameters, if any
                 $struct_name
                 $(<$($generic_param),* $(, $generic_lifetime)*>)?
-                // TODO: $(where $($where_clause)+)?
                 {
                     #(
                         #parent_trait_methods_impls_in_struct
@@ -414,14 +410,14 @@ pub fn trait_var(
     args: proc_macro::TokenStream,
     input: proc_macro::TokenStream,
 ) -> proc_macro::TokenStream {
-    // 将 TokenStream 转换为 ParseStream
+    // Convert TokenStream to ParseStream
     let AttrArgs(trait_name) = parse_macro_input!(args as AttrArgs);
 
     // parse input, only accept `struct`
     let input_struct = parse_macro_input!(input as syn::ItemStruct);
     let visible = &input_struct.vis;
     let struct_name = &input_struct.ident;
-    let generics = &input_struct.generics; // parse generics
+    let generics = &input_struct.generics;
 
     // handle different visibility of the struct fields
     // NOTE: the `original_struct_fields` does not include the hidden trait variable fields

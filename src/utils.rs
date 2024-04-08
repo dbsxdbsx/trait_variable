@@ -77,7 +77,7 @@ pub fn parse_assignment_expr(expr: MyAssignExpr, is_method_mut: bool) -> Expr {
     let new_right_str = replace_self_field(&expr.right, is_method_mut, false);
     // 3. rebuild the final expression and return
     let new_expr_str = format!("{} {} {}", new_left_str, expr.op, new_right_str);
-    syn::parse_str(&new_expr_str).expect("Failed to parse new expr")
+    syn::parse_str(&new_expr_str).expect("Failed to parse to expr in fn `parse_assignment_expr`")
 }
 
 /// Check if a string contains `ref mut` adjacent to each other
@@ -121,11 +121,11 @@ pub fn replace_self_field<T: ToTokens>(
     for cap in re.captures_iter(&raw_expr_str) {
         let match_start = cap.get(0).unwrap().start();
         let match_end = cap.get(0).unwrap().end();
-        // 如果匹配后紧跟`(`，则不进行替换，因为这说明其原本就是个合法的函数调用
+        // If it is followed by `(` after the match, do not perform replacement because it indicates a valid function call
         if raw_expr_str[match_end..].starts_with('(') {
             continue;
         }
-        // 将上一个匹配结束到当前匹配开始之间的文本追加到结果中
+        // Append the text between the end of the previous match and the start of the current match to the result
         result.push_str(&raw_expr_str[last_end..match_start]);
         match (cap.get(1), cap.get(3), cap.get(5)) {
             // match `&mut self.x`
@@ -165,7 +165,7 @@ pub fn replace_self_field<T: ToTokens>(
         }
         last_end = match_end;
     }
-    // 将最后一个匹配结束到字符串末尾之间的文本追加到结果中
+    // Append the text between the end of the previous match and the end of the string to the result
     result.push_str(&raw_expr_str[last_end..]);
 
     result
@@ -194,9 +194,9 @@ fn extract_trailing_expr_until_to_1st_fn(raw_expr_str: &str, match_end: usize) -
     ""
 }
 
-/// 检查一个方法签名是否表示一个可变方法。
-/// 返回 `Some(true)` 表示可变方法,`Some(false)` 表示不可变方法,
-/// `None` 表示无效签名或不是一个与 `self` 参数相关的方法。
+/// Check if a method signature represents a mutable method.
+/// Returns `Some(true)` for mutable methods, `Some(false)` for immutable methods,
+/// `None` for invalid signatures or methods not related to the `self` parameter.
 pub fn is_method_mut(method_signature: &str) -> Option<bool> {
     let sig: Result<Signature, _> = parse_str(method_signature);
 
@@ -209,22 +209,22 @@ pub fn is_method_mut(method_signature: &str) -> Option<bool> {
                         reference,
                         ..
                     }) => {
-                        // 如果是 `self`,返回 None
+                        // If it is `self`, return None
                         if reference.is_none() {
                             None
                         } else {
-                            // 如果有 mutability,则为 Some(true),否则为 Some(false)
+                            // If there is mutability, then it is Some(true), otherwise it is Some(false)
                             Some(mutability.is_some())
                         }
                     }
                     FnArg::Typed(_) => {
-                        // 其他情况不考虑为方法,返回 None
+                        // For other cases, not considered as a method, return None
                         None
                     }
                 }
             })
         }
-        Err(_) => None, // 解析失败返回 None
+        Err(_) => None, // Return None if parsing fails
     }
 }
 

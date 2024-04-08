@@ -147,11 +147,9 @@ Choose the license that best fits your needs.
 ## todo list
 
   array,tuple with generic in struct;
-  where clause in struct;
+ - [] where clause in struct;
+ - [] lifetime in struct;
  - [] fn `replace_self_field` params necessity check;
- - [] lifetime, add generics to both trait param and return type in complex.rs;
  - [] GAT, async methods, etc;
  - [] omit `use <trait_module>::<_hidden_parent_trait_name>;` statement when using `#[trait_var(<trait_name>)]` for a struct in an extra module;
- - [] `syn::parse_str` refactor;
- - [] to English comment;
  - [] try to let smart intellisense extension(like `Rust Analyzer`) support idents inside macro(Maybe impossible).

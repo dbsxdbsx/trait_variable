@@ -98,16 +98,6 @@ fn parse_stmt(re: &Regex, stmt: Stmt, is_method_mut: bool) -> Stmt {
             unreachable!(
                 "If you see this message, please check the logic of process_stmt function."
             )
-            // TODO: delete
-            // let stmt_str = quote!(#stmt).to_string();
-            // let new_stmt_str = re
-            //     .replace_all(&stmt_str, |caps: &Captures| {
-            //         let field_name = &caps[1];
-            //         format!("(*self._{}())", field_name)
-            //     })
-            //     .to_string();
-            // let new_stmt: Stmt = parse_str(&new_stmt_str).expect("Failed to parse new stmt");
-            // new_stmt
         }
     }
 }
@@ -158,11 +148,11 @@ fn parse_expr(
         }
         // for lambda, closure
         syn::Expr::Closure(closure) => {
-            // 检查闭包体是否已经是一个块表达式
+            // Check if the closure body is already a block expression
             let refined_body = match *closure.body {
-                // 如果闭包体是一个块表达式，直接处理块中的每个语句
+                // If the closure body is a block expression, parse each statement in the block directly
                 syn::Expr::Block(block) => {
-                    let processed_stmts: Vec<syn::Stmt> = block
+                    let parsed_stmts: Vec<syn::Stmt> = block
                         .block
                         .stmts
                         .into_iter()
@@ -170,13 +160,13 @@ fn parse_expr(
                         .collect();
                     syn::Expr::Block(syn::ExprBlock {
                         block: syn::Block {
-                            stmts: processed_stmts,
+                            stmts: parsed_stmts,
                             ..block.block
                         },
                         ..block
                     })
                 }
-                // 如果闭包体不是一个块表达式，将其包装在一个块中然后处理
+                // If the closure body is not a block expression, wrap it in a block and then parse it
                 _ => {
                     let stmt = syn::Stmt::Expr(*closure.body, None);
                     match parse_stmt(re, stmt, is_method_mut) {
@@ -188,7 +178,7 @@ fn parse_expr(
                             attrs: Vec::new(),
                             label: None, // no need label for closure of expression style
                         }),
-                        _ => panic!("Unexpected stmt type after processing closure body"),
+                        _ => panic!("Unexpected stmt type after parsing closure body"),
                     }
                 }
             };

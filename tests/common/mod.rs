@@ -519,9 +519,9 @@ trait_variable! {
             self.i = 5;
             match self.i {
                 0 => unreachable!(),
-                1..=4 => unreachable!(), // 使用范围匹配来简化代码
+                1..=4 => unreachable!(),
                 5 => assert_eq!(self.i, 5),
-                _ if self.i > 5 => unreachable!(), // 使用匹配守卫来添加额外的条件
+                _ if self.i > 5 => unreachable!(),
                 _ => unreachable!()
 
             }
