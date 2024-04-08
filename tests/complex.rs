@@ -12,9 +12,9 @@ use std::fmt::Debug;
 use std::hash::Hash;
 use trait_variable::{trait_var, trait_variable};
 
-pub struct CustomGenericType<U> {
-    // pub id: T,
+pub struct CustomGenericType<T, U> {
     pub name: U,
+    pub nick_name: T,
 }
 
 trait ExplicitParentTrait {
@@ -34,7 +34,6 @@ where
 /*↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓trait definition↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓*/
 trait_variable! {
     pub trait ComplexTrait<P, K: Hash + Eq + Debug + fmt::Display, V>: ExplicitParentTrait + ExplicitParentTraitWithGeneric<P>
-
     where
         P: AsRef<str> + From<String>,
         V: fmt::Display+ Debug + Clone,
@@ -43,7 +42,7 @@ trait_variable! {
         pub data: V;
             id: i32;
         pub(crate) cache: HashMap<K, V>;
-        custom_generic_obj: CustomGenericType<V>;
+        custom_generic_obj: CustomGenericType<P, V>;
         // TODO: add more generic, like `P` to it
 
         // constant value and associated type
@@ -57,30 +56,44 @@ trait_variable! {
         }
         fn get_hashmap_len(&self) -> Self::HashMapLen;
         fn get_custom_gereric_type_name(&self) -> &Self::CustomGenericTypeName;
+        fn get_custom_gereric_type_nick_name(&self) -> &P;
     }
 }
 /*↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑trait definition↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑*/
 
 /*↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓struct definition↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓*/
+// NOTE: when using generics with the macro, please use exactly the SAME generic tags as the trait does
 // way1: use the attribute macro to expand the struct (Recommended)
 #[trait_var(ComplexTrait)]
-pub struct ComplexStruct<K, V>;
+pub struct ComplexStruct<P, K, V>;
 // way2: use the hidden declarative macro to expand the struct (Not recommended)
 // ComplexTrait_for_struct! {
-//     pub struct ComplexStruct<K, V> { // feel free to add `pub` when needed
+//     pub struct ComplexStruct<P, K, V> { // feel free to add `pub` when needed
 //     }
 // }
 /*↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑struct definition↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑*/
-impl<K, V> ExplicitParentTrait for ComplexStruct<K, V> {}
-impl<K, V> ExplicitParentTraitWithGeneric<String> for ComplexStruct<K, V>
+impl<P, K, V> ExplicitParentTrait for ComplexStruct<P, K, V> {}
+impl<P, K, V> ExplicitParentTraitWithGeneric<P> for ComplexStruct<P, K, V>
+// NOTE: It is not yet supported for specific generic type usage like this:
+// `impl<P, K, V> ExplicitParentTraitWithGeneric<String> for ComplexStruct<P, K, V>`,
+// because in this intricate complex example, the type `P` is not only used as a generic type for a parent trait,
+// but also used as a generic type for the trait varialbe field, which means that the type `P`
+// need to be specifically handled for the hidden trait `_ComplexTrait`.
+// While if the `P` is NOT mixly used both for the trait varialbe field and an explicit parent trait,
+// then it is supported.
 where
+    P: AsRef<str> + From<String>,
     K: Hash + Eq + Debug + fmt::Display,
     V: Debug + Clone + fmt::Display,
 {
 }
 
-impl<K, V> ComplexTrait<String, K, V> for ComplexStruct<K, V>
+impl<P, K, V> ComplexTrait<P, K, V> for ComplexStruct<P, K, V>
+// TODO: In this intricate complex example, for specific generic type usage like this:
+// `impl<P, K, V> ComplexTrait<String, K, V> for ComplexStruct<P, K, V>`,
+// the reason is the same as above.
 where
+    P: AsRef<str> + From<String>,
     K: Hash + Eq + Debug + fmt::Display,
     V: Debug + Clone + fmt::Display,
 {
@@ -94,6 +107,9 @@ where
     fn get_custom_gereric_type_name(&self) -> &Self::CustomGenericTypeName {
         &self.custom_generic_obj.name
     }
+    fn get_custom_gereric_type_nick_name(&self) -> &P {
+        &self.custom_generic_obj.nick_name
+    }
 }
 
 #[test]
@@ -103,7 +119,8 @@ fn test() {
         data: "data".to_string(),
         cache: HashMap::new(),
         custom_generic_obj: CustomGenericType {
-            name: "hello_world".to_string(),
+            name: "name".to_string(),
+            nick_name: "nick name".to_string(),
         },
     };
 
@@ -119,5 +136,9 @@ fn test() {
     );
     assert_eq!(complex_struct.get_struct_id(), 42);
     assert_eq!(complex_struct.get_hashmap_len(), 1);
-    assert_eq!(complex_struct.get_custom_gereric_type_name(), "hello_world");
+    assert_eq!(complex_struct.get_custom_gereric_type_name(), "name");
+    assert_eq!(
+        complex_struct.get_custom_gereric_type_nick_name(),
+        "nick name"
+    );
 }
