@@ -57,12 +57,33 @@ impl MyTrait for MyStruct {
 }
 /*↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑struct impl↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑*/
 
+/*↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓anthor struct for test↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓*/
+#[trait_var(MyTrait)]
+struct AnthorStruct {
+    c: i32,
+    d: bool,
+}
+/*↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑anthor struct for test↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑*/
+
 #[test]
 fn test() {
+    // create a struct instance using the trait_variable macro
     let s = MyStruct::new(1, "hello".into(), -2, true);
     s.print_all();
     assert_eq!(s.a, 1);
     assert_eq!(s.b, "hello");
     assert_eq!(s.x, -2); // if not in a unit test, then `self.x`` is not accessible, since it is private
     assert!(s.y);
+
+    // create another struct instance using the trait_variable macro
+    let s2 = AnthorStruct {
+        c: 42,
+        d: true,
+        x: -2,
+        y: true,
+    };
+    assert_eq!(s2.c, 42);
+    assert!(s2.d);
+    assert_eq!(s2.x, -2);
+    assert!(s2.y);
 }
