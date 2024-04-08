@@ -136,8 +136,8 @@ struct TraitInput {
     explicit_parent_traits: Option<Punctuated<TypeParamBound, Token![+]>>, // explicit parent traits
     where_clause: Option<WhereClause>, // optional where clause for the trait
     _brace_token: token::Brace,
-    trait_variables: Punctuated<TraitVarField, Token![;]>,
-    trait_items: Vec<TraitItem>, // all valid trait items, including methods, constants, and associated types
+    trait_variables: Vec<TraitVarField>,
+    trait_items: Vec<TraitItem>,
 }
 
 impl Parse for TraitInput {
@@ -176,24 +176,17 @@ impl Parse for TraitInput {
             _brace_token: braced!(content in input),
             // Parse all variable declarations until a method or end of input is encountered
             trait_variables: {
-                let mut vars = Punctuated::new();
+                let mut v = Vec::new();
                 while !content.peek(Token![type])
                     && !content.peek(Token![const])
                     && !content.peek(Token![fn])
                     && !content.is_empty()
                 {
-                    vars.push_value(content.parse()?);
-                    if content.peek(Token![;]) {
-                        vars.push_punct(content.parse()?);
-                    }
+                    v.push(content.call(TraitVarField::parse)?);
+                    let _: Token![;] = content.parse()?;
                 }
-                vars
-                // TODO: delete
-                // content
-                //     .parse_terminated(TraitVarField::parse, Token![;])
-                //     .unwrap_or_default()
+                v
             },
-            // Parse all valid trait items, including methods, constants, and associated types
             trait_items: {
                 let mut items = Vec::new();
                 while !content.is_empty() {
