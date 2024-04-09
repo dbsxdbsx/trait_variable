@@ -354,7 +354,7 @@ pub fn trait_variable(input: proc_macro::TokenStream) -> proc_macro::TokenStream
                 $(#[$struct_attr:meta])* // NOTE: make sure the style is consistent with that in arm 2 output
                 $vis:vis struct $struct_name:ident
                 $(<$($generic_param:ident),* $(, $generic_lifetime:lifetime)* $(,)? >)?
-                $(where $($where_clause:tt)*)?
+                // TODO: $(where $($where_clause:tt)*)?
                 {
                     $($struct_content:tt)*
                 }
@@ -363,7 +363,7 @@ pub fn trait_variable(input: proc_macro::TokenStream) -> proc_macro::TokenStream
                 $(#[$struct_attr])*
                 $vis struct $struct_name
                 $(<$($generic_param),* $(, $generic_lifetime)*>)?
-                $(where $($where_clause)*)?
+                // TODO: $(where $($where_clause)*)?
                 {
                     $($struct_content)*
                     #(
@@ -434,7 +434,7 @@ pub fn trait_var(
     let trait_macro_name = Ident::new(&format!("{}_for_struct", trait_name), trait_name.span());
     let _hidden_parent_trait_name = Ident::new(&format!("_{}", trait_name), trait_name.span());
     let expanded = quote! {
-        #trait_macro_name! {
+        crate::#trait_macro_name! {
             // (#hidden_trait_path) // TODO: delete?
             #visible struct #struct_name #generics {
                 #(#original_struct_fields)*

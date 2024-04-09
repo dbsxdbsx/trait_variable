@@ -25,7 +25,8 @@ trait_variable! {
 /*↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓struct definition↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓*/
 // way1: use the attribute macro to expand the struct (Recommended)
 #[trait_var(MyTrait)]
-pub struct MyStruct {
+struct MyStruct { // feel free to add `pub` when needed
+    // feel free to add any fields as usual or leave it empty
     a: i32,
     pub b: String,
 }
