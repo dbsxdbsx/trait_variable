@@ -22,11 +22,12 @@ trait_variable! {
         pub s: String;
             v_i32: Vec<i32>;
             opt_i32: Option<i32>;
-        pub t : (i32, String, Vec<i32>);
+        pub tuple : (i32, String, Vec<i32>);
         pub(crate) set_i32: HashSet<i32>;
             bmap: BTreeMap<i32, String>;
         pub(super) custom: CustomType;
         pub(in crate::common) e: EnumType;
+            array_i32: [i32; 3];
 
         // 2. For all valid trait items, like fn, constant values and associated types,
         // they should NOT be above of the trait variables---it is designed on purpose for readability of the target trait
@@ -52,9 +53,10 @@ trait_variable! {
 
         // the below is methods for testing trait variable fields:
         fn test_macro(&self) {
-            println!("i32: `{}`, bool: `{}`, f32: `{}`, v_i32: `{:?}`, s:`{}`, opt_i32: `{:?}`, tuple:`{:?}`, set_i32:`{:?}`, btree_map:`{:?}`, custom_type:`{:#?}, enum::`{:?}`", self.i, self.b, self.f, self.v_i32, self.s , self.opt_i32, self.t, self.set_i32, self.bmap, self.custom, self.e); // for macro param `self.i`, it would convert to `*self._x()`
+            println!("i32: `{}`, bool: `{}`, f32: `{}`, v_i32: `{:?}`, s:`{}`, opt_i32: `{:?}`, tuple:`{:?}`, set_i32:`{:?}`, btree_map:`{:?}`, custom_type:`{:#?}, enum:`{:?}`, array_i32: `{:?}`", self.i, self.b, self.f, self.v_i32, self.s , self.opt_i32, self.tuple, self.set_i32, self.bmap, self.custom, self.e, self.array_i32); // for macro param `self.i`, it would convert to `*self._x()`
             // println!("i32: `{self.i}`"); // the **Inline Replacement Style** is not supported yet
-            eprintln!("i32: `{}`, bool: `{}`, f32: `{}`, v_i32: `{:?}`, s:`{}`, opt_i32: `{:?}`, tuple:`{:?}`, set_i32:`{:?}`, btree_map:`{:?}`, custom_type:`{:#?}`, enum::`{:?}`", self.i, self.b, self.f, self.v_i32, self.s, self.opt_i32, self.t, self.set_i32, self.bmap, self.custom, self.e); // the same as above
+            eprintln!("i32: `{}`, bool: `{}`, f32: `{}`, v_i32: `{:?}`, s:`{}`, opt_i32: `{:?}`, tuple:`{:?}`, set_i32:`{:?}`, btree_map:`{:?}`, custom_type:`{:#?}`, enum:`{:?}`, array_i32: `{:?}`", self.i, self.b, self.f, self.v_i32, self.s, self.opt_i32, self.tuple, self.set_i32, self.bmap, self.custom, self.e, self.array_i32); // the same as above
+
             assert!(self.i == self.i);
             assert!(self.i != self.i-1);
             assert!(self.i - 2 != self.i);
@@ -63,10 +65,12 @@ trait_variable! {
             assert_eq!(self.v_i32, self.v_i32);
             assert_eq!(self.s, self.s);
             assert_eq!(self.opt_i32, self.opt_i32);
-            assert_eq!(self.t, self.t);
+            assert_eq!(self.tuple, self.tuple);
             assert_eq!(self.set_i32, self.set_i32);
             assert_eq!(self.bmap, self.bmap);
             assert_eq!(self.custom, self.custom);
+            assert_eq!(self.e, self.e);
+            assert_eq!(self.array_i32, self.array_i32);
         }
 
         fn test_assigntment(&mut self) {
@@ -77,12 +81,12 @@ trait_variable! {
             let bak_v_i32 = self.v_i32.clone();
             let bak_s = self.s.clone();
             let bak_opt_i32 = self.opt_i32.clone();
-            let bak_t = self.t.clone();
+            let bak_tuple = self.tuple.clone();
             let bak_set_i32 = self.set_i32.clone();
             let bak_bmap = self.bmap.clone();
             let bak_custom = self.custom.clone();
             let bak_e = self.e.clone();
-            // println!("bak is:{:?}",std::any::type_name_of_val(bak_i));
+            let bak_array_i32 = self.array_i32;
 
             // assignment of i32
             self.i = self.i;
@@ -144,19 +148,19 @@ trait_variable! {
             self.opt_i32 = None;
             assert!(self.opt_i32.is_none());
             // assignment of tuple
-            self.t.0 = 1;
-            self.t.1 = "hello".to_string();
-            self.t.2 = self.v_i32.clone();
-            assert_eq!(self.t, (1, "hello".to_string(), vec![-6, 2, 3, 4]));
-            self.t = (2, "world".to_string(), vec![4, 5, 6]);
-            assert_eq!(self.t, (2, "world".to_string(), vec![4, 5, 6]));
-            let (_, ref s, ref v) = self.t; // the right side would be converted into `(*self._t())`
+            self.tuple.0 = 1;
+            self.tuple.1 = "hello".to_string();
+            self.tuple.2 = self.v_i32.clone();
+            assert_eq!(self.tuple, (1, "hello".to_string(), vec![-6, 2, 3, 4]));
+            self.tuple = (2, "world".to_string(), vec![4, 5, 6]);
+            assert_eq!(self.tuple, (2, "world".to_string(), vec![4, 5, 6]));
+            let (_, ref s, ref v) = self.tuple; // the right side would be converted into `(*self._t())`
             assert_eq!(s, "world");
             assert_eq!(v, &vec![4, 5, 6]);
-            let (_, ref  mut s, _) = self.t; // the right side would be converted into `(*self._t_mut())`
+            let (_, ref  mut s, _) = self.tuple; // the right side would be converted into `(*self._t_mut())`
             assert_eq!(s, "world");
             *s = "world2".into();
-            assert_eq!(self.t, (2, "world2".to_string(), vec![4, 5, 6]));
+            assert_eq!(self.tuple, (2, "world2".to_string(), vec![4, 5, 6]));
             // assignment of HashSet<i32>
             self.set_i32 = HashSet::from([-1,0,1]);
             let new_set =  HashSet::from([0,1,2]);
@@ -175,7 +179,6 @@ trait_variable! {
             self.i = -1;
             self.custom.i = self.custom.i + self.i;
             assert_eq!(self.custom.i, 0);
-
             self.custom.str = "hello".to_string();
             assert_eq!(self.custom.str, "hello");
             self.custom.str = self.custom.str.to_uppercase();
@@ -189,6 +192,11 @@ trait_variable! {
             assert_eq!(self.e, EnumType::Message("hello".to_string()));
             self.e = EnumType::Rgb(1, 2, 3);
             assert_eq!(self.e, EnumType::Rgb(1, 2, 3));
+            // assignment of array of [i32; 3]
+            self.array_i32[0] = 1;
+            self.array_i32[1] = 2;
+            self.array_i32[2] = 3;
+            assert_eq!(self.array_i32, [1, 2, 3]);
 
             // restore
             self.i = bak_i;
@@ -197,11 +205,12 @@ trait_variable! {
             self.v_i32 = bak_v_i32;
             self.s = bak_s;
             self.opt_i32 = bak_opt_i32;
-            self.t = bak_t;
+            self.tuple = bak_tuple;
             self.set_i32 = bak_set_i32;
             self.bmap = bak_bmap;
             self.custom = bak_custom;
             self.e = bak_e;
+            self.array_i32 = bak_array_i32;
         }
 
         /*↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓test return type↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓*/
@@ -307,22 +316,22 @@ trait_variable! {
         }
         // test return type tuple (i32, String, Vec<i32>)
         fn test_return_ref_tuple_by_return_statement(&self) -> &(i32, String, Vec<i32>){
-            return &self.t;
+            return &self.tuple;
         }
         fn test_return_mut_ref_tuple_by_return_statement(&mut self) -> &mut (i32, String, Vec<i32>){
-            return &mut self.t;
+            return &mut self.tuple;
         }
         fn test_return_ref_tuple_by_expression(&self) -> &(i32, String, Vec<i32>){
-            &self.t
+            &self.tuple
         }
         fn test_return_mut_ref_tuple_by_expression(&mut self) -> &mut (i32, String, Vec<i32>){
-            &mut self.t
+            &mut self.tuple
         }
         fn test_return_cloned_tuple_by_explicit_clone_return_statement(&self) -> (i32, String, Vec<i32>){
-            return self.t.clone();
+            return self.tuple.clone();
         }
         fn test_return_cloned_tuple_by_explicit_clone_expression(&self) -> (i32, String, Vec<i32>){
-            self.t.clone()
+            self.tuple.clone()
         }
         // test return type HashSet<i32>
         fn test_return_ref_set_i32_by_return_statement(&self) -> &HashSet<i32>{
@@ -400,6 +409,25 @@ trait_variable! {
         fn test_return_cloned_enum_by_explicit_clone_expression(&self) -> EnumType{
             self.e.clone()
         }
+        // test return type array of [i32; 3]
+        fn test_return_ref_array_i32_by_return_statement(&self) -> &[i32; 3]{
+            return &self.array_i32;
+        }
+        fn test_return_mut_ref_array_i32_by_return_statement(&mut self) -> &mut [i32; 3]{
+            return &mut self.array_i32;
+        }
+        fn test_return_ref_array_i32_by_expression(&self) -> &[i32; 3]{
+            &self.array_i32
+        }
+        fn test_return_mut_ref_array_i32_by_expression(&mut self) -> &mut [i32; 3]{
+            &mut self.array_i32
+        }
+        fn test_return_cloned_array_i32_by_explicit_clone_return_statement(&self) -> [i32; 3]{
+            return self.array_i32.clone();
+        }
+        fn test_return_cloned_array_i32_by_explicit_clone_expression(&self) -> [i32; 3]{
+            self.array_i32.clone()
+        }
         /*↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑test return type↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑*/
 
         /*↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓test param↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓*/
@@ -445,13 +473,13 @@ trait_variable! {
         }
         // test param tuple (i32, String, Vec<i32>)
         fn test_param_tuple(&self) {
-            assert_eq!(test_with_param_tuple(self.t.clone()), self.t);
+            assert_eq!(test_with_param_tuple(self.tuple.clone()), self.tuple);
         }
         fn test_ref_param_tuple(&self) {
-            assert_eq!(test_with_ref_param_tuple(&self.t), self.t);
+            assert_eq!(test_with_ref_param_tuple(&self.tuple), self.tuple);
         }
         fn test_mut_ref_param_tuple(&mut self) {
-              assert_eq!(test_with_mut_ref_param_tuple(&mut self.t), self.t);
+              assert_eq!(test_with_mut_ref_param_tuple(&mut self.tuple), self.tuple);
         }
         // test param HashSet<i32>
         fn test_param_set_i32(&self) {
@@ -491,7 +519,17 @@ trait_variable! {
             assert_eq!(test_with_ref_param_enum(&self.e), self.e);
         }
         fn test_mut_ref_param_enum(&mut self) {
-              assert_eq!(test_with_mut_ref_param_enum(&mut self.e), self.e);
+            assert_eq!(test_with_mut_ref_param_enum(&mut self.e), self.e);
+        }
+        // test param array of [i32; 3]
+        fn test_param_array_i32(&self) {
+            assert_eq!(test_with_param_array_i32(self.array_i32), self.array_i32);
+        }
+        fn test_ref_param_array_i32(&self) {
+            assert_eq!(test_with_ref_param_array_i32(&self.array_i32), self.array_i32);
+        }
+        fn test_mut_ref_param_array_i32(&mut self) {
+            assert_eq!(test_with_mut_ref_param_array_i32(&mut self.array_i32), self.array_i32);
         }
         /*↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑test param↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑*/
 
@@ -552,9 +590,11 @@ trait_variable! {
             self.e = bak_e;
         }
         fn test_raw_loop(&mut self) {
+            // bak
             let bak_i = self.i;
             let bak_set_i32 = self.set_i32.clone();
             let bak_bmap = self.bmap.clone();
+            let bak_array_i32 = self.array_i32;
 
             // test i32
             self.i = 100;
@@ -595,15 +635,30 @@ trait_variable! {
             }
             assert_eq!(sum, 3);
             assert_eq!(vec, vec!["hello".to_string(), "world".to_string()]);
+            // test array of [i32; 3]
+            self.array_i32 = [1, 2, 3];
+            let mut sum = 0;
+            let mut iter = self.array_i32.iter();
+            loop {
+                match iter.next() {
+                    Some(i) => sum += i,
+                    None => break,
+                }
+            }
+            assert_eq!(sum, 6);
 
+            // restore
             self.i = bak_i;
             self.set_i32 = bak_set_i32;
             self.bmap = bak_bmap;
+            self.array_i32 = bak_array_i32;
         }
         fn test_for_loop(&mut self) {
+            // bak
             let bak_i = self.i;
             let bak_set_i32 = self.set_i32.clone();
             let bak_bmap = self.bmap.clone();
+            let bak_array_i32 = self.array_i32;
 
             // test i32
             self.i = 100;
@@ -629,10 +684,19 @@ trait_variable! {
             }
             assert_eq!(sum, 3);
             assert_eq!(vec, vec!["hello".to_string(), "world".to_string()]);
+            // test array of [i32; 3]
+            self.array_i32 = [1, 2, 3];
+            let mut sum = 0;
+            for i in &self.array_i32 {
+                sum += i;
+            }
+            assert_eq!(sum, 6);
 
+            // restore
             self.i = bak_i;
             self.set_i32 = bak_set_i32;
             self.bmap = bak_bmap;
+            self.array_i32 = bak_array_i32;
         }
         /*↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑test conditional/loop↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑*/
 
@@ -711,21 +775,21 @@ trait_variable! {
         }
         // for tuple (i32, String, Vec<i32>)
         fn test_lambda_for_tuple(&mut self) {
-            let bak_t = self.t.clone();
+            let bak_tuple = self.tuple.clone();
 
-            self.t = (1, "hello".to_string(), vec![1, 2, 3]);
+            self.tuple = (1, "hello".to_string(), vec![1, 2, 3]);
             // lambda with block
             let mut lambda = |delta: i32| {
-                self.t.0 += delta;
+                self.tuple.0 += delta;
             };
             lambda(10);
-            assert_eq!(self.t, (11, "hello".to_string(), vec![1, 2, 3]));
+            assert_eq!(self.tuple, (11, "hello".to_string(), vec![1, 2, 3]));
             // lambda with expression
-            let mut lambda = |delta: i32| self.t.0 += delta;
+            let mut lambda = |delta: i32| self.tuple.0 += delta;
             lambda(100);
-            assert_eq!(self.t, (111, "hello".to_string(), vec![1, 2, 3]));
+            assert_eq!(self.tuple, (111, "hello".to_string(), vec![1, 2, 3]));
 
-            self.t = bak_t;
+            self.tuple = bak_tuple;
         }
         // for HashSet<i32>
         fn test_lambda_for_set_i32(&mut self) {
@@ -811,6 +875,24 @@ trait_variable! {
 
             self.e = bak_e;
         }
+        // for array of [i32; 3]
+        fn test_lambda_for_array_i32(&mut self) {
+            let bak_array_i32 = self.array_i32;
+
+            self.array_i32 = [1, 2, 3];
+            // lambda with block
+            let mut lambda = |i: i32| {
+                self.array_i32[0] = i;
+            };
+            lambda(10);
+            assert_eq!(self.array_i32, [10, 2, 3]);
+            // lambda with expression
+            let mut lambda = |i: i32| self.array_i32[1] = i;
+            lambda(100);
+            assert_eq!(self.array_i32, [10, 100, 3]);
+
+            self.array_i32 = bak_array_i32;
+        }
         /*↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑test lambda↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑*/
     }
 }
@@ -841,10 +923,12 @@ impl MyStruct {
         v_i32: Vec<i32>,
         s: &str,
         opt_i32: Option<i32>,
+        tuple: (i32, String, Vec<i32>),
         set_i32: HashSet<i32>,
         b_map: BTreeMap<i32, String>,
         custom: CustomType,
         e: EnumType,
+        array_i32: [i32; 3],
     ) -> Self {
         Self {
             a,
@@ -854,11 +938,12 @@ impl MyStruct {
             v_i32,
             s: s.into(),
             opt_i32,
-            t: (0, "".into(), vec![]),
+            tuple,
             set_i32,
             bmap: b_map,
             custom,
             e,
+            array_i32,
         }
     }
     pub fn get_explicit_field_a(&self) -> i32 {

@@ -135,6 +135,16 @@ The code inside the `trait_variable` macro may not receive comprehensive intelli
 
 Contributions are welcome. Feel free to submit pull requests or open issues on the [GitHub repository](https://github.com/dbsxdbsx/trait_variable).
 
+## todo list
+
+ - [] trait bound(where clause) in struct definition;
+ - [] lifetime in struct definition;
+ - [] constant generic with array field in struct definition;
+ - [] fn `replace_self_field` params necessity check;
+ - [] GAT, async methods, etc. in trait definition;
+ - [] omit `use <trait_module>::<_hidden_parent_trait_name>;` statement when using `#[trait_var(<trait_name>)]` for a struct in an extra module;
+ - [] try to let smart intellisense extension(like `Rust Analyzer`) support idents inside macro(Maybe impossible).
+
 ## License
 
 This crate is dual-licensed under either:
@@ -143,13 +153,3 @@ This crate is dual-licensed under either:
 - MIT license (http://opensource.org/licenses/MIT)
 
 Choose the license that best fits your needs.
-
-## todo list
-
-  array,tuple with generic in struct;
- - [] where clause in struct;
- - [] lifetime in struct;
- - [] fn `replace_self_field` params necessity check;
- - [] GAT, async methods, etc;
- - [] omit `use <trait_module>::<_hidden_parent_trait_name>;` statement when using `#[trait_var(<trait_name>)]` for a struct in an extra module;
- - [] try to let smart intellisense extension(like `Rust Analyzer`) support idents inside macro(Maybe impossible).

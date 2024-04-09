@@ -114,4 +114,14 @@ pub fn test_with_ref_param_enum(e: &EnumType) -> EnumType {
 pub fn test_with_mut_ref_param_enum(e: &mut EnumType) -> EnumType {
     e.clone()
 }
+// for param (ref of) array of [i32; 3]
+pub fn test_with_param_array_i32(arr: [i32; 3]) -> [i32; 3] {
+    arr
+}
+pub fn test_with_ref_param_array_i32(arr: &[i32; 3]) -> [i32; 3] {
+    *arr
+}
+pub fn test_with_mut_ref_param_array_i32(arr: &mut [i32; 3]) -> [i32; 3] {
+    *arr
+}
 /*↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑assistant pub fns↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑*/

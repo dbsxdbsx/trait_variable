@@ -21,10 +21,12 @@ fn test() {
         vec![-1, 0, 1],
         "hello world",
         Some(0),
+        (0, "".into(), vec![]),
         HashSet::from([0, 1, 2]),
         BTreeMap::new(),
         CustomType::new(),
         EnumType::Unit,
+        [-1, 0, 1],
     );
 
     assert_eq!(s.get_explicit_field_a(), 1);
@@ -224,6 +226,28 @@ fn test() {
         s.test_return_cloned_enum_by_explicit_clone_expression(),
         EnumType::Unit
     );
+    // test return array of [i32; 3]
+    assert_eq!(
+        s.test_return_ref_array_i32_by_return_statement(),
+        &[-1, 0, 1]
+    );
+    assert_eq!(
+        s.test_return_mut_ref_array_i32_by_return_statement(),
+        &mut [-1, 0, 1]
+    );
+    assert_eq!(s.test_return_ref_array_i32_by_expression(), &[-1, 0, 1]);
+    assert_eq!(
+        s.test_return_mut_ref_array_i32_by_expression(),
+        &mut [-1, 0, 1]
+    );
+    assert_eq!(
+        s.test_return_cloned_array_i32_by_explicit_clone_return_statement(),
+        [-1, 0, 1]
+    );
+    assert_eq!(
+        s.test_return_cloned_array_i32_by_explicit_clone_expression(),
+        [-1, 0, 1]
+    );
     /*↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑test return type↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑*/
 
     /*↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓test param↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓*/
@@ -263,6 +287,10 @@ fn test() {
     s.test_param_enum();
     s.test_ref_param_enum();
     s.test_mut_ref_param_enum();
+    // test param array of [i32; 3]
+    s.test_param_array_i32();
+    s.test_ref_param_array_i32();
+    s.test_mut_ref_param_array_i32();
     /*↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑test param↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑*/
 
     /*↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓conditional/loop↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓*/
