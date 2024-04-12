@@ -5,7 +5,6 @@
 //! The code in this file is not intended to be practical,
 //! but rather to test corner cases and showcase the flexibility of the macro
 //! when working with generics.
-
 use core::fmt;
 use std::collections::HashMap;
 use std::fmt::Debug;

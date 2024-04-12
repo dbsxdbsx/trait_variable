@@ -9,7 +9,7 @@ use std::collections::{BTreeMap, HashSet};
 
 use common::MyStruct;
 
-use crate::common::{CustomType, EnumType, MyTrait};
+use crate::common::{CustomType, EnumType, PracticalTrait};
 
 #[test]
 fn test() {

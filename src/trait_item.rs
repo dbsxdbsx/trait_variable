@@ -4,7 +4,7 @@ use regex::Regex;
 use syn::TraitItem;
 use syn::{ExprCall, Local, LocalInit, Stmt};
 
-use crate::utils::{
+use crate::trait_utils::{
     is_ref_mut, is_trait_method_mutable, parse_assignment_expr, replace_self_field, MyAssignOp,
 };
 

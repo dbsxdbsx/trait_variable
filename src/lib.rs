@@ -1,8 +1,10 @@
+mod path_utils;
 mod trait_item;
-mod utils;
+mod trait_utils;
 
 use proc_macro2::TokenStream;
 
+#[allow(unused)]
 use quote::{quote, ToTokens};
 
 use syn::visit::{self, Visit};
@@ -434,7 +436,7 @@ pub fn trait_var(
     let trait_macro_name = Ident::new(&format!("{}_for_struct", trait_name), trait_name.span());
     let _hidden_parent_trait_name = Ident::new(&format!("_{}", trait_name), trait_name.span());
     let expanded = quote! {
-        crate::#trait_macro_name! {
+        #trait_macro_name! {
             // (#hidden_trait_path) // TODO: delete?
             #visible struct #struct_name #generics {
                 #(#original_struct_fields)*

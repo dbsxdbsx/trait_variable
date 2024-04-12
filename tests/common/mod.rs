@@ -11,7 +11,7 @@ trait ParentTrait {
 //↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓trait definition↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓
 use trait_variable::{trait_var, trait_variable};
 trait_variable! {
-    pub(crate) trait MyTrait<T: std::fmt::Debug>: ParentTrait
+    pub(crate) trait PracticalTrait<T: std::fmt::Debug>: ParentTrait
     where
         T: std::fmt::Display
     {  // feel free to add `pub` when needed
@@ -900,12 +900,12 @@ trait_variable! {
 
 //↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓struct definition↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓
 // way1: use the attribute macro to expand the struct (Recommended)
-#[trait_var(MyTrait)]
+#[trait_var(PracticalTrait)]
 pub struct MyStruct {
     a: i32,
 }
 // way2: use the hidden declarative macro to expand the struct (Not recommended)
-// MyTrait_for_struct! {
+// PracticalTrait_for_struct! {
 //     pub struct MyStruct { // feel free to add `pub` when needed
 //      // feel free to add any fields as usual or leave it empty
 //      a: i32,
@@ -957,7 +957,7 @@ impl MyStruct {
 // don't forget to implement the original parent trait for the struct
 impl ParentTrait for MyStruct {}
 
-impl MyTrait<i32> for MyStruct {
+impl PracticalTrait<i32> for MyStruct {
     type Output = i32;
     const VALUE: i32 = 10;
 

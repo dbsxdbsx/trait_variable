@@ -5,7 +5,7 @@
 /*↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓trait definition↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓*/
 use trait_variable::{trait_var, trait_variable};
 trait_variable! {
-    pub(crate) trait MyTrait {  // feel free to add `pub` when needed
+    pub(crate) trait BasicTrait {  // feel free to add `pub` when needed
         // 1.put the variable fields definition at the TOP of the target trait before any function
             x: i32;
         pub y: bool;
@@ -24,14 +24,15 @@ trait_variable! {
 
 /*↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓struct definition↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓*/
 // way1: use the attribute macro to expand the struct (Recommended)
-#[trait_var(MyTrait)]
-struct MyStruct { // feel free to add `pub` when needed
+#[trait_var(BasicTrait)]
+struct MyStruct {
+    // feel free to add `pub` when needed
     // feel free to add any fields as usual or leave it empty
     a: i32,
     pub b: String,
 }
 // way2: use the hidden declarative macro to expand the struct (Not recommended)
-// MyTrait_for_struct! {
+// BasicTrait_for_struct! {
 //     pub struct MyStruct { // feel free to add `pub` when needed
 //      // feel free to add any fields as usual or leave it empty
 //      a: i32,
@@ -48,7 +49,7 @@ impl MyStruct {
     }
 }
 // the trait implementation
-impl MyTrait for MyStruct {
+impl BasicTrait for MyStruct {
     fn print_all(&self) {
         println!("a: `{}`", self.a);
         println!("b: `{}`", self.b);
@@ -59,7 +60,7 @@ impl MyTrait for MyStruct {
 /*↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑struct impl↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑*/
 
 /*↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓anthor struct for test↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓*/
-#[trait_var(MyTrait)]
+#[trait_var(BasicTrait)]
 struct AnthorStruct {
     c: i32,
     d: bool,
