@@ -449,10 +449,25 @@ pub fn trait_var(
     // filter element from GLOBAL_DATA, that the element name is equal to the trait_name
     let mut trait_searcher = TraitPathFinder::new(trait_name.to_string());
     let global_data = GLOBAL_DATA.lock().unwrap();
-    let global_trait = global_data
+    let global_trait = match global_data
         .iter()
         .find(|t| t.name == trait_name.to_string())
-        .unwrap();
+    {
+        Some(trait_data) => trait_data,
+        None => {
+            std::thread::sleep(std::time::Duration::from_secs(2));
+            match global_data
+                .iter()
+                .find(|t| t.name == trait_name.to_string())
+            {
+                Some(trait_data) => trait_data,
+                None => panic!(
+                    "Location of Trait `{}` not found in GLOBAL_DATA",
+                    trait_name
+                ),
+            }
+        }
+    };
     let import_statement_tokenstream = if global_trait.path == trait_searcher.get_trait_def_path() {
         quote! {}
     } else {
