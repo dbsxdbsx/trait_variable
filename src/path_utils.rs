@@ -38,7 +38,7 @@ fn caller_crate_root() -> PathBuf {
     current_dir
 }
 
-pub struct TraitVisitor {
+pub(crate) struct TraitPathFinder {
     crate_root: PathBuf,
     trait_name: String,
     searched: bool,
@@ -46,8 +46,8 @@ pub struct TraitVisitor {
     trait_path: String,
 }
 
-impl TraitVisitor {
-    fn new(trait_name: String) -> Self {
+impl TraitPathFinder {
+    pub fn new(trait_name: String) -> Self {
         Self {
             crate_root: caller_crate_root(),
             trait_name,
@@ -57,8 +57,8 @@ impl TraitVisitor {
         }
     }
 
-    fn get_trait_import_statement(&mut self) -> String {
-        if self.find_trait_caller_path().is_empty() {
+    pub fn get_trait_import_statement(&mut self) -> String {
+        if self.get_trait_def_path().is_empty() {
             return "".to_string();
         }
 
@@ -78,7 +78,7 @@ impl TraitVisitor {
         format!("use crate::{}::{};", module_path, self.trait_name)
     }
 
-    fn find_trait_caller_path(&mut self) -> String {
+    pub fn get_trait_def_path(&mut self) -> String {
         if self.searched {
             return self.trait_path.clone();
         }
@@ -116,7 +116,7 @@ impl TraitVisitor {
     }
 }
 
-impl<'ast> Visit<'ast> for TraitVisitor {
+impl<'ast> Visit<'ast> for TraitPathFinder {
     fn visit_macro(&mut self, mac: &'ast Macro) {
         let last_seg = mac.path.segments.last().unwrap();
         if last_seg.ident != "trait_variable" {
@@ -136,7 +136,7 @@ impl<'ast> Visit<'ast> for TraitVisitor {
         // If matched, it should appear at the beginning of the macro invocation within 3 ident tokens
         for i in 0..idents.len().min(3) {
             if idents[i] == "trait" && idents[i + 1] == self.trait_name {
-                println!("found trait: {:?}", self.trait_name);
+                // println!("found trait: {:?}", self.trait_name);
                 // put the trait path into self.trait_path
                 self.trait_path = self.cur_check_path.clone();
                 break;
@@ -153,13 +153,14 @@ fn test_caller_crate_root() {
 }
 
 #[test]
-fn test_get_source_file() {
+fn test_trait_path_finder() {
     // positive case
-    let mut trait_searcher = TraitVisitor::new("ComplexTrait".to_string());
-    let path = trait_searcher.get_trait_import_statement();
-    println!("trait path: {:?}", path);
-    assert_eq!(path, "use crate::tests::complex::ComplexTrait;");
+    let mut trait_searcher = TraitPathFinder::new("ComplexTrait".to_string());
+    let caller_path = trait_searcher.get_trait_def_path();
+    assert!(caller_path.ends_with("trait_variable\\tests\\complex.rs"));
+    let import_statment = trait_searcher.get_trait_import_statement();
+    assert_eq!(import_statment, "use crate::tests::complex::ComplexTrait;");
     // negative case
-    let mut trait_searcher = TraitVisitor::new("NoExistedTrait".to_string());
+    let mut trait_searcher = TraitPathFinder::new("NoExistedTrait".to_string());
     assert!(trait_searcher.get_trait_import_statement().is_empty());
 }

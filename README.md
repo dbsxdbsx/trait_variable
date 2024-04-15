@@ -78,8 +78,9 @@ fn test() {
     assert_eq!(s.y, true); // s.x is private
 }
 ```
+## Technical Details
 
-This example demonstrates how to define a trait with variable fields and implement it for a struct. The `trait_variable!` macro facilitates the inclusion of variable fields in traits, and the `#[trait_var]` attribute macro automates the implementation details, allowing the struct to use these fields as if they were its own. For a complete example, please refer to the [basic example](https://github.com/dbsxdbsx/trait_variable/blob/main/tests/basic.rs)(There is a more [comprehensive and practical example](https://github.com/dbsxdbsx/trait_variable/blob/main/tests/practical.rs), a more [complex example](https://github.com/dbsxdbsx/trait_variable/blob/main/tests/complex.rs) with generics you can refer to).
+The above example demonstrates how to define a trait with variable fields and implement it for a struct. The `trait_variable!` macro facilitates the inclusion of variable fields in traits, and the `#[trait_var]` attribute macro automates the implementation details, allowing the struct to use these fields as if they were its own. For a complete example, please refer to the [basic example](https://github.com/dbsxdbsx/trait_variable/blob/main/tests/basic.rs)(There is a more [comprehensive and practical example](https://github.com/dbsxdbsx/trait_variable/blob/main/tests/practical.rs), a more [complex example](https://github.com/dbsxdbsx/trait_variable/blob/main/tests/complex.rs) with generics you can refer to).
 
 Specifically, `x` and `y` are the variable fields of the trait `MyTrait`, and `MyStruct` is a struct that implements `MyTrait`. The `trait_variable!` functional macro will automatically transfer the trait variables into a new parent trait with `_` as the prefix of the trait (`_MyTrait` in this case). Here is an example of how the hidden declarative macro generates a default implementation for `_MyTrait`:
 ```rust
@@ -135,7 +136,7 @@ The code inside the `trait_variable` macro may not receive comprehensive intelli
 
 Contributions are welcome. Feel free to submit pull requests or open issues on the [GitHub repository](https://github.com/dbsxdbsx/trait_variable).
 
-## todo list
+## Todo List
 
  - [] trait bound(where clause) in struct definition;
  - [] lifetime in struct definition;
