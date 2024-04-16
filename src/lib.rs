@@ -2,6 +2,8 @@ mod path_utils;
 mod trait_item;
 mod trait_utils;
 
+use macro_state::*;
+
 use std::collections::HashSet;
 use std::sync::Mutex;
 
@@ -397,17 +399,28 @@ pub fn trait_variable(input: proc_macro::TokenStream) -> proc_macro::TokenStream
     };
 
     // 6. insert the trait data into GLOBAL_DATA
-    let mut trait_searcher = TraitPathFinder::new(trait_name.to_string());
+    let trait_name_str = trait_name.to_string();
+    let mut trait_searcher = TraitPathFinder::new(trait_name_str.clone());
     let caller_path = trait_searcher.get_trait_def_path();
     assert!(
         !caller_path.is_empty(),
-        "The trait path for `{trait_name}`should NOT be empty"
+        "The trait path for `{trait_name}`should NOT be empty!"
     );
-    GLOBAL_DATA.lock().unwrap().insert(GlobalTrait {
-        name: trait_name.to_string(),
-        path: caller_path,
-        import_statement: trait_searcher.get_trait_import_statement(),
-    });
+
+    if proc_has_state(&trait_name_str) {
+        proc_clear_state(&trait_name_str);
+    }
+    proc_append_state(&trait_name_str, &caller_path);
+    proc_append_state(
+        &trait_name_str,
+        &trait_searcher.get_trait_import_statement(),
+    );
+
+    // GLOBAL_DATA.lock().unwrap().insert(GlobalTrait {
+    //     name: trait_name.to_string(),
+    //     path: caller_path,
+    //     import_statement: trait_searcher.get_trait_import_statement(),
+    // });
 
     // 7. integrate all expanded code
     proc_macro::TokenStream::from(quote! {
@@ -415,19 +428,6 @@ pub fn trait_variable(input: proc_macro::TokenStream) -> proc_macro::TokenStream
         #declarative_macro_code
     })
 }
-
-#[derive(PartialEq, Eq, Hash, Clone)]
-struct GlobalTrait {
-    name: String,
-    path: String,
-    import_statement: String,
-}
-// TODO: rewrite hash
-
-static GLOBAL_DATA: Lazy<Mutex<HashSet<GlobalTrait>>> = Lazy::new(|| Mutex::new(HashSet::new()));
-// GLOBAL_DATA.lock().unwrap().insert(uid);
-// *GLOBAL_DATA.lock().unwrap() = "hi".into();
-// if let Some(ref mut process) = *GLOBAL_DATA.lock().unwrap() {}
 
 /// Define the struct to represent the attribute macro(`trait_var`) arguments.
 struct AttrArgs(Ident);
@@ -448,33 +448,37 @@ pub fn trait_var(
 
     // filter element from GLOBAL_DATA, that the element name is equal to the trait_name
     let mut trait_searcher = TraitPathFinder::new(trait_name.to_string());
-    let global_data = GLOBAL_DATA.lock().unwrap();
-    let global_trait = match global_data
-        .iter()
-        .find(|t| t.name == trait_name.to_string())
-    {
-        Some(trait_data) => trait_data.clone(),
-        None => {
-            // unlock the global data
-            drop(global_data);
-            std::thread::sleep(std::time::Duration::from_secs(2));
-            let global_dat2a = GLOBAL_DATA.lock().unwrap();
-            match global_dat2a
-                .iter()
-                .find(|t| t.name == trait_name.to_string())
-            {
-                Some(trait_data) => trait_data.clone(),
-                None => panic!(
-                    "Location of Trait `{}` not found in GLOBAL_DATA",
-                    trait_name
-                ),
-            }
-        }
-    };
-    let import_statement_tokenstream = if global_trait.path == trait_searcher.get_trait_def_path() {
+    // let global_data = GLOBAL_DATA.lock().unwrap();
+    // let global_trait = match global_data
+    //     .iter()
+    //     .find(|t| t.name == trait_name.to_string())
+    // {
+    //     Some(trait_data) => trait_data.clone(),
+    //     None => {
+    //         // unlock the global data
+    //         drop(global_data);
+    //         std::thread::sleep(std::time::Duration::from_secs(2));
+    //         let global_dat2a = GLOBAL_DATA.lock().unwrap();
+    //         match global_dat2a
+    //             .iter()
+    //             .find(|t| t.name == trait_name.to_string())
+    //         {
+    //             Some(trait_data) => trait_data.clone(),
+    //             None => panic!(
+    //                 "Location of Trait `{}` not found in GLOBAL_DATA",
+    //                 trait_name
+    //             ),
+    //         }
+    //     }
+    // };
+    let trait_name_str = trait_name.to_string();
+    let trait_infos = proc_read_state_vec(&trait_name_str);
+    let trait_path = trait_infos[0].clone();
+    let import_statement_tokenstream = if trait_path == trait_searcher.get_trait_def_path() {
         quote! {}
     } else {
-        syn::parse_str::<TokenStream>(&global_trait.import_statement)
+        let import_statement = trait_infos[1].clone();
+        syn::parse_str::<TokenStream>(&import_statement)
             .expect("Failed to parse import statement to TokenStream")
     };
 
