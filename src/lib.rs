@@ -408,13 +408,14 @@ pub fn trait_variable(input: proc_macro::TokenStream) -> proc_macro::TokenStream
     );
 
     if proc_has_state(&trait_name_str) {
-        proc_clear_state(&trait_name_str);
+        proc_clear_state(&trait_name_str).unwrap();
     }
-    proc_append_state(&trait_name_str, &caller_path);
+    proc_append_state(&trait_name_str, &caller_path).unwrap();
     proc_append_state(
         &trait_name_str,
         &trait_searcher.get_trait_import_statement(),
-    );
+    )
+    .unwrap();
 
     // GLOBAL_DATA.lock().unwrap().insert(GlobalTrait {
     //     name: trait_name.to_string(),
