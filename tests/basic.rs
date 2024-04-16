@@ -25,7 +25,7 @@ trait_variable! {
 /*↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓struct definition↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓*/
 // way1: use the attribute macro to expand the struct (Recommended)
 #[trait_var(BasicTrait)]
-struct MyStruct {
+struct MyStructForBasic {
     // feel free to add `pub` when needed
     // feel free to add any fields as usual or leave it empty
     a: i32,
@@ -33,7 +33,7 @@ struct MyStruct {
 }
 // way2: use the hidden declarative macro to expand the struct (Not recommended)
 // BasicTrait_for_struct! {
-//     pub struct MyStruct { // feel free to add `pub` when needed
+//     pub struct MyStructForBasic { // feel free to add `pub` when needed
 //      // feel free to add any fields as usual or leave it empty
 //      a: i32,
 //      pub b: String,
@@ -43,13 +43,13 @@ struct MyStruct {
 
 /*↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓struct impl↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓*/
 // the struct basic implementation
-impl MyStruct {
+impl MyStructForBasic {
     pub fn new(a: i32, b: String, x: i32, y: bool) -> Self {
         Self { a, b, x, y }
     }
 }
 // the trait implementation
-impl BasicTrait for MyStruct {
+impl BasicTrait for MyStructForBasic {
     fn print_all(&self) {
         println!("a: `{}`", self.a);
         println!("b: `{}`", self.b);
@@ -70,7 +70,7 @@ struct AnthorStruct {
 #[test]
 fn test() {
     // create a struct instance using the trait_variable macro
-    let s = MyStruct::new(1, "hello".into(), -2, true);
+    let s = MyStructForBasic::new(1, "hello".into(), -2, true);
     s.print_all();
     assert_eq!(s.a, 1);
     assert_eq!(s.b, "hello");

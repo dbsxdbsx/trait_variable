@@ -1,7 +1,8 @@
 use std::path::{Path, PathBuf};
 
+use proc_macro2::TokenTree;
 use syn::visit::Visit;
-use syn::{parse_file, Ident, Macro};
+use syn::{parse_file, Attribute, Ident, ItemStruct, Macro, Meta};
 use walkdir::WalkDir;
 
 fn caller_crate_root() -> PathBuf {
@@ -38,32 +39,34 @@ fn caller_crate_root() -> PathBuf {
     current_dir
 }
 
-pub(crate) struct TraitPathFinder {
+pub(crate) struct PathFinder {
     crate_root: PathBuf,
-    trait_name: String,
+    name: String,
     searched: bool,
     cur_check_path: String,
-    trait_path: String,
+    path: String,
+    for_struct: bool,
 }
 
-impl TraitPathFinder {
-    pub fn new(trait_name: String) -> Self {
+impl PathFinder {
+    pub fn new(trait_name: String, for_struct: bool) -> Self {
         Self {
             crate_root: caller_crate_root(),
-            trait_name,
+            name: trait_name,
             searched: false,
             cur_check_path: "".to_string(),
-            trait_path: "".to_string(),
+            path: "".to_string(),
+            for_struct,
         }
     }
 
     pub fn get_trait_import_statement(&mut self) -> String {
-        if self.get_trait_def_path().is_empty() {
+        if self.get_def_path().is_empty() {
             return "".to_string();
         }
 
         let crate_root_path = Path::new(&self.crate_root);
-        let trait_path_buf = PathBuf::from(&self.trait_path);
+        let trait_path_buf = PathBuf::from(&self.path);
         // Try to remove the `crate_root` part from `trait_path` and get the relative path
         let relative_path = trait_path_buf
             .strip_prefix(crate_root_path)
@@ -75,12 +78,12 @@ impl TraitPathFinder {
             .replace(std::path::MAIN_SEPARATOR, "::")
             .replace(".rs", "");
         // Format as use crate::<module_path>::<trait_name>; statement
-        format!("use crate::{}::{};", module_path, self.trait_name)
+        format!("use crate::{}::{};", module_path, self.name)
     }
 
-    pub fn get_trait_def_path(&mut self) -> String {
+    pub fn get_def_path(&mut self) -> String {
         if self.searched {
-            return self.trait_path.clone();
+            return self.path.clone();
         }
         // do search
         for entry in WalkDir::new(&self.crate_root)
@@ -106,20 +109,33 @@ impl TraitPathFinder {
             let file = parse_file(&rust_source).unwrap();
             // dbg!("===searching file: {:?}", entry.path());
             self.visit_file(&file);
-            if !self.trait_path.is_empty() {
+            if !self.path.is_empty() {
                 break;
             };
         }
         // set searched flag and return
         self.searched = true;
-        self.trait_path.clone()
+        self.path.clone()
     }
 }
 
-impl<'ast> Visit<'ast> for TraitPathFinder {
+impl<'ast> Visit<'ast> for PathFinder {
+    fn visit_item_struct(&mut self, struct_item: &'ast ItemStruct) {
+        if struct_item.ident == self.name {
+            // println!("found struct: {:?}", self.name);
+            self.path = self.cur_check_path.clone();
+        }
+    }
+
     fn visit_macro(&mut self, mac: &'ast Macro) {
         let last_seg = mac.path.segments.last().unwrap();
-        if last_seg.ident != "trait_variable" {
+        let check_macro_prefix = if self.for_struct {
+            "trait_var"
+        } else {
+            "trait_variable"
+        };
+
+        if last_seg.ident != check_macro_prefix {
             return;
         }
         // Convert the macro body tokens into a vector of Ident
@@ -134,11 +150,11 @@ impl<'ast> Visit<'ast> for TraitPathFinder {
             .collect();
         // Check for the presence of 'trait' keyword followed by the desired trait name
         // If matched, it should appear at the beginning of the macro invocation within 3 ident tokens
+        let check_prefix = if self.for_struct { "struct" } else { "trait" };
         for i in 0..idents.len().min(3) {
-            if idents[i] == "trait" && idents[i + 1] == self.trait_name {
+            if idents[i] == check_prefix && idents[i + 1] == self.name {
                 // println!("found trait: {:?}", self.trait_name);
-                // put the trait path into self.trait_path
-                self.trait_path = self.cur_check_path.clone();
+                self.path = self.cur_check_path.clone();
                 break;
             }
         }
@@ -154,13 +170,18 @@ fn test_caller_crate_root() {
 
 #[test]
 fn test_trait_path_finder() {
-    // positive case
-    let mut trait_searcher = TraitPathFinder::new("ComplexTrait".to_string());
-    let caller_path = trait_searcher.get_trait_def_path();
+    // positive case for trait finder
+    let mut trait_searcher = PathFinder::new("ComplexTrait".to_string(), false);
+    let caller_path = trait_searcher.get_def_path();
     assert!(caller_path.ends_with("trait_variable\\tests\\complex.rs"));
     let import_statment = trait_searcher.get_trait_import_statement();
     assert_eq!(import_statment, "use crate::tests::complex::ComplexTrait;");
+    // positive case for struct finder
+    let mut struct_searcher = PathFinder::new("MyStructForBasic".to_string(), true);
+    let caller_path = struct_searcher.get_def_path();
+    println!("caller_path: {:?}", caller_path);
+    assert!(caller_path.ends_with("trait_variable\\tests\\basic.rs"));
     // negative case
-    let mut trait_searcher = TraitPathFinder::new("NoExistedTrait".to_string());
+    let mut trait_searcher = PathFinder::new("NoExistedTrait".to_string(), false);
     assert!(trait_searcher.get_trait_import_statement().is_empty());
 }

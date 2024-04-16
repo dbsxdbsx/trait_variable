@@ -8,7 +8,7 @@ use std::collections::HashSet;
 use std::sync::Mutex;
 
 use once_cell::sync::Lazy;
-use path_utils::TraitPathFinder;
+use path_utils::PathFinder;
 use proc_macro2::TokenStream;
 
 #[allow(unused)]
@@ -400,8 +400,8 @@ pub fn trait_variable(input: proc_macro::TokenStream) -> proc_macro::TokenStream
 
     // 6. insert the trait data into GLOBAL_DATA
     let trait_name_str = trait_name.to_string();
-    let mut trait_searcher = TraitPathFinder::new(trait_name_str.clone());
-    let caller_path = trait_searcher.get_trait_def_path();
+    let mut trait_searcher = PathFinder::new(trait_name_str.clone(), false);
+    let caller_path = trait_searcher.get_def_path();
     assert!(
         !caller_path.is_empty(),
         "The trait path for `{trait_name}`should NOT be empty!"
@@ -447,8 +447,13 @@ pub fn trait_var(
     // Convert TokenStream to ParseStream
     let AttrArgs(trait_name) = parse_macro_input!(args as AttrArgs);
 
-    // filter element from GLOBAL_DATA, that the element name is equal to the trait_name
-    let mut trait_searcher = TraitPathFinder::new(trait_name.to_string());
+    // parse input, only accept `struct`
+    let input_struct = parse_macro_input!(input as syn::ItemStruct);
+    let visible = &input_struct.vis;
+    let struct_name = &input_struct.ident;
+    let generics = &input_struct.generics;
+
+    let mut struct_searcher = PathFinder::new(struct_name.to_string(), true);
     // let global_data = GLOBAL_DATA.lock().unwrap();
     // let global_trait = match global_data
     //     .iter()
@@ -475,19 +480,13 @@ pub fn trait_var(
     let trait_name_str = trait_name.to_string();
     let trait_infos = proc_read_state_vec(&trait_name_str);
     let trait_path = trait_infos[0].clone();
-    let import_statement_tokenstream = if trait_path == trait_searcher.get_trait_def_path() {
+    let import_statement_tokenstream = if trait_path == struct_searcher.get_def_path() {
         quote! {}
     } else {
         let import_statement = trait_infos[1].clone();
         syn::parse_str::<TokenStream>(&import_statement)
             .expect("Failed to parse import statement to TokenStream")
     };
-
-    // parse input, only accept `struct`
-    let input_struct = parse_macro_input!(input as syn::ItemStruct);
-    let visible = &input_struct.vis;
-    let struct_name = &input_struct.ident;
-    let generics = &input_struct.generics;
 
     // handle different visibility of the struct fields
     // NOTE: the `original_struct_fields` does not include the hidden trait variable fields
