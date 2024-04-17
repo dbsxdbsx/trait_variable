@@ -9,6 +9,7 @@ All notable changes to this project will be documented in this file.
 * Refine and add 3 integrated tests---`basic.rs`, `practical.rs`, and `complex.rs`---to cover all features
 * Checking tests under Rust version 1.77.0 as default version
 * Update crate `Syn` from V1.0 to V2.0
+* Omitted explicit import statement for the hidden trait, like `_Trait` for `Trait`;
 * Miscellaneous fixes and improvements
 * Refine `README.md`
 

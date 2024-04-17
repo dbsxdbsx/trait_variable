@@ -1,8 +1,7 @@
 use std::path::{Path, PathBuf};
 
-use proc_macro2::TokenTree;
 use syn::visit::Visit;
-use syn::{parse_file, Attribute, Ident, ItemStruct, Macro, Meta};
+use syn::{parse_file, Ident, ItemStruct, Macro};
 use walkdir::WalkDir;
 
 fn caller_crate_root() -> PathBuf {
@@ -60,7 +59,9 @@ impl PathFinder {
         }
     }
 
-    pub fn get_trait_import_statement(&mut self) -> String {
+    /// The `hidden` means the import statement is not in the source code,
+    /// and the target struct/trait would have a prefix `_`.
+    pub fn get_hidden_import_statement(&mut self) -> String {
         if self.get_def_path().is_empty() {
             return "".to_string();
         }
@@ -175,15 +176,15 @@ fn test_trait_path_finder() {
     let mut trait_searcher = PathFinder::new("ComplexTrait".to_string(), false);
     let caller_path = trait_searcher.get_def_path();
     assert!(caller_path.ends_with("trait_variable\\tests\\complex.rs"));
-    let import_statment = trait_searcher.get_trait_import_statement();
-    assert_eq!(import_statment, "use crate::tests::complex::ComplexTrait;");
+    let import_statment = trait_searcher.get_hidden_import_statement();
+    assert_eq!(import_statment, "use crate::tests::complex::_ComplexTrait;");
     // positive case for struct finder
     let mut struct_searcher = PathFinder::new("MyStructForBasic".to_string(), true);
     let caller_path = struct_searcher.get_def_path();
     assert!(caller_path.ends_with("trait_variable\\tests\\basic.rs"));
     // negative case
     let mut trait_searcher = PathFinder::new("NoExistedTrait".to_string(), false);
-    assert!(trait_searcher.get_trait_import_statement().is_empty());
+    assert!(trait_searcher.get_hidden_import_statement().is_empty());
 }
 
 #[test]
@@ -192,8 +193,11 @@ fn test_mod_and_src_path_for_trait_path_finder() {
     let mut trait_searcher = PathFinder::new("PracticalTrait".to_string(), false);
     let caller_path = trait_searcher.get_def_path();
     assert!(caller_path.ends_with("trait_variable\\tests\\common\\mod.rs"));
-    let import_statment = trait_searcher.get_trait_import_statement();
-    assert_eq!(import_statment, "use crate::tests::common::PracticalTrait;");
+    let import_statment = trait_searcher.get_hidden_import_statement();
+    assert_eq!(
+        import_statment,
+        "use crate::tests::common::_PracticalTrait;"
+    );
     // 2. test import_statement with `src` folder
     let crate_root_path = Path::new(&trait_searcher.crate_root);
     trait_searcher.path = crate_root_path
@@ -202,6 +206,6 @@ fn test_mod_and_src_path_for_trait_path_finder() {
         .join("mod.rs")
         .to_string_lossy()
         .to_string();
-    let import_statment = trait_searcher.get_trait_import_statement();
-    assert_eq!(import_statment, "use crate::common::PracticalTrait;");
+    let import_statment = trait_searcher.get_hidden_import_statement();
+    assert_eq!(import_statment, "use crate::common::_PracticalTrait;");
 }

@@ -2,12 +2,6 @@ mod path_utils;
 mod trait_item;
 mod trait_utils;
 
-use macro_state::*;
-
-use std::collections::HashSet;
-use std::sync::Mutex;
-
-use once_cell::sync::Lazy;
 use path_utils::PathFinder;
 use proc_macro2::TokenStream;
 
@@ -439,7 +433,7 @@ pub fn trait_var(
     let import_statement_tokenstream = if trait_def_path == struct_searcher.get_def_path() {
         quote! {}
     } else {
-        let import_statement = trait_searcher.get_trait_import_statement();
+        let import_statement = trait_searcher.get_hidden_import_statement();
         syn::parse_str::<TokenStream>(&import_statement)
             .expect("Failed to parse import statement to TokenStream")
     };
@@ -461,7 +455,6 @@ pub fn trait_var(
     let expanded = quote! {
         #import_statement_tokenstream
         #trait_macro_name! {
-            // (#hidden_trait_path) // TODO: delete?
             #visible struct #struct_name #generics {
                 #(#original_struct_fields)*
             }
