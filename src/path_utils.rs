@@ -49,10 +49,10 @@ pub(crate) struct PathFinder {
 }
 
 impl PathFinder {
-    pub fn new(trait_name: String, for_struct: bool) -> Self {
+    pub fn new(name: String, for_struct: bool) -> Self {
         Self {
             crate_root: caller_crate_root(),
-            name: trait_name,
+            name,
             searched: false,
             cur_check_path: "".to_string(),
             path: "".to_string(),
@@ -79,7 +79,7 @@ impl PathFinder {
             .replace("::mod.rs", "")
             .replace(".rs", "");
         // Format as use crate::<module_path>::<trait_name>; statement
-        format!("use crate::{}::{};", module_path, self.name).replace("crate::src::", "crate::")
+        format!("use crate::{}::_{};", module_path, self.name).replace("crate::src::", "crate::")
     }
 
     pub fn get_def_path(&mut self) -> String {
