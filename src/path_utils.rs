@@ -79,7 +79,7 @@ impl PathFinder {
             .replace("::mod.rs", "")
             .replace(".rs", "");
         // Format as use crate::<module_path>::<trait_name>; statement
-        format!("use crate::{}::{};", module_path, self.name).replace("crate::src::", "")
+        format!("use crate::{}::{};", module_path, self.name).replace("crate::src::", "crate::")
     }
 
     pub fn get_def_path(&mut self) -> String {
@@ -203,5 +203,5 @@ fn test_mod_and_src_path_for_trait_path_finder() {
         .to_string_lossy()
         .to_string();
     let import_statment = trait_searcher.get_trait_import_statement();
-    assert_eq!(import_statment, "use common::PracticalTrait;");
+    assert_eq!(import_statment, "use crate::common::PracticalTrait;");
 }
