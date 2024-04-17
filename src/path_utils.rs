@@ -76,8 +76,8 @@ impl PathFinder {
         // Convert path separators to Rust module path separators `::`
         let module_path = relative_path
             .replace(std::path::MAIN_SEPARATOR, "::")
-            .replace(".rs", "")
-            .replace("::mod", "");
+            .replace("::mod.rs", "")
+            .replace(".rs", "");
         // Format as use crate::<module_path>::<trait_name>; statement
         format!("use crate::{}::{};", module_path, self.name)
     }
