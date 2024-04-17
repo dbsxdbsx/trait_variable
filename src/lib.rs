@@ -354,7 +354,26 @@ pub fn trait_variable(input: proc_macro::TokenStream) -> proc_macro::TokenStream
         }
     };
 
-    // 5. generate the hidden declarative macro for target struct
+    //   // 5. insert the trait data into GLOBAL_DATA
+    //   let trait_name_str = trait_name.to_string();
+    //   let mut trait_searcher = PathFinder::new(trait_name_str.clone(), false);
+    //   let caller_path = trait_searcher.get_def_path();
+    //   assert!(
+    //       !caller_path.is_empty(),
+    //       "The trait path for `{trait_name}`should NOT be empty!"
+    //   );
+
+    //   if proc_has_state(&trait_name_str) {
+    //       proc_clear_state(&trait_name_str).unwrap();
+    //   }
+    //   proc_append_state(&trait_name_str, &caller_path).unwrap();
+    //   proc_append_state(
+    //       &trait_name_str,
+    //       &trait_searcher.get_trait_import_statement(),
+    //   )
+    //   .unwrap();
+
+    // 6. generate the hidden declarative macro for target struct
     let declarative_macro_code = quote! {
         #[doc(hidden)]
         #[macro_export] // it is ok to always export the declarative macro
@@ -398,25 +417,6 @@ pub fn trait_variable(input: proc_macro::TokenStream) -> proc_macro::TokenStream
         }
     };
 
-    // 6. insert the trait data into GLOBAL_DATA
-    let trait_name_str = trait_name.to_string();
-    let mut trait_searcher = PathFinder::new(trait_name_str.clone(), false);
-    let caller_path = trait_searcher.get_def_path();
-    assert!(
-        !caller_path.is_empty(),
-        "The trait path for `{trait_name}`should NOT be empty!"
-    );
-
-    if proc_has_state(&trait_name_str) {
-        proc_clear_state(&trait_name_str).unwrap();
-    }
-    proc_append_state(&trait_name_str, &caller_path).unwrap();
-    proc_append_state(
-        &trait_name_str,
-        &trait_searcher.get_trait_import_statement(),
-    )
-    .unwrap();
-
     // GLOBAL_DATA.lock().unwrap().insert(GlobalTrait {
     //     name: trait_name.to_string(),
     //     path: caller_path,
@@ -454,36 +454,17 @@ pub fn trait_var(
     let generics = &input_struct.generics;
 
     let mut struct_searcher = PathFinder::new(struct_name.to_string(), true);
-    // let global_data = GLOBAL_DATA.lock().unwrap();
-    // let global_trait = match global_data
-    //     .iter()
-    //     .find(|t| t.name == trait_name.to_string())
-    // {
-    //     Some(trait_data) => trait_data.clone(),
-    //     None => {
-    //         // unlock the global data
-    //         drop(global_data);
-    //         std::thread::sleep(std::time::Duration::from_secs(2));
-    //         let global_dat2a = GLOBAL_DATA.lock().unwrap();
-    //         match global_dat2a
-    //             .iter()
-    //             .find(|t| t.name == trait_name.to_string())
-    //         {
-    //             Some(trait_data) => trait_data.clone(),
-    //             None => panic!(
-    //                 "Location of Trait `{}` not found in GLOBAL_DATA",
-    //                 trait_name
-    //             ),
-    //         }
-    //     }
-    // };
     let trait_name_str = trait_name.to_string();
-    let trait_infos = proc_read_state_vec(&trait_name_str);
-    let trait_path = trait_infos[0].clone();
-    let import_statement_tokenstream = if trait_path == struct_searcher.get_def_path() {
+    let mut trait_searcher = PathFinder::new(trait_name_str.clone(), false);
+    let trait_def_path = trait_searcher.get_def_path();
+    assert!(
+        !trait_def_path.is_empty(),
+        "The path for trait `{trait_name}` should NOT be empty!"
+    );
+    let import_statement_tokenstream = if trait_def_path == struct_searcher.get_def_path() {
         quote! {}
     } else {
-        let import_statement = trait_infos[1].clone();
+        let import_statement = trait_searcher.get_trait_import_statement();
         syn::parse_str::<TokenStream>(&import_statement)
             .expect("Failed to parse import statement to TokenStream")
     };
