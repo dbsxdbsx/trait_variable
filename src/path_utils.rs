@@ -76,7 +76,8 @@ impl PathFinder {
         // Convert path separators to Rust module path separators `::`
         let module_path = relative_path
             .replace(std::path::MAIN_SEPARATOR, "::")
-            .replace(".rs", "");
+            .replace(".rs", "")
+            .replace("::mod", "");
         // Format as use crate::<module_path>::<trait_name>; statement
         format!("use crate::{}::{};", module_path, self.name)
     }
@@ -179,9 +180,14 @@ fn test_trait_path_finder() {
     // positive case for struct finder
     let mut struct_searcher = PathFinder::new("MyStructForBasic".to_string(), true);
     let caller_path = struct_searcher.get_def_path();
-    println!("caller_path: {:?}", caller_path);
     assert!(caller_path.ends_with("trait_variable\\tests\\basic.rs"));
     // negative case
     let mut trait_searcher = PathFinder::new("NoExistedTrait".to_string(), false);
     assert!(trait_searcher.get_trait_import_statement().is_empty());
+    // test import_statement with `mod.rs`
+    let mut trait_searcher = PathFinder::new("PracticalTrait".to_string(), false);
+    let caller_path = trait_searcher.get_def_path();
+    assert!(caller_path.ends_with("trait_variable\\tests\\common\\mod.rs"));
+    let import_statment = trait_searcher.get_trait_import_statement();
+    assert_eq!(import_statment, "use crate::tests::common::PracticalTrait;");
 }

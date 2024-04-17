@@ -354,30 +354,11 @@ pub fn trait_variable(input: proc_macro::TokenStream) -> proc_macro::TokenStream
         }
     };
 
-    //   // 5. insert the trait data into GLOBAL_DATA
-    //   let trait_name_str = trait_name.to_string();
-    //   let mut trait_searcher = PathFinder::new(trait_name_str.clone(), false);
-    //   let caller_path = trait_searcher.get_def_path();
-    //   assert!(
-    //       !caller_path.is_empty(),
-    //       "The trait path for `{trait_name}`should NOT be empty!"
-    //   );
-
-    //   if proc_has_state(&trait_name_str) {
-    //       proc_clear_state(&trait_name_str).unwrap();
-    //   }
-    //   proc_append_state(&trait_name_str, &caller_path).unwrap();
-    //   proc_append_state(
-    //       &trait_name_str,
-    //       &trait_searcher.get_trait_import_statement(),
-    //   )
-    //   .unwrap();
-
-    // 6. generate the hidden declarative macro for target struct
+    // 5. generate the hidden declarative macro for target struct
     let declarative_macro_code = quote! {
         #[doc(hidden)]
         #[macro_export] // it is ok to always export the declarative macro
-        macro_rules! #trait_decl_macro_name { // NOTE: the reexpanded macro is used for rust struct onl
+        macro_rules! #trait_decl_macro_name { // NOTE: the reexpanded macro is used for rust struct only
             (
                 $(#[$struct_attr:meta])* // NOTE: make sure the style is consistent with that in arm 2 output
                 $vis:vis struct $struct_name:ident
@@ -417,13 +398,7 @@ pub fn trait_variable(input: proc_macro::TokenStream) -> proc_macro::TokenStream
         }
     };
 
-    // GLOBAL_DATA.lock().unwrap().insert(GlobalTrait {
-    //     name: trait_name.to_string(),
-    //     path: caller_path,
-    //     import_statement: trait_searcher.get_trait_import_statement(),
-    // });
-
-    // 7. integrate all expanded code
+    // 6. integrate all expanded code
     proc_macro::TokenStream::from(quote! {
         #expanded_trait_code
         #declarative_macro_code

@@ -7,13 +7,13 @@
 mod common;
 use std::collections::{BTreeMap, HashSet};
 
-use common::MyStruct;
+use common::MyStructForPractical;
 
 use crate::common::{CustomType, EnumType, PracticalTrait};
 
 #[test]
 fn test() {
-    let mut s = MyStruct::new(
+    let mut s = MyStructForPractical::new(
         1,
         -2,
         true,
@@ -33,7 +33,7 @@ fn test() {
     assert_eq!(s.get_impl_trait_field_i(), -2);
     assert_eq!(
         s.test_associated_type_and_constant_value(),
-        s.i * MyStruct::VALUE
+        s.i * MyStructForPractical::VALUE
     );
 
     s.test_generics_with_trait_display(-1);

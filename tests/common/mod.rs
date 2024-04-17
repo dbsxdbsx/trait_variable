@@ -901,7 +901,7 @@ trait_variable! {
 //↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓struct definition↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓
 // way1: use the attribute macro to expand the struct (Recommended)
 #[trait_var(PracticalTrait)]
-pub struct MyStruct {
+pub struct MyStructForPractical {
     a: i32,
 }
 // way2: use the hidden declarative macro to expand the struct (Not recommended)
@@ -914,7 +914,7 @@ pub struct MyStruct {
 //↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑struct definition↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑
 
 /*↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓struct impl↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓*/
-impl MyStruct {
+impl MyStructForPractical {
     pub fn new(
         a: i32,
         i: i32,
@@ -955,9 +955,9 @@ impl MyStruct {
 }
 
 // don't forget to implement the original parent trait for the struct
-impl ParentTrait for MyStruct {}
+impl ParentTrait for MyStructForPractical {}
 
-impl PracticalTrait<i32> for MyStruct {
+impl PracticalTrait<i32> for MyStructForPractical {
     type Output = i32;
     const VALUE: i32 = 10;
 
