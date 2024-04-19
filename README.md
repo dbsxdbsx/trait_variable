@@ -100,9 +100,10 @@ pub(crate) trait MyTrait: _MyTrait {
 In this way, the basics for using trait variables are built while no rule is broken.
 And it is easy to guess that any trait function body containing `self.x` as the trait variable identifier would be converted into `self._x()` or `self._x_mut()` accordingly.
 
-Besides, the `#[trait_var(MyTrait)]` attribute macro will first expand the target struct into a form wrapped with a hidden declarative macro (also generated from `trait_variable!`) as stated above in block `way2:` with the macro `MyTrait_for_struct!`. Then this hidden declarative macro would further generate a default implementation of `_MyTrait` (not `MyTrait`) for `MyStruct`, which in this case looks like this:
+Besides, the `#[trait_var(MyTrait)]` attribute macro will first expand the target struct into a form wrapped with a hidden declarative macro (also generated from `trait_variable!`) as stated above in block `way2:` with the macro `MyTrait_for_struct!`, along with an import statement towards to the hidden trait path. Then this hidden declarative macro would further generate a default implementation of `_MyTrait` (not `MyTrait`) for `MyStruct`, which in this case looks like this:
 
 ```rust
+use crate::PathToMyTrait; // if the trait is defined in another file
 impl _MyTrait for MyStruct {
     fn  _x(&self) -> &i32 {
         &self.x
@@ -127,10 +128,12 @@ NOTE: In this whole implementation, the `x` and `y` are still not the fields of 
 
 The code inside the `trait_variable` macro may not receive comprehensive intellisense and lint support from Rust extensions (like [Rust Analyzer](https://github.com/rust-lang/rust-analyzer)). This is because most Rust extensions currently struggle to handle identifiers inside macros effectively. Therefore, when using this crate, you may not have access to full code completion, refactoring, go-to-definition, and other intelligent awareness features. This is a known limitation that may be improved (if it is technically possible) in future versions.
 
+Besides, due to some issue with declarative macro, currently, if the two macros are use  in the sae file, the `trait_variable!` macro should be placed before the `#[trait_var(MyTrait)]` attribute macro, otherwise, the hidden trait `_MyTrait` would not be found. This issue will be fixed in the future.
+
 ## Requirements
 
 - Rust edition 2021 or later is required.
-- The crate has been tested with Rust version 1.77.0, but the minimum compatible version is not specified.
+- The crate has been tested with Rust version 1.77.1, but the minimum compatible version is not specified.
 
 ## Contributing
 
@@ -143,7 +146,6 @@ Contributions are welcome. Feel free to submit pull requests or open issues on t
  - [] constant generic with array field in struct definition;
  - [] fn `replace_self_field` params necessity check;
  - [] GAT, async methods, etc. in trait definition;
- - [] omit `use <trait_module>::<_hidden_parent_trait_name>;` statement when using `#[trait_var(<trait_name>)]` for a struct in an extra module;
  - [] try to let smart intellisense extension(like `Rust Analyzer`) support idents inside macro(Maybe impossible).
 
 ## License
